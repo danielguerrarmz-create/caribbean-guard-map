@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# raw Squarespace export / reference dumps (one-time source material, not build input)
+/docs/source-material/
+
+# staged media pulled from Squarespace CDN before manual upload to Drive
+/media/
+
+# one-time extraction output used to author src/content/*.ts by hand
+/scripts/out/

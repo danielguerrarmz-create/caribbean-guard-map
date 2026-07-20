@@ -1,1 +1,141 @@
 @import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --accent: hsl(204.39 79.49% 38.24%);
+  --accent-light: hsl(240 10.53% 92.55%);
+  --accent-dark: hsl(209.23 52.7% 70.98%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-dark: var(--accent-dark);
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Section-theme classes, mirroring Squarespace's per-section theme system.
+ * Wrap a section in one of these to re-theme it and everything inside it.
+ */
+.theme-white {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+.theme-light {
+  --background: var(--accent-light);
+  --foreground: #000000;
+}
+
+.theme-black {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+.theme-bright {
+  --background: var(--accent);
+  --foreground: #ffffff;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/*
+ * Styling for raw CMS HTML rendered via dangerouslySetInnerHTML.
+ * Tailwind's preflight strips default heading/paragraph/list spacing,
+ * so untagged markup from the Squarespace export needs it restored here.
+ */
+.rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rich-text :where(h1, h2, h3, h4) {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.rich-text h1 {
+  font-size: 2.25rem;
+}
+
+.rich-text h2 {
+  font-size: 1.875rem;
+}
+
+.rich-text h3 {
+  font-size: 1.5rem;
+}
+
+.rich-text h4 {
+  font-size: 1.25rem;
+}
+
+.rich-text p {
+  line-height: 1.7;
+}
+
+.rich-text :where(ul, ol) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.rich-text ul {
+  list-style: disc;
+}
+
+.rich-text ol {
+  list-style: decimal;
+}
+
+.rich-text a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-text strong {
+  font-weight: 600;
+}
+
+.rich-text em {
+  font-style: italic;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.rich-text-compact p + p {
+  margin-top: 0.5em;
+}
