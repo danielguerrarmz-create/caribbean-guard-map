@@ -5,7 +5,6 @@ type VideoSectionProps = {
   title?: string;
   src?: string;
   poster?: string;
-  driveEmbedId?: string;
   autoPlay?: boolean;
   loop?: boolean;
   muted?: boolean;
@@ -17,7 +16,6 @@ export default function VideoSection({
   title,
   src,
   poster,
-  driveEmbedId,
   autoPlay = false,
   loop = false,
   muted = false,
@@ -32,7 +30,7 @@ export default function VideoSection({
           </h2>
         )}
         <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
-          {src ? (
+          {src && (
             <video
               src={src}
               poster={poster}
@@ -43,14 +41,7 @@ export default function VideoSection({
               playsInline
               className="h-full w-full object-cover"
             />
-          ) : driveEmbedId ? (
-            <iframe
-              src={`https://drive.google.com/file/d/${driveEmbedId}/preview`}
-              className="h-full w-full"
-              allow="autoplay"
-              allowFullScreen
-            />
-          ) : null}
+          )}
         </div>
       </div>
     </section>

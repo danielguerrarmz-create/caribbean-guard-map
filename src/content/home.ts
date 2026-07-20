@@ -13,7 +13,8 @@ export const homeContent = {
   },
   video: {
     title: "PROGRAMA PLAYA ORGANIZADA",
-    driveEmbedId: "1PW6EDWxp3KMMNC41IjFOeWyBjzvXvrSb",
+    src: "/videos/programa-playa-organizada.mp4",
+    poster: "/videos/programa-playa-organizada-poster.jpg",
   },
   mission: {
     html: [

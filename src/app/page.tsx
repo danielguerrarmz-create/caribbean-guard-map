@@ -21,7 +21,12 @@ export default function HomePage() {
         heading={homeContent.hero.heading}
         button={homeContent.hero.button}
       />
-      <VideoSection theme="light" title={homeContent.video.title} driveEmbedId={homeContent.video.driveEmbedId} />
+      <VideoSection
+        theme="light"
+        title={homeContent.video.title}
+        src={homeContent.video.src}
+        poster={homeContent.video.poster}
+      />
       <RichTextSection theme="light" html={homeContent.mission.html} />
       <InstagramFeed />
     </>
