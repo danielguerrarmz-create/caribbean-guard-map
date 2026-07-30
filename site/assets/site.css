@@ -1,0 +1,235 @@
+/* Caribbean Guard — site stylesheet
+   Mobile first. Every number below is set for a 390px phone and only widened
+   at breakpoints, never the reverse. That is not a slogan here: the live site
+   set its home hero to min-height:10vh, about 84px on a phone, which is what a
+   desktop-first process produces. */
+
+/* Poppins, served from the same Squarespace CDN the live site already uses, so
+   this is the organization's own typeface rather than a new dependency. Falls
+   back to the system stack if the CDN is unreachable. */
+@font-face{font-family:Poppins;font-style:normal;font-weight:400;font-display:swap;
+  src:url('https://file.squarespace-cdn.com/content/v2/namespaces/fonts/libraries/sqsp/assets/da0c3c0d-458f-46e2-9c64-bac004d4e8c1/latin.woff2') format('woff2')}
+@font-face{font-family:Poppins;font-style:normal;font-weight:500;font-display:swap;
+  src:url('https://file.squarespace-cdn.com/content/v2/namespaces/fonts/libraries/sqsp/assets/abb8d202-34bc-4174-a25f-c00d4154bb44/latin.woff2') format('woff2')}
+@font-face{font-family:Poppins;font-style:normal;font-weight:700;font-display:swap;
+  src:url('https://file.squarespace-cdn.com/content/v2/namespaces/fonts/libraries/sqsp/assets/95402d3d-cf4f-4ff3-b652-fa1bddbe79de/latin.woff2') format('woff2')}
+
+:root{
+  /* One accent, not two. Squarespace's own theme already defined an unused
+     accent near #1570AF and the safety map had independently picked #1565C0 for
+     its locate control. Both surfaces were circling the same blue. */
+  --ink:#0B1C2C;
+  --paper:#FFFFFF;
+  --sand:#F3EEE6;
+  --wash:#FAF8F4;
+  --rule:#DED7CB;
+  --muted:#5B6B7A;
+  --signal:#1565C0;
+  --signal-dark:#104E96;
+
+  /* Semantic, and separate from the accent. Two tiers: the -text values clear
+     4.5:1 for text and fills, the plain values are for graphics needing 3:1. */
+  --safe:#178049;   --safe-vivid:#1F9D55;
+  --caution:#9C5C00; --caution-vivid:#F5B942;
+  --danger:#C62828;
+
+  --f-head:Poppins,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+
+  --gutter:1.15rem;
+  --measure:64ch;
+  --s1:.45rem; --s2:.8rem; --s3:1.3rem; --s4:2rem; --s5:3.2rem; --s6:4.5rem;
+  --tap:44px;              /* WCAG target. The live site's social links are 20px. */
+  --radius:10px;
+}
+@media (min-width:760px){ :root{ --gutter:2rem } }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--f-body);font-size:17px;line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+h1,h2,h3,h4{font-family:var(--f-head);font-weight:700;line-height:1.15;
+  text-wrap:balance;margin:0}
+h1{font-size:clamp(1.85rem,6.4vw,3rem);letter-spacing:-.02em}
+h2{font-size:clamp(1.35rem,4.4vw,2rem);letter-spacing:-.015em}
+h3{font-size:1.12rem;font-weight:600}
+p,li{max-width:var(--measure)}
+p{margin:0 0 var(--s2)}
+a{color:var(--signal)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--signal);
+  outline-offset:2px;border-radius:3px}
+img{max-width:100%;height:auto;display:block}
+
+.wrap{max-width:66rem;margin:0 auto;padding:0 var(--gutter)}
+.narrow{max-width:46rem}
+
+/* ---------- emergency bar: 911 is never more than a glance away ---------- */
+.emg{background:var(--danger);color:#fff}
+/* The tap target is the LINK, not the bar around it. A 44px bar containing a
+   27px anchor still fails: the thing you can hit is the anchor. */
+.emg a{color:#fff;text-decoration:none;font-weight:700;
+  display:inline-flex;align-items:center;min-height:var(--tap);padding:0 .5rem;
+  border-radius:6px}
+.emg a:hover{background:rgba(255,255,255,.14)}
+.emg .wrap{display:flex;align-items:center;justify-content:center;gap:.3rem;
+  min-height:var(--tap);font-size:14px;text-align:center;flex-wrap:wrap}
+.emg .num{font-size:17px;letter-spacing:.02em}
+
+/* ---------- header ---------- */
+header.site{border-bottom:1px solid var(--rule);background:var(--paper);
+  position:sticky;top:0;z-index:50}
+header.site .wrap{display:flex;align-items:center;gap:var(--s2);
+  min-height:60px;padding-top:.5rem;padding-bottom:.5rem}
+.brand{font-family:var(--f-head);font-weight:700;font-size:16px;letter-spacing:-.01em;
+  color:var(--ink);text-decoration:none;line-height:1.1;display:flex;
+  align-items:center;min-height:var(--tap)}
+.brand span{display:block;font-weight:400;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);margin-top:2px}
+.spacer{flex:1}
+
+.menu-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;
+  min-width:var(--tap);min-height:var(--tap);padding:0 .7rem;
+  background:transparent;border:1px solid var(--rule);border-radius:8px;
+  font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+@media (min-width:900px){.menu-btn{display:none}}
+
+nav.main{display:none}
+nav.main ul{list-style:none;margin:0;padding:0}
+nav.main a{display:flex;align-items:center;min-height:var(--tap);
+  color:var(--ink);text-decoration:none;font-size:15px;font-weight:500}
+nav.main a[aria-current="page"]{color:var(--signal);font-weight:700}
+@media (min-width:900px){
+  nav.main{display:block}
+  nav.main ul{display:flex;gap:1.15rem;align-items:center}
+  nav.main a:hover{color:var(--signal)}
+}
+/* mobile drawer */
+nav.main.open{display:block;position:absolute;top:100%;left:0;right:0;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+  box-shadow:0 12px 24px rgba(11,28,44,.12)}
+nav.main.open ul{flex-direction:column;padding:var(--s2) var(--gutter) var(--s3)}
+nav.main.open a{border-bottom:1px solid var(--rule);min-height:52px}
+
+.cta{display:inline-flex;align-items:center;justify-content:center;
+  min-height:var(--tap);padding:0 1rem;border-radius:999px;
+  background:var(--signal);color:#fff!important;text-decoration:none;
+  font-weight:700;font-size:14.5px;border:0;cursor:pointer}
+.cta:hover{background:var(--signal-dark)}
+.cta.ghost{background:transparent;color:var(--signal)!important;
+  border:1.5px solid var(--signal)}
+.cta.ghost:hover{background:var(--wash)}
+.cta.danger{background:var(--danger)}
+
+/* ---------- hero ---------- */
+.hero{background:var(--ink);color:#fff;padding:var(--s5) 0}
+.hero h1{color:#fff}
+.hero p{color:#D6E1EC;font-size:1.06rem;margin-top:var(--s3)}
+.hero .actions{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s4)}
+.hero .cta.ghost{color:#fff!important;border-color:rgba(255,255,255,.5)}
+.hero .cta.ghost:hover{background:rgba(255,255,255,.1)}
+
+section{padding:var(--s5) 0}
+section.alt{background:var(--wash);border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule)}
+.eyebrow{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin:0 0 var(--s1)}
+.lede{font-size:1.08rem}
+
+/* ---------- the map card: the one thing someone may open twice ---------- */
+.mapcard{display:block;background:var(--ink);color:#fff;border-radius:var(--radius);
+  padding:var(--s3);text-decoration:none;border:1px solid var(--ink)}
+.mapcard:hover{background:#12293E}
+.mapcard h2{color:#fff;font-size:1.2rem}
+.mapcard p{color:#CBD9E6;font-size:15px;margin:var(--s1) 0 var(--s2)}
+.mapcard .go{display:inline-flex;align-items:center;gap:.4rem;
+  font-weight:700;color:#fff;font-size:15px}
+.mapcard .rev{font-size:12.5px;color:#9FB4C8;margin:0}
+
+/* ---------- cards and lists ---------- */
+.grid{display:grid;gap:var(--s3);margin-top:var(--s3)}
+@media (min-width:620px){.grid.two{grid-template-columns:1fr 1fr}}
+@media (min-width:900px){.grid.three{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:var(--s3);display:flex;flex-direction:column;gap:var(--s1)}
+/* cards carry h2 or h3 depending on whether they are the page's sections or
+   sit under one; both render at the same size */
+.card h2,.card h3{font-size:1.12rem;font-weight:600;margin-bottom:.1rem;letter-spacing:0}
+.card p{font-size:15.5px;margin:0}
+.card .more{margin-top:auto;padding-top:var(--s2);font-weight:600;font-size:15px}
+
+.stack{display:flex;flex-direction:column;gap:var(--s4);margin-top:var(--s4)}
+.item{border-top:1px solid var(--rule);padding-top:var(--s3)}
+.item h2{font-size:1.18rem;font-weight:700;margin-bottom:var(--s1);letter-spacing:-.005em}
+
+dl.facts{display:grid;gap:var(--s2);margin:var(--s3) 0 0}
+@media (min-width:620px){dl.facts{grid-template-columns:auto 1fr;column-gap:var(--s3)}}
+dl.facts dt{font-weight:700;font-size:15px}
+dl.facts dd{margin:0;font-size:15.5px}
+
+/* ---------- status vocabulary, shared with the map ---------- */
+.status{display:inline-flex;align-items:center;gap:.45em;font-size:11.5px;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:.34em .7em;border-radius:4px;color:#fff}
+.status.safe{background:var(--safe)}
+.status.caution{background:var(--caution)}
+.status.danger{background:var(--danger)}
+.swatch{flex:0 0 auto}
+
+/* ---------- forms: the site had none at all ---------- */
+form.contact{display:grid;gap:var(--s3);max-width:34rem;margin-top:var(--s3)}
+.field{display:flex;flex-direction:column;gap:.35rem}
+.field label{font-weight:600;font-size:15px}
+.field .hint{font-size:13.5px;color:var(--muted)}
+input,select,textarea{font:inherit;font-size:16px;/* 16px or iOS zooms on focus */
+  padding:.62rem .7rem;min-height:var(--tap);
+  border:1.5px solid var(--rule);border-radius:8px;background:var(--paper);
+  color:var(--ink);width:100%}
+textarea{min-height:7rem;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--signal);outline:0;
+  box-shadow:0 0 0 3px rgba(21,101,192,.18)}
+
+/* ---------- figures: hazard maps get captions, not empty alt ---------- */
+figure{margin:var(--s3) 0}
+figure img{border:1px solid var(--rule);border-radius:var(--radius)}
+figcaption{font-size:14px;color:var(--muted);margin-top:var(--s1);max-width:var(--measure)}
+.panx{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.panx img{max-width:none;width:920px}
+@media (min-width:980px){.panx img{width:100%}}
+
+details.equiv{border:1px solid var(--rule);border-radius:var(--radius);
+  padding:var(--s2) var(--s3);margin-top:var(--s2);background:var(--wash)}
+details.equiv summary{font-weight:700;cursor:pointer;min-height:var(--tap);
+  display:flex;align-items:center;font-size:15px}
+details.equiv ul{margin:var(--s1) 0 var(--s2);padding-left:1.15rem}
+details.equiv li{font-size:15px;margin-bottom:.3rem}
+
+/* ---------- people ---------- */
+.people{display:grid;gap:var(--s3);grid-template-columns:1fr;margin-top:var(--s3)}
+@media (min-width:560px){.people{grid-template-columns:1fr 1fr}}
+@media (min-width:900px){.people{grid-template-columns:repeat(3,1fr)}}
+.person{border:1px solid var(--rule);border-radius:var(--radius);padding:var(--s3)}
+.person h2{font-size:1.02rem;letter-spacing:0}
+.person p{font-size:15px;color:var(--muted);margin:.2rem 0 0}
+
+/* ---------- footer ---------- */
+footer.site{background:var(--ink);color:#C9D7E4;padding:var(--s5) 0 var(--s4);
+  margin-top:var(--s5)}
+footer.site a{color:#fff}
+footer.site h2{color:#fff;font-size:1.1rem;margin-bottom:var(--s2)}
+.fgrid{display:grid;gap:var(--s4)}
+@media (min-width:760px){.fgrid{grid-template-columns:1.3fr 1fr 1fr}}
+footer.site ul{list-style:none;margin:0;padding:0;display:flex;
+  flex-direction:column;gap:.1rem}
+footer.site ul a{display:flex;align-items:center;min-height:var(--tap);
+  text-decoration:none;font-size:15px}
+footer.site ul a:hover{text-decoration:underline}
+.legal{border-top:1px solid rgba(255,255,255,.16);margin-top:var(--s4);
+  padding-top:var(--s3);font-size:13.5px;color:#9FB4C8}
+.legal p{max-width:none}
+
+.skip{position:absolute;left:-9999px;top:0;background:var(--signal);color:#fff;
+  padding:.7rem 1rem;z-index:100;text-decoration:none;border-radius:0 0 8px 0}
+.skip:focus{left:0}

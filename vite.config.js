@@ -1,10 +1,11 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  // web/ is the site root. index.html sits there and references img/ and data/
-  // with relative paths, which is also how it will sit on Cloudflare Pages, so
-  // dev and production resolve identically.
-  root: "web",
+  // site/ is the website. The safety map is copied into site/mapa/app/ by
+  // tools/build_site.py so the whole thing is navigable as one tree locally.
+  // In production the map deploys separately, because the entire point is that
+  // it does not sit behind anything heavier than itself.
+  root: "site",
 
   server: {
     // Bound to 0.0.0.0 on purpose. This is a map for someone standing on a beach

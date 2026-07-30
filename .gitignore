@@ -38,3 +38,12 @@ tools/align_overlay.png
 tools/mask_ref.png
 tools/dbg_*.jpg
 gl.json
+
+# Extracted copy: derived from the saved Squarespace HTML, which is itself
+# ignored. Regenerate with tools/extract_site_copy.py.
+tools/site_copy.json
+tools/copy_preview.txt
+
+# The map is copied into the site tree at build time so the whole thing is
+# navigable locally; in production it deploys separately.
+site/mapa/app/
