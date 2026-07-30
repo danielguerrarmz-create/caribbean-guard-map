@@ -20,13 +20,36 @@ Image.MAX_IMAGE_PIXELS = None
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-SRC = r"C:\Users\danie\Downloads\caribbean-guard-cuts\Complete Mapping.jpg"
+# Lossless source. The previous working base came from a JPEG that had already
+# been through the generative upscale and then a quality-80 encode, so it was
+# compressed twice before anyone looked at it. Same 15000x4219 framing, verified
+# by phase correlation at 0.1 px with a mean difference of 0.9/255, so the solved
+# georeference applies to it unchanged and nothing needs re-solving.
+SRC = r"C:\Users\danie\Downloads\caribbean-guard-cuts\FULL RESOLUTION MAPPING.png"
 Z, TS = 17, 256
 
-# PNG at 5000 px is 13 MB, which is indefensible on a phone with one bar of
-# signal, and that phone is the whole point of this map. WebP carries the alpha
-# channel we need for the rotated corners at a fraction of the weight.
-OUTS = [("base.webp", 5000, 82), ("base-lo.webp", 1400, 78)]
+# WebP carries the alpha we need for the rotated corners at a fraction of PNG's
+# weight (the same content as PNG at 5000 px is 13 MB, which is indefensible on a
+# phone with one bar of signal, and that phone is the whole point of this map).
+#
+# 9000 px, not 5000 and not 15000. Measured on the lossless source:
+#     5000  3.33 m/px  1.07 MB
+#     7000  2.38 m/px  1.63 MB
+#     9000  1.85 m/px  2.29 MB
+#    11000  1.51 m/px  3.17 MB
+# The source went through a generative upscale, so detail finer than roughly
+# 2 m/px is largely invented. Paying another 2 MB for fabricated sharpness is the
+# same bad trade the tile pyramid was rejected for. 9000 sits just past that line
+# and is about 3x upsampled at the map's maximum zoom, which is honest.
+#
+# The overview is what actually loads on arrival; the full base is deferred until
+# somebody zooms, so its weight is paid only by people who ask for it.
+# The overview is 1200 px, not 1400. It is what loads on arrival, so its weight is
+# the number that matters: 63 KB against 86 KB. At the default contain fit the
+# overlay is about 1100 device px on a phone and 1400 on a desktop window, so 1200
+# is at parity on the device this map is for and only briefly soft on the other,
+# until the full base swaps in behind it.
+OUTS = [("base.webp", 9000, 82), ("base-lo.webp", 1200, 78)]
 
 
 def tile2deg(x, y, z):

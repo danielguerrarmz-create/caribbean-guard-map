@@ -371,7 +371,8 @@ const T = {
       compassDenied:"Sin acceso a la brújula. La flecha sigue marcando el norte.",
       compassNone:"Este dispositivo no tiene brújula. La flecha marca el norte.",
       ripTitle:"Corriente de resaca",
-      ripLen:m=>`Aproximadamente ${m} m, tira hacia mar abierto`,
+      ripLen:m=>`Aproximadamente ${m} m desde la orilla`,
+      ripDir:"La flecha apunta mar afuera, perpendicular a la playa. La ubicación es la que marcó Caribbean Guard; el rumbo exacto de su mapa no se pudo leer y no se afirma aquí.",
       ripWhy:"Si te agarra: no luches contra ella. Nada en paralelo a la playa hasta salir, y después hacia la orilla. Levanta el brazo y grita si necesitas ayuda.",
       areaTitle:"Zona marcada, sin definir",
       areaWhy:"El mapa de Caribbean Guard marca esta zona en rojo, pero su leyenda no dice qué significa. Podría ser una zona peligrosa o una zona segura de bañado. No la interpretes hasta que la asociación lo confirme.",
@@ -396,7 +397,8 @@ const T = {
       compassDenied:"No compass access. The arrow still points north.",
       compassNone:"This device has no compass. The arrow points north.",
       ripTitle:"Rip current",
-      ripLen:m=>`About ${m} m, pulls out to sea`,
+      ripLen:m=>`About ${m} m from the shore`,
+      ripDir:"The arrow points out to sea, perpendicular to the beach. The position is Caribbean Guard’s; the exact bearing on their map could not be read and is not claimed here.",
       ripWhy:"If it catches you: do not fight it. Swim parallel to the beach until you are out of it, then back in. Raise an arm and shout if you need help.",
       areaTitle:"Marked area, meaning unclear",
       areaWhy:"Caribbean Guard's map shades this area red, but its legend does not say what that means. It could be a hazard zone or a designated safe swimming zone. Do not read it either way until the association confirms.",
@@ -857,7 +859,8 @@ function openAnnot(kind, f){
     ? `<span class="status danger">${t.ripTitle}</span>
        <h2>${t.ripTitle}</h2>
        <p class="sub">${t.ripLen(f.properties.length_m)}</p>
-       <p class="why">${t.ripWhy}</p>`
+       <p class="why">${t.ripWhy}</p>
+       <p class="prov">${t.ripDir}</p>`
     : `<span class="status station" style="background:#5b6b7a">${t.areaTitle}</span>
        <h2>${t.areaTitle}</h2>
        <p class="why">${t.areaWhy}</p>`;

@@ -13,19 +13,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.71804,
-      9.645272
+      -82.717995,
+      9.645262
      ],
      [
-      -82.717735,
-      9.645516
+      -82.717682,
+      9.64541
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 43,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 38,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -36,19 +36,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.71125,
-      9.641867
+      -82.711159,
+      9.642036
      ],
      [
-      -82.710892,
-      9.642597
+      -82.711105,
+      9.642629
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 91,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 66,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -59,19 +59,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.707672,
-      9.641274
+      -82.710098,
+      9.641719
      ],
      [
-      -82.70742,
-      9.641507
+      -82.709808,
+      9.641909
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 39,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 38,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -82,19 +82,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.710129,
-      9.641708
+      -82.715561,
+      9.642565
      ],
      [
-      -82.709892,
-      9.642025
+      -82.715767,
+      9.643072
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 44,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 60,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -105,19 +105,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.715492,
-      9.642914
+      -82.707962,
+      9.640396
      ],
      [
-      -82.715248,
-      9.643115
+      -82.707199,
+      9.640799
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 35,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 94,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -128,19 +128,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.707932,
-      9.640364
+      -82.710403,
+      9.641581
      ],
      [
-      -82.707741,
-      9.641232
+      -82.710175,
+      9.641729
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 99,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 29,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -151,19 +151,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.710495,
-      9.641316
+      -82.711372,
+      9.641772
      ],
      [
-      -82.710419,
-      9.641592
+      -82.711311,
+      9.642046
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 32,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 31,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -175,18 +175,18 @@
     "coordinates": [
      [
       -82.724022,
-      9.644045
+      9.644067
      ],
      [
-      -82.723969,
-      9.644469
+      -82.724144,
+      9.644426
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 46,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 41,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }
@@ -197,65 +197,19 @@
     "type": "LineString",
     "coordinates": [
      [
-      -82.709381,
-      9.641147
+      -82.723961,
+      9.643739
      ],
      [
-      -82.709091,
-      9.641211
+      -82.72406,
+      9.644014
      ]
     ]
    },
    "properties": {
     "kind": "rip_current",
-    "length_m": 33,
-    "direction": "seaward, inferred from sheet orientation",
-    "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
-    "needs_confirmation": true
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -82.715607,
-      9.642194
-     ],
-     [
-      -82.715538,
-      9.64249
-     ]
-    ]
-   },
-   "properties": {
-    "kind": "rip_current",
-    "length_m": 34,
-    "direction": "seaward, inferred from sheet orientation",
-    "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
-    "needs_confirmation": true
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -82.715691,
-      9.642163
-     ],
-     [
-      -82.715965,
-      9.642268
-     ]
-    ]
-   },
-   "properties": {
-    "kind": "rip_current",
-    "length_m": 33,
-    "direction": "seaward, inferred from sheet orientation",
+    "length_m": 32,
+    "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "needs_confirmation": true
    }

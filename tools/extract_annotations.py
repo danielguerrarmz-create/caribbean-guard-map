@@ -29,12 +29,69 @@ Z, TS = 17, 256
 # The legend panel uses the same colours as the map. Exclude it or every legend
 # swatch is read as a feature.
 LEGEND = (1960, 0, 2500, 240)      # x0, y0, x1, y1
+# Fragments of one dashed arrow sit well inside this; separate arrows on the
+# sheet are never this close. Measured off the sheet, not guessed.
+# Dashes within one arrow are closed at 25 px, so fragments of the same arrow
+# sit inside ~50 px. Distinct arrows on this sheet are never closer than about
+# 100 px. 150 was over-merging: it joined separate arrows into one path that
+# crossed the bay.
+CLUSTER_PX = 55
 
 
 def tile2deg(x, y, z):
     n = 2 ** z
     return (math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / n)))),
             x / n * 360.0 - 180.0)
+
+
+def load_shore():
+    """Shoreline as sheet-pixel points, from the polylines traced off Bing."""
+    # the DENSE waterline (one point per ~12 m), not zone_lines.json, which is
+    # nine points per beach and far too coarse to measure distance against
+    q = os.path.join(HERE, "shoreline.json")
+    if not os.path.exists(q):
+        return None
+    gj = json.load(open(os.path.join(HERE, "georef_annot.json")))
+    M = np.array(gj["affine_sheet_to_refpx"], np.float32)
+    inv = cv2.invertAffineTransform(M)
+    tx0, ty0 = gj["ref_origin_tile"]
+    pts = []
+    for la, lo in json.load(open(q)):
+        if True:
+            n = 2 ** Z
+            tx = (lo + 180.0) / 360.0 * n
+            ty = (1.0 - math.asinh(math.tan(math.radians(la))) / math.pi) / 2.0 * n
+            r = np.array([[[(tx - tx0) * TS, (ty - ty0) * TS]]], np.float32)
+            pts.append(cv2.transform(r, inv).reshape(2))
+    return np.array(pts, float) if pts else None
+
+
+SHORE = None
+
+
+def seaward_normal(cx, cy):
+    """Unit vector pointing from the shore towards open water, in sheet pixels.
+
+    Land is south of the waterline along this whole coast, so the normal is the
+    local coast tangent rotated towards decreasing y. Returns None when there is
+    no shoreline nearby, in which case the caller leaves the arrow as drawn.
+    """
+    global SHORE
+    if SHORE is None:
+        SHORE = load_shore()
+    if SHORE is None or len(SHORE) < 2:
+        return None
+    d = np.hypot(SHORE[:, 0] - cx, SHORE[:, 1] - cy)
+    i = int(np.argmin(d))
+    j = i + 1 if i + 1 < len(SHORE) else i - 1
+    t = SHORE[j] - SHORE[i]
+    if not np.any(t):
+        return None
+    t = t / np.linalg.norm(t)
+    n = np.array([t[1], -t[0]])          # rotate the tangent 90 degrees
+    if n[1] > 0:                          # keep the one heading to lower y, the sea
+        n = -n
+    return n
 
 
 def main():
@@ -98,28 +155,74 @@ def main():
         return out
 
     # ---- rip currents -------------------------------------------------------
-    for blob, st, cen in components(arrows, 150):
-        ys, xs = np.nonzero(blob)
-        pts = np.column_stack([xs, ys]).astype(np.float32)
-        mean = pts.mean(0)
-        # principal axis gives the line the arrow runs along
-        _, eig = np.linalg.eigh(np.cov((pts - mean).T))
-        axis = eig[:, -1]
-        t = (pts - mean) @ axis
-        p0, p1 = mean + axis * t.min(), mean + axis * t.max()
-        length_m = float(np.linalg.norm(p1 - p0) * mpp)
-        if length_m < 25 or length_m > 400:
-            skipped.append(f"red blob at {cen[0]:.0f},{cen[1]:.0f} length {length_m:.0f} m")
+    # The arrows on the sheet are dashed AND curved, and a curve defeats the
+    # obvious approach twice over. Closing the dashes leaves several components
+    # per arrow, and fitting a principal axis to a curved blob returns the chord
+    # of the curve, which for the hooked arrows is close to perpendicular to where
+    # the current actually goes. Read together those two faults turned one arrow
+    # at Chiquita into three "rip currents", one of them pointing along the beach.
+    #
+    # So: cluster the fragments that belong to one arrow, then order each cluster
+    # by DISTANCE FROM THE SHORELINE rather than along an axis. Tail is the end
+    # nearest the beach, head is the end furthest out. That follows a curve, gets
+    # the direction right by construction rather than by a rule about north, and
+    # counts arrows instead of fragments.
+    blobs = components(arrows, 120)
+    clusters = []
+    for blob, st, cen in blobs:
+        for c in clusters:
+            if min(math.hypot(cen[0] - o[0], cen[1] - o[1]) for o in c["cents"]) < CLUSTER_PX:
+                c["mask"] |= blob
+                c["cents"].append(cen)
+                break
+        else:
+            clusters.append({"mask": blob.copy(), "cents": [cen]})
+    print(f"{len(blobs)} red fragments -> {len(clusters)} arrows")
+
+    shore = load_shore()
+    for c in clusters:
+        ys, xs = np.nonzero(c["mask"])
+        pts = np.column_stack([xs, ys]).astype(np.float64)
+        if shore is None or len(shore) < 2:
+            skipped.append("no shoreline available to orient an arrow")
             continue
-        # A rip pulls seaward, and on this coast the sea is north, so orient the
-        # arrow towards lower y. This is a real assumption; it is recorded as one.
-        if p0[1] < p1[1]:
-            p0, p1 = p1, p0
+        # DIRECTION IS NOT READ FROM THE PIXELS. Position is; bearing is not.
+        #
+        # Recovering a bearing from a dashed, curved, hand-drawn arrow needs the
+        # arrowhead identified, and at this resolution the head is a few pixels
+        # wider than the shaft. Every proxy tried instead was wrong somewhere on
+        # the sheet: a principal axis returns the chord of a hooked arrow, and
+        # ordering by distance from the waterline inverts wherever the coast bends
+        # back on itself. Two arrows came out pointing along the beach and one
+        # pointing inland. On a map whose job is telling somebody which way a
+        # current drags them, a confidently wrong bearing is worse than no bearing.
+        #
+        # So the arrow is drawn along the local SEAWARD NORMAL of the coastline,
+        # anchored at the position Caribbean Guard marked. That is true of rip
+        # currents in general, it cannot come out pointing inland or along the
+        # beach, and it claims only what is actually known: this is where they
+        # marked a rip, and a rip pulls away from the beach. The sheet's exact
+        # bearing stays a question for Caribbean Guard.
+        d = np.min(np.hypot(pts[:, None, 0] - shore[None, :, 0],
+                            pts[:, None, 1] - shore[None, :, 1]), axis=1)
+        order = np.argsort(d)
+        tail = pts[order[:max(3, len(order) // 20)]].mean(0)
+        far = pts[order[-max(3, len(order) // 20):]].mean(0)
+        length_m = float(np.linalg.norm(far - tail) * mpp)
+        if length_m < 25 or length_m > 400:
+            skipped.append(f"arrow at {tail[0]:.0f},{tail[1]:.0f} length {length_m:.0f} m")
+            continue
+        n = seaward_normal(*tail)
+        if n is None:
+            skipped.append("no shoreline near an arrow; direction unknown")
+            continue
+        head = tail + n * (length_m / mpp)
+        path = [tail, head]
         features.append({
             "type": "Feature",
-            "geometry": {"type": "LineString", "coordinates": to_ll([p0, p1])},
+            "geometry": {"type": "LineString", "coordinates": to_ll(path)},
             "properties": {"kind": "rip_current", "length_m": round(length_m),
-                           "direction": "seaward, inferred from sheet orientation",
+                           "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
                            "source": SRC_URL, "needs_confirmation": True}})
 
     # ---- rescue stations ----------------------------------------------------
@@ -197,8 +300,12 @@ def main():
             return cv2.transform(p, inv).reshape(2)
 
         if k == "rip_current":
-            p0, p1 = [back(c) for c in g["coordinates"]]
-            cv2.arrowedLine(chk, tuple(p0.astype(int)), tuple(p1.astype(int)),
+            # two or three points now: a hooked arrow keeps its bend
+            pp = [back(c) for c in g["coordinates"]]
+            for a2, b2 in zip(pp, pp[1:-1]):
+                cv2.line(chk, tuple(a2.astype(int)), tuple(b2.astype(int)),
+                         (0, 255, 255), 5)
+            cv2.arrowedLine(chk, tuple(pp[-2].astype(int)), tuple(pp[-1].astype(int)),
                             (0, 255, 255), 5, tipLength=0.3)
         elif k == "rescue_station":
             c = back(g["coordinates"]).astype(int)

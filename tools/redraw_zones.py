@@ -165,6 +165,21 @@ def main():
 
     json.dump(out, open(os.path.join(HERE, "zone_lines.json"), "w"), indent=1)
 
+    # Also export the DENSE waterline, every 10 reference pixels. zone_lines.json
+    # is nine points per beach, which is fine for drawing and useless for geometry:
+    # one point per 370 m cannot tell you how far a pixel is from the water. Other
+    # tools need the real thing (tools/extract_annotations.py orients rip arrows by
+    # distance from it), so write it once here where it is already computed.
+    dense = []
+    for x in range(0, RW, 10):
+        y = smooth[x]
+        if np.isfinite(y):
+            la, lo = px_to_ll(float(x), float(y))
+            dense.append([round(la, 6), round(lo, 6)])
+    json.dump(dense, open(os.path.join(HERE, "shoreline.json"), "w"))
+    print(f"dense shoreline: {len(dense)} points, one per "
+          f"{10 * mpp:.0f} m -> tools/shoreline.json")
+
 
 if __name__ == "__main__":
     main()
