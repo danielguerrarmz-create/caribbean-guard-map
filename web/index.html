@@ -39,6 +39,13 @@
      without putting a grey band around them, and it costs no width, so a thin
      line stays thin. */
   .leaflet-overlay-pane{filter:drop-shadow(0 1px 2px rgba(0,0,0,.75))}
+  /* The coast is a 3:1 strip, so on any viewport shape there is empty space above
+     and below it once the whole thing is on screen. Flat colour there reads as a
+     broken image. This is the overview blown up, blurred and darkened, sitting
+     behind the real base: the sea appears to continue instead of stopping at an
+     edge. It is deliberately unreadable, so it cannot be mistaken for map data. */
+  .backdrop{filter:blur(26px) saturate(.55) brightness(.42);
+    transform:scale(1.04);transform-origin:center}
 
   /* ---------- top bar ---------- */
   .topbar{position:absolute;top:0;left:0;right:0;z-index:1000;
@@ -442,13 +449,17 @@ const map = L.map("map",{
    The overview stays underneath rather than being swapped out, so there is never a
    blank frame. Both overlays resolve to the same rect in the same absolutely
    positioned pane, so the upgrade cannot reflow anything: measured CLS is exactly 0. */
-L.imageOverlay("img/base-lo.webp", IMG_BOUNDS, {alt:"Costa de Talamanca"}).addTo(map);
+const backdrop = L.imageOverlay("img/base-lo.webp", IMG_BOUNDS,
+  {alt:"", className:"backdrop", interactive:false, zIndex:1}).addTo(map);
+L.imageOverlay("img/base-lo.webp", IMG_BOUNDS,
+  {alt:"Costa de Talamanca", zIndex:2}).addTo(map);
 
 let baseLoaded = false;
 function loadFullBase(){
   if(baseLoaded) return;
   baseLoaded = true;
-  const full = L.imageOverlay("img/base.webp", IMG_BOUNDS, {opacity:0, alt:""});
+  const full = L.imageOverlay("img/base.webp", IMG_BOUNDS,
+                              {opacity:0, alt:"", zIndex:3});
   full.addTo(map);
   const el = full.getElement();
   if(el){ el.fetchPriority = "low"; el.setAttribute("aria-hidden","true"); }
@@ -507,9 +518,27 @@ function fitCoast(){
   // snaps upward on the first interaction.
   const z = map.getBoundsZoom(BB, false, pad);
   map.fitBounds(BB, {paddingTopLeft:[8, c.top], paddingBottomRight:[8, c.bot]});
-  map.setMinZoom(z - 0.35);
+  // No slack below the fit. Zooming out past the whole coast only ever buys more
+  // empty space, so the floor IS the fit.
+  map.setMinZoom(z);
   map.setMaxBounds(BB.pad(0.02));
+  sizeBackdrop(z);
 }
+/* Stretch the backdrop to cover whatever the viewport can reach at the zoom
+   floor, computed rather than guessed: a portrait phone leaves bands several
+   times the height of the strip, a landscape desktop leaves far less, and a
+   fixed padding would be wrong on both. */
+function sizeBackdrop(floor){
+  const size = map.getSize();
+  const c = BB.getCenter();
+  const nw = map.unproject(map.project(c, floor).subtract(size.divideBy(1.7)), floor);
+  const se = map.unproject(map.project(c, floor).add(size.divideBy(1.7)), floor);
+  const need = L.latLngBounds(nw, se);
+  backdrop.setBounds(L.latLngBounds(
+    [Math.min(need.getSouth(), BB.getSouth()), Math.min(need.getWest(), BB.getWest())],
+    [Math.max(need.getNorth(), BB.getNorth()), Math.max(need.getEast(), BB.getEast())]));
+}
+
 map.setView(BB.getCenter(), 14);
 fitCoast();
 // after the opening fit has finished animating, not immediately: fitBounds emits
@@ -534,6 +563,47 @@ const STROKE = {
   safe:    {weight:5,  dash:"2 8"}     // lightest: a suggestion, not a promise
 };
 
+/* Stroke weight and dash length are a function of zoom, not constants.
+
+   At the whole-coast view an 11 px line is about 200 m wide on the ground and
+   swallows the beach it describes; a 16 px dash gap closes up and "caution"
+   stops looking dashed at all, so the pattern that carries the status for anyone
+   who cannot separate the colours quietly disappears. Zoomed in to a single
+   beach the same 11 px is a thread.
+
+   Both scale, and the RATIO between the three weights is preserved at every
+   zoom, because that ranking is the thing doing the work: the loudest mark is
+   always the most dangerous one. */
+function zoneStroke(status){
+  const base = STROKE[status];
+  const t = Math.max(0, Math.min(1, (map.getZoom() - 11.5) / 5.5));
+  // 0.42x at the whole-coast view, 1.5x on a single beach. The low end matters
+  // more than it looks: on a portrait phone the strip is only about 130 px tall,
+  // so a stroke sized for desktop covers the beach it is describing.
+  const k = 0.42 + t * 1.08;
+  const out = {weight: Math.max(2.5, base.weight * k)};
+  if(base.dash){
+    // scale the pattern with the line, or a thin line gets a coarse dash and a
+    // thick one gets a dotted texture that reads as a different status
+    out.dashArray = base.dash.split(" ").map(n => Math.max(2, +n * k)).join(" ");
+  }
+  return out;
+}
+
+let zonesReady = false;
+function restyleZones(){
+  // fitCoast() emits zoomend during startup, before the zone layers exist.
+  // `typeof layers === "undefined"` does NOT guard this: typeof still throws on a
+  // const in the temporal dead zone. An ordinary flag does.
+  if(!zonesReady) return;
+  ZONES.forEach(z=>{
+    const l = layers[z.id]; if(!l) return;
+    const st = zoneStroke(z.status);
+    l.line.setStyle({weight: st.weight * (l.current ? 1.25 : 1),
+                     dashArray: st.dashArray || null});
+  });
+}
+
 /* ---------- draw zones ---------- */
 const layers = {};
 ZONES.forEach(z=>{
@@ -541,15 +611,19 @@ ZONES.forEach(z=>{
   // sausage the colour sat inside, which is worse than the legibility problem it
   // was there to solve. The strokes carry their own contrast: the map darkens
   // under them instead (see .leaflet-overlay-pane filter).
+  const st0 = zoneStroke(z.status);
   const line = L.polyline(z.line,{color:COLOR[z.status],
-                                  weight:STROKE[z.status].weight,
-                                  dashArray:STROKE[z.status].dash,
+                                  weight:st0.weight,
+                                  dashArray:st0.dashArray || null,
                                   opacity:1,lineCap:"round"});
   const g = L.layerGroup([line]).addTo(map);
   const hit = L.polyline(z.line,{color:"#000",weight:44,opacity:0}).addTo(g);
   hit.on("click",()=>openZone(z));
   layers[z.id]={line};
 });
+zonesReady = true;
+map.on("zoomend", restyleZones);
+restyleZones();
 
 POSTS.forEach(p=>{
   const icon = L.divIcon({className:"", html:`<div class="po ${p.kind}">${p.n}</div>`,
@@ -654,7 +728,8 @@ function openPost(p){
    the map but was taught nowhere. A user cannot learn that solid means stop if
    nothing ever tells them. */
 function swatch(status){
-  const s = STROKE[status];
+  const s = STROKE[status];   // the card shows the reference weights, not the
+                              // current zoom's, so the legend stays stable
   return `<svg class="sw" width="26" height="12" viewBox="0 0 26 12" aria-hidden="true" focusable="false">
     <line x1="1" y1="6" x2="25" y2="6" stroke="${COLOR[status]}"
           stroke-width="${Math.max(3, s.weight * 0.6)}" stroke-linecap="round"
@@ -680,9 +755,9 @@ function markCurrent(id){
     if(on) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
   });
   Object.entries(layers).forEach(([k,o])=>
-    o.line.setStyle({opacity: k===id ? 1 : .55,
-                     weight: STROKE[ZONES.find(z=>z.id===k).status].weight *
-                             (k===id ? 1.25 : 1)}));
+    o.line.setStyle({opacity: k===id ? 1 : .55}));
+  Object.entries(layers).forEach(([k,o])=>{ o.current = (k===id); });
+  restyleZones();
 }
 
 /* ---------- locate ---------- */
@@ -779,7 +854,7 @@ function arrowScale(){
   const z = map.getZoom();
   // z11.5 whole coast -> z18 standing on the beach
   const t = Math.max(0, Math.min(1, (z - 12) / 5));
-  return {weight: 3 + t * 4, head: 7 + t * 13, shaftMin: 26 - t * 22};
+  return {weight: 2.5 + t * 4.5, head: 6 + t * 14, shaftMin: 20 - t * 16};
 }
 
 function arrowHead(a, b, colour){
@@ -839,6 +914,7 @@ function drawAnnotations(gj){
   });
   // Heads and shafts are sized in screen space, so both are rebuilt on zoom.
   map.on("zoomend", ()=>{
+    restyleZones();
     const sc = arrowScale();
     ANNOT.rips.forEach(r=>{
       const pts = r.f.geometry.coordinates.map(c=>[c[1], c[0]]);
