@@ -521,8 +521,13 @@ function fitCoast(){
   // No slack below the fit. Zooming out past the whole coast only ever buys more
   // empty space, so the floor IS the fit.
   map.setMinZoom(z);
-  map.setMaxBounds(BB.pad(0.02));
   sizeBackdrop(z);
+  // Pan limit is the BACKDROP, not the image. Clamping to the image looks right
+  // and breaks flyClear: offsetting the centre so a zone clears the bottom sheet
+  // pushes the viewport past the image edge, maxBounds drags it back, and the
+  // zone the user just asked about ends up behind the sheet. The backdrop is
+  // large enough to absorb that offset and there is no flat fill inside it.
+  map.setMaxBounds(backdrop.getBounds());
 }
 /* Stretch the backdrop to cover whatever the viewport can reach at the zoom
    floor, computed rather than guessed: a portrait phone leaves bands several
