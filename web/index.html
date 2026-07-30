@@ -35,6 +35,10 @@
      which reads as a broken image. Make them the app's own navy so the letterbox
      looks deliberate. */
   .leaflet-container{background:var(--ink)}
+  /* Replaces the old white casing. A shadow lifts the strokes off the imagery
+     without putting a grey band around them, and it costs no width, so a thin
+     line stays thin. */
+  .leaflet-overlay-pane{filter:drop-shadow(0 1px 2px rgba(0,0,0,.75))}
 
   /* ---------- top bar ---------- */
   .topbar{position:absolute;top:0;left:0;right:0;z-index:1000;
@@ -403,7 +407,7 @@ const T = {
 };
 let lang = (navigator.language||"es").toLowerCase().startsWith("en") ? "en" : "es";
 
-/* Map graphics, drawn over photography with a white halo under them, so the job
+/* Map graphics drawn straight onto photography, so the job
    here is separating the three statuses FROM EACH OTHER rather than from a page
    background. They are separated by brightness, not hue, because hue is the first
    thing a sun-washed screen loses:
@@ -489,27 +493,20 @@ function fitCoast(){
   // map slowly loses the ability to show the whole coast.
   map.setMinZoom(0);
 
-  if(wide()){
-    // cover the INSCRIBED rectangle, not the bounding box: the box includes the
-    // rotation wedges, which are transparent, so covering it still shows corners
-    const z = map.getBoundsZoom(SAFE, true);    // true = cover
-    map.setMinZoom(z);
-    map.setMaxBounds(SAFE);                     // no background reachable by panning
-    if(map.getZoom() < z) map.setView(SAFE.getCenter(), z);
-  } else {
-    // Pad by the header and picker heights so the strip centres in the band the
-    // user can actually see, not behind the chrome. The fit is width-limited, so
-    // this recentres without making the coast any smaller.
-    const pad = L.point(8, c.top).add(L.point(8, c.bot));
-    // Derive the floor from getBoundsZoom, NOT from getZoom() after fitBounds.
-    // fitBounds animates, so on the next line getZoom() is still the OLD zoom and
-    // the floor lands above the fit: the map then sits below its own minimum and
-    // snaps upward on the first interaction.
-    const z = map.getBoundsZoom(BB, false, pad);
-    map.fitBounds(BB, {paddingTopLeft:[8, c.top], paddingBottomRight:[8, c.bot]});
-    map.setMinZoom(z - 0.5);
-    map.setMaxBounds(BB.pad(0.02));
-  }
+  // Contain everywhere. Seeing all 16.6 km at once is worth more than never
+  // showing the page behind the map: the whole point of the overview is knowing
+  // which beach you are looking at, and a cover fit on this 3:1 strip zooms in
+  // far enough to lose that on every viewport shape. The empty bands are the
+  // app's own navy, so they read as a deliberate letterbox rather than a gap.
+  const pad = L.point(8, c.top).add(L.point(8, c.bot));
+  // Derive the floor from getBoundsZoom, NOT from getZoom() after fitBounds.
+  // fitBounds animates, so on the next line getZoom() is still the OLD zoom and
+  // the floor lands above the fit: the map then sits below its own minimum and
+  // snaps upward on the first interaction.
+  const z = map.getBoundsZoom(BB, false, pad);
+  map.fitBounds(BB, {paddingTopLeft:[8, c.top], paddingBottomRight:[8, c.bot]});
+  map.setMinZoom(z - 0.35);
+  map.setMaxBounds(BB.pad(0.02));
 }
 map.setView(BB.getCenter(), 14);
 fitCoast();
@@ -538,18 +535,18 @@ const STROKE = {
 /* ---------- draw zones ---------- */
 const layers = {};
 ZONES.forEach(z=>{
-  // halo scales with the stroke, otherwise a fixed halo swallows the thin safe
-  // line and the zone reads as a white sausage with a few green dots in it
-  const halo = L.polyline(z.line,{color:"#fff",weight:STROKE[z.status].weight+8,
-                                  opacity:.55,lineCap:"round"});
+  // No casing. A translucent white stroke under every line read as a grey
+  // sausage the colour sat inside, which is worse than the legibility problem it
+  // was there to solve. The strokes carry their own contrast: the map darkens
+  // under them instead (see .leaflet-overlay-pane filter).
   const line = L.polyline(z.line,{color:COLOR[z.status],
                                   weight:STROKE[z.status].weight,
                                   dashArray:STROKE[z.status].dash,
                                   opacity:1,lineCap:"round"});
-  const g = L.layerGroup([halo,line]).addTo(map);
+  const g = L.layerGroup([line]).addTo(map);
   const hit = L.polyline(z.line,{color:"#000",weight:44,opacity:0}).addTo(g);
   hit.on("click",()=>openZone(z));
-  layers[z.id]={halo, line};
+  layers[z.id]={line};
 });
 
 POSTS.forEach(p=>{
@@ -681,7 +678,9 @@ function markCurrent(id){
     if(on) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
   });
   Object.entries(layers).forEach(([k,o])=>
-    o.halo.setStyle({opacity: k===id ? .95 : .55, weight: k===id ? 21 : 15}));
+    o.line.setStyle({opacity: k===id ? 1 : .55,
+                     weight: STROKE[ZONES.find(z=>z.id===k).status].weight *
+                             (k===id ? 1.25 : 1)}));
 }
 
 /* ---------- locate ---------- */
@@ -767,17 +766,46 @@ document.getElementById("btn-en").onclick=()=>setLang("en");
    ============================================================ */
 const ANNOT = {rips:[], stations:[], areas:[]};
 
+/* Arrow weight and head size are a function of zoom, not constants.
+
+   A rip is 30 to 100 m long. At the whole-coast view that is a couple of pixels,
+   so a fixed 13 px head is a red blob detached from a shaft nobody can see, and
+   eleven of them read as noise. Zoomed in, the same head is a pinprick on a
+   200 px shaft. So both scale with zoom, clamped at each end: readable as a
+   direction when close, and legible as a cluster of hazards when far. */
+function arrowScale(){
+  const z = map.getZoom();
+  // z11.5 whole coast -> z18 standing on the beach
+  const t = Math.max(0, Math.min(1, (z - 12) / 5));
+  return {weight: 3 + t * 4, head: 7 + t * 13, shaftMin: 26 - t * 22};
+}
+
 function arrowHead(a, b, colour){
   // A rip is a direction, not a place, so it needs a head. Leaflet has no arrow,
   // so this is two short segments rotated onto the bearing of the last leg.
   const p1 = map.latLngToLayerPoint(a), p2 = map.latLngToLayerPoint(b);
   // NOT named L: that shadows Leaflet's own L inside this function and the very
   // next line, L.point(...), throws "L.point is not a function".
-  const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x), LEN = 13, SPREAD = 0.42;
+  const sc = arrowScale();
+  const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x), LEN = sc.head, SPREAD = 0.42;
   const wing = d => map.layerPointToLatLng(
     L.point(p2.x - LEN * Math.cos(ang + d), p2.y - LEN * Math.sin(ang + d)));
   return L.polyline([wing(-SPREAD), b, wing(SPREAD)],
-                    {color:colour, weight:5, opacity:1, lineCap:"round", lineJoin:"round"});
+                    {color:colour, weight:sc.weight, opacity:1,
+                     lineCap:"round", lineJoin:"round"});
+}
+
+/* At the overview a 40 m rip is shorter than its own arrowhead, so the shaft is
+   stretched to a readable minimum along its own bearing. The position stays the
+   position; only the drawn length changes, and it stops mattering by z15. */
+function shaftPoints(pts){
+  const sc = arrowScale();
+  if(sc.shaftMin <= 1) return pts;
+  const a = map.latLngToLayerPoint(pts[0]), b = map.latLngToLayerPoint(pts[pts.length-1]);
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  if(len >= sc.shaftMin || len === 0) return pts;
+  const k = sc.shaftMin / len;
+  return [pts[0], map.layerPointToLatLng(L.point(a.x + dx * k, a.y + dy * k))];
 }
 
 function drawAnnotations(gj){
@@ -786,15 +814,15 @@ function drawAnnotations(gj){
     const k = f.properties.kind, g = f.geometry;
     if(k === "rip_current"){
       const pts = g.coordinates.map(c=>[c[1], c[0]]);
-      // white casing first so a red arrow survives dark water and bright surf
-      layer.addLayer(L.polyline(pts,{color:"#fff",weight:9,opacity:.75,lineCap:"round"}));
-      layer.addLayer(L.polyline(pts,{color:"#e53935",weight:5,opacity:1,
-                                     dashArray:"9 6",lineCap:"round"}));
-      const head = arrowHead(pts[pts.length-2] || pts[0], pts[pts.length-1], "#e53935");
-      layer.addLayer(head);
+      const drawn = shaftPoints(pts);
+      const sc = arrowScale();
+      const shaft = L.polyline(drawn,{color:"#e53935",weight:sc.weight,opacity:1,
+                                      dashArray:"9 6",lineCap:"round"}).addTo(layer);
+      const head = arrowHead(drawn[drawn.length-2] || drawn[0],
+                             drawn[drawn.length-1], "#e53935").addTo(layer);
       const hit = L.polyline(pts,{color:"#000",weight:30,opacity:0}).addTo(layer);
       hit.on("click", ()=>openAnnot("rip", f));
-      ANNOT.rips.push({f, layers:[head]});
+      ANNOT.rips.push({f, shaft, head});
     }
     else if(k === "shaded_area_meaning_unknown"){
       const ring = g.coordinates[0].map(c=>[c[1], c[0]]);
@@ -807,12 +835,17 @@ function drawAnnotations(gj){
       ANNOT.areas.push({f});
     }
   });
-  // arrow heads are drawn in screen space, so they must be rebuilt on zoom
+  // Heads and shafts are sized in screen space, so both are rebuilt on zoom.
   map.on("zoomend", ()=>{
+    const sc = arrowScale();
     ANNOT.rips.forEach(r=>{
       const pts = r.f.geometry.coordinates.map(c=>[c[1], c[0]]);
-      r.layers[0].setLatLngs(
-        arrowHead(pts[pts.length-2] || pts[0], pts[pts.length-1], "#e53935").getLatLngs());
+      const drawn = shaftPoints(pts);
+      r.shaft.setLatLngs(drawn);
+      r.shaft.setStyle({weight: sc.weight});
+      const h = arrowHead(drawn[drawn.length-2] || drawn[0], drawn[drawn.length-1], "#e53935");
+      r.head.setLatLngs(h.getLatLngs());
+      r.head.setStyle({weight: sc.weight});
     });
   });
   return layer;
