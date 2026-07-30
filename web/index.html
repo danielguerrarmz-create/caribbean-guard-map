@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<meta name="theme-color" content="#0b1c2c">
+<title>Caribbean Guard | Mapa de Seguridad</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    /* Two tiers on purpose.
+       The plain tokens are for GRAPHICS on the map, where the bar is 3:1 and
+       vividness helps them survive a sun-washed screen.
+       The -text tokens are for SOLID FILLS CARRYING WHITE TEXT, where the bar is
+       4.5:1. White on the old #1f9d55 measured 3.49:1 and on #c77700 measured
+       3.46:1, so both status pills were failing outright. 13px bold does not
+       qualify for the large-text exception, which needs about 18.66px bold.
+       Old --caution #c77700 also had almost exactly the same luminance as --safe
+       (0.254 vs 0.251), so in direct sun, which kills hue first, "caution" and
+       "swimming ok" were the same colour. */
+    --safe:#1f9d55;        --safe-text:#178049;
+    --caution:#9c5c00;     --caution-text:#9c5c00;
+    --danger:#c62828;      --danger-text:#c62828;
+    --ink:#0b1c2c; --paper:#ffffff; --muted:#5b6b7a;
+    --sheet-r:20px;
+    --safe-pad: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;
+    font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink); background:var(--ink)}
+  #map{position:absolute;inset:0}
+  /* The coast is a 3.5:1 strip and the phone is portrait, so there will always be
+     empty bands above and below it. Leaflet fills those with its own light grey,
+     which reads as a broken image. Make them the app's own navy so the letterbox
+     looks deliberate. */
+  .leaflet-container{background:var(--ink)}
+
+  /* ---------- top bar ---------- */
+  .topbar{position:absolute;top:0;left:0;right:0;z-index:1000;
+    padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;
+    display:flex;align-items:center;gap:10px;
+    background:linear-gradient(180deg,rgba(11,28,44,.92),rgba(11,28,44,0));
+    pointer-events:none}
+  .brand{font-weight:800;letter-spacing:.02em;color:#fff;font-size:15px;line-height:1.15;
+    text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .brand small{display:block;font-weight:500;font-size:11px;opacity:.85;letter-spacing:.04em;
+    text-transform:uppercase}
+  .spacer{flex:1}
+  .lang{pointer-events:auto;display:flex;background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.28);border-radius:999px;overflow:hidden;
+    backdrop-filter:blur(8px)}
+  .lang button{appearance:none;border:0;background:transparent;color:#fff;font:inherit;
+    font-size:12px;font-weight:700;padding:7px 12px;min-height:36px;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:#fff;color:var(--ink)}
+
+  /* ---------- emergency ---------- */
+  .sos{pointer-events:auto;display:flex;align-items:center;gap:6px;
+    background:var(--danger);color:#fff;text-decoration:none;font-weight:800;font-size:13px;
+    padding:9px 14px;min-height:40px;border-radius:999px;
+    box-shadow:0 3px 12px rgba(0,0,0,.4)}
+
+  /* ---------- beach picker (primary bottom control) ---------- */
+  .picker{position:absolute;left:0;right:0;z-index:1000;
+    bottom:calc(var(--safe-pad) + 10px);
+    display:flex;gap:9px;padding:6px 12px;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
+  .picker::-webkit-scrollbar{display:none}
+  .card{flex:0 0 auto;scroll-snap-align:center;min-width:146px;
+    background:rgba(255,255,255,.97);border-radius:14px;padding:10px 13px 11px;
+    border:2px solid transparent;box-shadow:0 3px 14px rgba(0,0,0,.34);cursor:pointer;
+    text-align:left;font:inherit;color:var(--ink)}
+  .card[aria-current="true"]{border-color:var(--ink)}
+  .card .nm{display:block;font-size:14.5px;font-weight:800;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+  .card .st{display:flex;align-items:center;gap:6px;margin-top:5px;
+    font-size:11.5px;font-weight:800;letter-spacing:.03em}
+  /* coloured text on white, so also the -text tier */
+  .card .st.safe{color:var(--safe-text)} .card .st.caution{color:var(--caution-text)}
+  .card .st.danger{color:var(--danger-text)}
+  /* was an 11px square identical for all three statuses, so it carried no
+     information beyond its fill. Now it is a sample of the actual map stroke. */
+  .sw{flex:0 0 auto;display:block}
+
+  /* ---------- locate button ---------- */
+  .fab{position:absolute;right:12px;z-index:1000;
+    bottom:calc(var(--safe-pad) + 96px);
+    width:52px;height:52px;border-radius:50%;border:0;background:#fff;
+    box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;cursor:pointer}
+  .fab svg{width:24px;height:24px}
+  .fab.on svg{color:#1565c0}
+
+  /* ---------- bottom sheet ---------- */
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:1200;
+    background:var(--paper);border-radius:var(--sheet-r) var(--sheet-r) 0 0;
+    box-shadow:0 -6px 28px rgba(0,0,0,.35);
+    transform:translateY(102%);transition:transform .28s cubic-bezier(.32,.72,0,1);
+    max-height:74vh;display:flex;flex-direction:column;
+    padding-bottom:var(--safe-pad)}
+  .sheet.open{transform:translateY(0)}
+  .grab{width:40px;height:4px;border-radius:2px;background:#d5dbe1;margin:9px auto 4px;flex:0 0 auto}
+  .sheet-body{overflow-y:auto;padding:6px 18px 20px;-webkit-overflow-scrolling:touch}
+  .status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;
+    padding:7px 14px;font-size:13px;font-weight:800;color:#fff;letter-spacing:.02em}
+  /* white text on a solid fill, so these take the -text tier */
+  .status.safe{background:var(--safe-text)} .status.caution{background:var(--caution-text)}
+  .status.danger{background:var(--danger-text)}
+  .sheet h2{margin:12px 0 2px;font-size:22px;line-height:1.2}
+  .sheet .sub{margin:0 0 14px;color:var(--muted);font-size:13px}
+  .why{background:#f4f6f8;border-left:4px solid var(--ink);border-radius:0 10px 10px 0;
+    padding:12px 14px;font-size:14.5px;line-height:1.5;margin:0 0 14px}
+  /* Provenance sits directly under the verdict it qualifies, not in a footer.
+     Muted when there is a real reviewer and a fresh date; amber and bordered when
+     nobody has checked or the check has expired, because that is a caveat the
+     reader has to actually see before acting on the verdict above it. */
+  .prov{margin:-4px 0 14px;font-size:12.5px;line-height:1.45;color:var(--muted)}
+  .prov.unverified{color:#7a4a00;background:#fdf4e3;border:1px solid #e7cf9e;
+    border-radius:10px;padding:9px 12px;font-weight:600}
+  .facts{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:9px}
+  .facts li{display:flex;gap:10px;font-size:14px;line-height:1.45;align-items:flex-start}
+  .facts .ic{flex:0 0 22px;text-align:center;font-size:15px}
+  .actions{display:grid;gap:9px;grid-template-columns:1fr 1fr}
+  .btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;
+    border-radius:12px;border:1.5px solid rgba(11,28,44,.15);background:#fff;
+    font:inherit;font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;cursor:pointer}
+  .btn.primary{background:var(--danger);border-color:var(--danger);color:#fff}
+  .close{position:absolute;top:8px;right:10px;width:38px;height:38px;border-radius:50%;
+    border:0;background:rgba(11,28,44,.07);font-size:20px;line-height:1;cursor:pointer;color:var(--ink)}
+
+  /* ---------- post markers ---------- */
+  .po{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
+    background:#fff;border:3px solid var(--ink);font-weight:800;font-size:13px;
+    box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  .po.staffed{border-color:var(--safe)}
+  .po.proposed{border-style:dashed;opacity:.85}
+
+  /* ---------- offline / signal banner ---------- */
+  .toast{position:absolute;left:12px;right:12px;z-index:1400;
+    top:calc(env(safe-area-inset-top,0px) + 62px);
+    background:var(--ink);color:#fff;border-radius:12px;padding:11px 14px;
+    font-size:13px;line-height:1.4;box-shadow:0 4px 18px rgba(0,0,0,.4);
+    display:none}
+  .toast.show{display:block}
+
+  .leaflet-control-attribution{font-size:9px}
+  @media (min-width:820px){
+    .sheet{left:auto;right:16px;bottom:16px;width:390px;border-radius:16px;max-height:70vh}
+    .sheet.open{transform:translateY(0)}
+  }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="topbar">
+  <div class="brand">CARIBBEAN GUARD<small id="tagline">Mapa de seguridad costera</small></div>
+  <div class="spacer"></div>
+  <a class="sos" href="tel:911">911</a>
+  <div class="lang" role="group" aria-label="Idioma">
+    <button id="btn-es" aria-pressed="true">ES</button>
+    <button id="btn-en" aria-pressed="false">EN</button>
+  </div>
+</div>
+
+<!-- assertive, not polite: every message this carries is safety relevant
+     ("you are between two beaches", "you are outside this coastline") and a
+     polite region would be queued behind whatever else is speaking. -->
+<div class="toast" id="toast" role="status" aria-live="assertive" aria-atomic="true"></div>
+
+<button class="fab" id="locate" aria-label="Mi ubicación">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/>
+    <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
+  </svg>
+</button>
+
+<div class="picker" id="picker"></div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="false">
+  <div class="grab"></div>
+  <button class="close" id="sheet-close" aria-label="Cerrar">&times;</button>
+  <div class="sheet-body" id="sheet-body"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ============================================================
+   1. GEOREFERENCE  <-- solved 2026-07-30, do not hand-edit
+   Solved by tools/refine.py against Bing aerial, then the source
+   image was resampled north-up into Web Mercator by tools/rectify.py
+   so these bounds are exact rather than an approximation of a
+   rotated image. Regenerate both if the base image is ever restitched.
+
+   MEASURED ACCURACY (tools/residual.py, 14 points along the coast):
+     Puerto Viejo to Punta Uva     5 to 75 m,  8 points confirmed
+     Punta Uva to Manzanillo       not confirmable; see below
+   Good enough to say which beach you are on. NOT good enough to say
+   which end of it, and nowhere near good enough to place a hazard.
+
+   The east third cannot be verified because the generative upscale
+   replaced the water and reef with invented texture, so there is
+   nothing real there to match against. Treat east of Punta Uva as
+   roughly 150 m until better imagery replaces it.
+   ============================================================ */
+const IMG_BOUNDS = [[9.621462, -82.790863], [9.671534, -82.639053]]; // [[S,W],[N,E]]
+const GEO_ACCURACY_M = 75;      // what we can defend in the west
+const GEO_ACCURACY_EAST_M = 150;
+const GEO_EAST_OF = -82.699;    // longitude where confidence drops
+
+/* ============================================================
+   2. SAFETY DATA  <-- must be authored by Caribbean Guard, not by satellite
+   Edit this block to update the map. Nothing else needs to change.
+   status: safe | caution | danger
+
+   PROVENANCE IS NOT OPTIONAL. Give every zone a `reviewed` object:
+       reviewed: {by:"name of the person", on:"YYYY-MM-DD"}
+   Leave it null and the interface says out loud that nobody has verified this,
+   which is the honest state today: every description below was written from
+   general knowledge, not by a guard who has stood on that sand.
+
+   The interface must never claim more currency or more authority than this block
+   actually carries. No "real time", no "live conditions", no attribution to
+   Caribbean Guard's guards until a real name and date sit here. Stale defaults to
+   unknown, never to safe. A map that admits what it has not checked is more
+   trustworthy than one that implies it has checked everything.
+   ============================================================ */
+const REVIEW_VALID_DAYS = 120;   // past this, a review is stale and says so
+
+const ZONES = [
+  {
+    id:"playa-negra", status:"safe",
+    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    name:{es:"Playa Negra", en:"Playa Negra"},
+    sub:{es:"Puerto Viejo oeste", en:"West of Puerto Viejo"},
+    why:{es:"Fondo de arena, pendiente suave y poca corriente la mayor parte del año. La zona más segura para familias y niños.",
+         en:"Sand bottom, gentle slope and little current most of the year. The safest stretch for families and children."},
+    facts:{es:["Sin arrecife cerca de la orilla","Oleaje bajo salvo en marejadas de diciembre a marzo","Puesto de rescate a 600 m al este"],
+           en:["No reef near the shore","Low surf except during December to March swells","Rescue post 600 m to the east"]},
+    line:[[9.6608,-82.7680],[9.6588,-82.7622],[9.6570,-82.7570]]
+  },
+  {
+    id:"salsa-brava", status:"danger",
+    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    name:{es:"Salsa Brava", en:"Salsa Brava"},
+    sub:{es:"Puerto Viejo centro", en:"Puerto Viejo town"},
+    why:{es:"Ola de arrecife que rompe sobre coral vivo en agua muy poco profunda. No es zona de baño. Riesgo de corte y golpe contra el arrecife incluso con mar en calma.",
+         en:"Reef break over live coral in very shallow water. This is not a swimming area. Risk of laceration and impact on the reef even when the sea looks calm."},
+    facts:{es:["Prohibido nadar. Solo surfistas con experiencia","Arrecife a menos de 1 m bajo la superficie","Corriente de retorno en el canal del lado este"],
+           en:["No swimming. Experienced surfers only","Reef less than 1 m below the surface","Rip current in the channel on the east side"]},
+    line:[[9.6560,-82.7548],[9.6548,-82.7510],[9.6538,-82.7472]]
+  },
+  {
+    id:"cocles", status:"danger",
+    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    name:{es:"Playa Cocles", en:"Playa Cocles"},
+    sub:{es:"Corrientes de retorno frecuentes", en:"Frequent rip currents"},
+    why:{es:"La playa con más rescates de la costa. Bancos de arena cambiantes generan corrientes de retorno que salen mar adentro sin aviso. Bañarse solo frente al puesto de guardavidas.",
+         en:"The beach with the most rescues on this coast. Shifting sandbars create rip currents that pull straight out with no warning. Swim only in front of the lifeguard post."},
+    facts:{es:["Guardavidas de 9:00 a 17:00","Si lo arrastra la corriente: no luche, nade paralelo a la playa","Banderas rojas marcan los canales activos"],
+           en:["Lifeguards 9:00 to 17:00","If caught in a rip: do not fight it, swim parallel to the beach","Red flags mark the active channels"]},
+    line:[[9.6520,-82.7420],[9.6494,-82.7355],[9.6470,-82.7290],[9.6452,-82.7228]]
+  },
+  {
+    id:"chiquita", status:"caution",
+    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    name:{es:"Playa Chiquita", en:"Playa Chiquita"},
+    sub:{es:"Seguro solo con marea alta", en:"Safe at high tide only"},
+    why:{es:"Pequeñas piscinas de arrecife protegidas con marea alta. Con marea baja el coral queda expuesto y el acceso al agua es cortante y resbaloso.",
+         en:"Small protected reef pools at high tide. At low tide the coral is exposed and entering the water is sharp and slippery."},
+    facts:{es:["Consultar tabla de mareas antes de entrar","Usar calzado de agua","Sin guardavidas permanente"],
+           en:["Check the tide table before entering","Wear water shoes","No permanent lifeguard"]},
+    line:[[9.6448,-82.7190],[9.6432,-82.7130],[9.6420,-82.7062]]
+  },
+  {
+    id:"punta-uva", status:"safe",
+    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    name:{es:"Punta Uva", en:"Punta Uva"},
+    sub:{es:"Bahía protegida por arrecife", en:"Reef protected bay"},
+    why:{es:"El arrecife exterior rompe el oleaje antes de llegar a la orilla. Agua tranquila, poca corriente y entrada de arena. La mejor opción para nadar en toda la costa.",
+         en:"The outer reef breaks the swell before it reaches the shore. Calm water, little current and a sand entry. The best swimming on this coast."},
+    facts:{es:["Aguas tranquilas casi todo el año","Evitar el canal del extremo este, ahí sí hay corriente","Puesto de observación P.O. 4"],
+           en:["Calm water nearly year round","Avoid the channel at the far east end, there is current there","Observation post P.O. 4"]},
+    line:[[9.6412,-82.6990],[9.6398,-82.6935],[9.6404,-82.6880]]
+  }
+];
+
+const POSTS = [
+  {id:"po1", n:"1", kind:"staffed",  ll:[9.6552,-82.7536],
+   name:{es:"Puesto Puerto Viejo",  en:"Puerto Viejo post"},  hours:{es:"9:00 a 17:00", en:"9:00 to 17:00"}},
+  {id:"po2", n:"2", kind:"staffed",  ll:[9.6486,-82.7338],
+   name:{es:"Puesto Cocles",        en:"Cocles post"},        hours:{es:"9:00 a 17:00", en:"9:00 to 17:00"}},
+  {id:"po3", n:"3", kind:"proposed", ll:[9.6432,-82.7128],
+   name:{es:"Propuesto Chiquita",   en:"Proposed Chiquita"},  hours:{es:"Sin personal", en:"Not yet staffed"}},
+  {id:"po4", n:"4", kind:"staffed",  ll:[9.6400,-82.6928],
+   name:{es:"Puesto Punta Uva",     en:"Punta Uva post"},     hours:{es:"9:00 a 17:00", en:"9:00 to 17:00"}}
+];
+
+/* ============================================================ */
+const T = {
+  es:{tagline:"Mapa de seguridad costera", safe:"SE PUEDE NADAR", caution:"PRECAUCIÓN",
+      danger:"NO NADAR", legendSafe:"Nadar", legendCaution:"Precaución", legendDanger:"No nadar",
+      why:"Por qué", call:"Llamar al 911", route:"Cómo llegar", locating:"Buscando su ubicación...",
+      denied:"Active la ubicación en su teléfono para ver dónde está.",
+      outside:"Usted está fuera de esta costa. El mapa cubre Puerto Viejo hasta Punta Uva.",
+      ambiguous:"Está entre dos playas. Toque el nombre de la playa donde está.",
+      unverified:"Sin verificar. Caribbean Guard aún no ha revisado esta playa. Pregunte a un guardavidas antes de entrar al mar.",
+      stale:d=>`Revisado hace más de ${d} días. Las condiciones pueden haber cambiado.`,
+      reviewedBy:(who,when)=>`Revisado por ${who} el ${when}`,
+      here:"Usted está aquí", nearest:"Puesto más cercano", hours:"Horario",
+      save:"Guarde esta página. La señal es débil en la playa."},
+  en:{tagline:"Coastal safety map", safe:"SWIMMING OK", caution:"CAUTION",
+      danger:"DO NOT SWIM", legendSafe:"Swim", legendCaution:"Caution", legendDanger:"No swim",
+      why:"Why", call:"Call 911", route:"Directions", locating:"Finding your location...",
+      denied:"Turn on location on your phone to see where you are.",
+      outside:"You are outside this coastline. The map covers Puerto Viejo to Punta Uva.",
+      ambiguous:"You are between two beaches. Tap the name of the beach you are on.",
+      unverified:"Not verified. Caribbean Guard has not reviewed this beach yet. Ask a lifeguard before you go in.",
+      stale:d=>`Reviewed more than ${d} days ago. Conditions may have changed.`,
+      reviewedBy:(who,when)=>`Reviewed by ${who} on ${when}`,
+      here:"You are here", nearest:"Nearest post", hours:"Hours",
+      save:"Save this page. Signal is weak on the beach."}
+};
+let lang = (navigator.language||"es").toLowerCase().startsWith("en") ? "en" : "es";
+
+/* Map graphics, drawn over photography with a white halo under them, so the job
+   here is separating the three statuses FROM EACH OTHER rather than from a page
+   background. They are separated by brightness, not hue, because hue is the first
+   thing a sun-washed screen loses:
+       caution  L 0.545   ---- 3.19:1 ----+
+       safe     L 0.251   -- 1.98:1 --+   |
+       danger   L 0.137   -- 1.52:1 --+---+
+   The dark #9C5C00 caution is deliberately NOT used here: against danger it
+   measures 1.06:1, which on a map line is indistinguishable. It stays reserved
+   for text and dots on white, where it is the value that passes 4.5:1. */
+const COLOR = {safe:"#1f9d55", caution:"#f5b942", danger:"#c62828"};
+
+/* ---------- map ---------- */
+const BB = L.latLngBounds(IMG_BOUNDS);
+const map = L.map("map",{
+  zoomControl:false, attributionControl:true,
+  maxBounds:BB.pad(0.02), maxBoundsViscosity:1.0,
+  maxZoom:18, zoomSnap:0.25, tap:true
+});
+/* Ship the 45 KB overview and nothing else, then fetch the 1.19 MB base only when
+   somebody actually zooms or pans past the default view.
+
+   Measured: at the default letterboxed zoom the overlay is 372x125 CSS px, which is
+   1116x375 device px at DPR 3, and the overview is 1000 px wide. They are already at
+   the same effective resolution, so the full base buys nothing visible there. Someone
+   who scans a QR code, reads their status off the card and pockets the phone never
+   downloads it, and the whole map costs them under 90 KB. Only someone who zooms pays,
+   at the moment they ask for it.
+
+   The overview stays underneath rather than being swapped out, so there is never a
+   blank frame. Both overlays resolve to the same rect in the same absolutely
+   positioned pane, so the upgrade cannot reflow anything: measured CLS is exactly 0. */
+L.imageOverlay("img/base-lo.webp", IMG_BOUNDS, {alt:"Costa de Talamanca"}).addTo(map);
+
+let baseLoaded = false;
+function loadFullBase(){
+  if(baseLoaded) return;
+  baseLoaded = true;
+  const full = L.imageOverlay("img/base.webp", IMG_BOUNDS, {opacity:0, alt:""});
+  full.addTo(map);
+  const el = full.getElement();
+  if(el){ el.fetchPriority = "low"; el.setAttribute("aria-hidden","true"); }
+  full.once("load", ()=>full.setOpacity(1));
+}
+// Armed AFTER the opening view settles. fitCoast() calls fitBounds, which fires
+// zoomend, so arming here would trigger the fetch on load and defeat the point.
+function armBaseUpgrade(){
+  map.once("zoomend", loadFullBase);
+  map.once("dragend", loadFullBase);
+}
+map.attributionControl.setPrefix("").addAttribution("Caribbean Guard");
+
+/* Contain, do not cover. This was cover-fit, and on a 390px portrait phone that
+   blew a 3.5:1 coast up until you could see about 370 m of it: all water, no
+   headland, nothing telling you which beach you were looking at. Someone who has
+   just scanned a QR code needs orientation in the first second, so show the whole
+   16.6 km and let the empty bands above and below be the page background. The
+   image carries alpha for the same reason, so the rotated corners read as
+   background rather than as black wedges. */
+function chrome(){
+  return {
+    top: (document.querySelector(".topbar")?.offsetHeight || 64) + 8,
+    bot: (document.querySelector(".picker")?.offsetHeight || 96) + 8
+  };
+}
+function fitCoast(){
+  const c = chrome();
+  // Clear the floor first. getBoundsZoom clamps its own result to the current
+  // minZoom, so setting minZoom from it ratchets upward on every call and the
+  // map slowly loses the ability to show the whole coast.
+  map.setMinZoom(0);
+  // Pad by the header and picker heights so the strip centres in the band the
+  // user can actually see, not behind the chrome. The fit is width-limited, so
+  // this recentres without making the coast any smaller.
+  map.fitBounds(BB, {paddingTopLeft:[8, c.top], paddingBottomRight:[8, c.bot]});
+  map.setMinZoom(map.getZoom() - 0.5);
+}
+map.setView(BB.getCenter(), 14);
+fitCoast();
+// after the opening fit has finished animating, not immediately: fitBounds emits
+// zoomend asynchronously, so arming synchronously still catches its own event
+map.whenReady(()=>setTimeout(armBaseUpgrade, 400));
+window.addEventListener("resize", fitCoast);
+
+/* Pattern and weight carry the status independently of colour, so the map still
+   works in sunlight, on a cheap screen, and for the 1 in 12 men who cannot
+   separate red from green.
+
+   The polarity here is deliberate and it is the reverse of what this file used to
+   do. It previously drew danger as a fine dotted line and safe as a solid one,
+   which made the most dangerous thing on the map the faintest mark on it. Every
+   convention a tourist already carries, road markings, hazard tape, warning
+   signage, says the loud mark is the dangerous one. So danger is now the heaviest
+   and most solid, and safe is the lightest. At a glance the map should shout
+   danger and merely note safety, not the other way round. */
+const STROKE = {
+  danger:  {weight:11, dash:null},     // heaviest, unbroken: a wall
+  caution: {weight:8,  dash:"16 10"},  // broken: proceed with care
+  safe:    {weight:5,  dash:"2 8"}     // lightest: a suggestion, not a promise
+};
+
+/* ---------- draw zones ---------- */
+const layers = {};
+ZONES.forEach(z=>{
+  // halo scales with the stroke, otherwise a fixed halo swallows the thin safe
+  // line and the zone reads as a white sausage with a few green dots in it
+  const halo = L.polyline(z.line,{color:"#fff",weight:STROKE[z.status].weight+8,
+                                  opacity:.55,lineCap:"round"});
+  const line = L.polyline(z.line,{color:COLOR[z.status],
+                                  weight:STROKE[z.status].weight,
+                                  dashArray:STROKE[z.status].dash,
+                                  opacity:1,lineCap:"round"});
+  const g = L.layerGroup([halo,line]).addTo(map);
+  const hit = L.polyline(z.line,{color:"#000",weight:44,opacity:0}).addTo(g);
+  hit.on("click",()=>openZone(z));
+  layers[z.id]={halo, line};
+});
+
+POSTS.forEach(p=>{
+  const icon = L.divIcon({className:"", html:`<div class="po ${p.kind}">${p.n}</div>`,
+    iconSize:[30,30], iconAnchor:[15,15]});
+  L.marker(p.ll,{icon}).addTo(map).on("click",()=>openPost(p));
+});
+
+/* ---------- bottom sheet ---------- */
+const sheet = document.getElementById("sheet");
+const sheetBody = document.getElementById("sheet-body");
+document.getElementById("sheet-close").onclick = ()=>sheet.classList.remove("open");
+
+/* Who said this, and when. Rendered on every verdict, never omitted.
+
+   A map that says DO NOT SWIM has to be able to say who decided that and when,
+   and the honest answer today is nobody. Saying so out loud costs some of the
+   artifact's authority, and that is the correct trade: an organization that
+   admits what it has not checked is more trustworthy than one that implies it
+   has checked everything. It also turns the claim from a guarantee into a
+   timestamped observation, which is the difference that matters if this is ever
+   read back to somebody after an accident. */
+function provenance(z){
+  const t=T[lang];
+  if(!z.reviewed) return `<p class="prov unverified">${t.unverified}</p>`;
+  // Build the date in LOCAL time. new Date("2026-07-01") parses as UTC midnight,
+  // and formatting that anywhere west of Greenwich renders the previous day, so a
+  // review dated the 1st displayed as "30 June". On the one field whose entire
+  // purpose is saying when, an off-by-one day is not acceptable.
+  const [yy, mm, dd] = z.reviewed.on.split("-").map(Number);
+  const on = new Date(yy, mm - 1, dd);
+  const days = Math.floor((Date.now() - on.getTime()) / 86400000);
+  const when = on.toLocaleDateString(lang==="es"?"es-CR":"en-GB",
+                        {year:"numeric", month:"long", day:"numeric"});
+  const line = t.reviewedBy(z.reviewed.by, when);
+  return days > REVIEW_VALID_DAYS
+    ? `<p class="prov unverified">${line}. ${t.stale(REVIEW_VALID_DAYS)}</p>`
+    : `<p class="prov">${line}</p>`;
+}
+
+function openZone(z){
+  const t=T[lang];
+  sheetBody.innerHTML = `
+    <span class="status ${z.status}">${t[z.status]}</span>
+    <h2>${z.name[lang]}</h2>
+    <p class="sub">${z.sub[lang]}</p>
+    <p class="why">${z.why[lang]}</p>
+    ${provenance(z)}
+    <ul class="facts">${z.facts[lang].map(f=>`<li><span class="ic">•</span><span>${f}</span></li>`).join("")}</ul>
+    <div class="actions">
+      <a class="btn primary" href="tel:911">${t.call}</a>
+      <a class="btn" target="_blank" rel="noopener"
+         href="https://www.google.com/maps/dir/?api=1&destination=${z.line[Math.floor(z.line.length/2)].join(",")}">${t.route}</a>
+    </div>`;
+  sheet.classList.add("open");
+  markCurrent(z.id);
+  flyClear(L.latLngBounds(z.line).pad(0.55));
+  history.replaceState(null,"","?z="+z.id);
+}
+
+/* Fly so the subject lands in the strip the sheet is NOT covering. Without this
+   Leaflet centres on the full map, the sheet then eats the bottom 60% of the
+   screen, and the zone you just asked about ends up pushed off the top edge. */
+function flyClear(bounds, opts){
+  const sheetH = sheet.classList.contains("open") ? sheet.offsetHeight : 0;
+  const headH  = document.querySelector(".topbar")?.offsetHeight || 64;
+  map.flyToBounds(bounds, Object.assign({
+    duration:.7, maxZoom:17,
+    paddingTopLeft:[24, headH + 16],
+    paddingBottomRight:[24, sheetH + 16]
+  }, opts||{}));
+}
+
+function openPost(p){
+  const t=T[lang];
+  sheetBody.innerHTML = `
+    <span class="status ${p.kind==="staffed"?"safe":"caution"}">${p.n}</span>
+    <h2>${p.name[lang]}</h2>
+    <p class="sub">${t.hours}: ${p.hours[lang]}</p>
+    <div class="actions">
+      <a class="btn primary" href="tel:911">${t.call}</a>
+      <a class="btn" target="_blank" rel="noopener"
+         href="https://www.google.com/maps/dir/?api=1&destination=${p.ll.join(",")}">${t.route}</a>
+    </div>`;
+  sheet.classList.add("open");
+  flyClear(L.latLngBounds([p.ll]).pad(0.002), {maxZoom:16.5});
+  history.replaceState(null,"","?p="+p.id);
+}
+
+/* ---------- beach picker ----------
+   The coast is 12 km of near identical jungle and sand. Nobody pans a map to
+   find their beach. They read the name off the sign behind them, so the names
+   are the navigation and the status is visible before anything is tapped. */
+/* The swatch on each card draws the SAME stroke the map uses for that status.
+   That is the legend, and it sits where the decision is made instead of behind a
+   tap. The file used to define legendSafe/legendCaution/legendDanger strings and
+   never reference them anywhere, which meant the pattern vocabulary existed on
+   the map but was taught nowhere. A user cannot learn that solid means stop if
+   nothing ever tells them. */
+function swatch(status){
+  const s = STROKE[status];
+  return `<svg class="sw" width="26" height="12" viewBox="0 0 26 12" aria-hidden="true" focusable="false">
+    <line x1="1" y1="6" x2="25" y2="6" stroke="${COLOR[status]}"
+          stroke-width="${Math.max(3, s.weight * 0.6)}" stroke-linecap="round"
+          ${s.dash ? `stroke-dasharray="${s.dash.split(" ").map(n=>+n*0.6).join(" ")}"` : ""}/>
+  </svg>`;
+}
+
+function buildPicker(){
+  const t=T[lang];
+  document.getElementById("picker").innerHTML = ZONES.map(z=>`
+    <button class="card" data-id="${z.id}" aria-current="false">
+      <span class="nm">${z.name[lang]}</span>
+      <span class="st ${z.status}">${swatch(z.status)}${t[z.status]}</span>
+    </button>`).join("");
+  document.querySelectorAll(".card").forEach(c=>{
+    c.onclick=()=>openZone(ZONES.find(z=>z.id===c.dataset.id));
+  });
+}
+function markCurrent(id){
+  document.querySelectorAll(".card").forEach(c=>{
+    const on = c.dataset.id===id;
+    c.setAttribute("aria-current",on);
+    if(on) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+  });
+  Object.entries(layers).forEach(([k,o])=>
+    o.halo.setStyle({opacity: k===id ? .95 : .55, weight: k===id ? 21 : 15}));
+}
+
+/* ---------- locate ---------- */
+let meMarker=null, meCircle=null;
+const toast=document.getElementById("toast");
+function say(msg,ms=4200){ toast.textContent=msg; toast.classList.add("show");
+  clearTimeout(say._t); say._t=setTimeout(()=>toast.classList.remove("show"),ms); }
+
+document.getElementById("locate").onclick=()=>{
+  const t=T[lang];
+  if(!navigator.geolocation){ say(t.denied); return; }
+  say(t.locating);
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude:la,longitude:lo,accuracy:acc}=pos.coords;
+    const ll=[la,lo];
+    if(meMarker){map.removeLayer(meMarker);map.removeLayer(meCircle);}
+
+    /* The circle is GPS error AND our registration error, combined, not GPS
+       alone. The imagery under the dot is only known to 75 m in the west and
+       about 150 m east of Punta Uva, so drawing a tight 8 m GPS circle would
+       claim a precision this map does not have. Two independent errors add in
+       quadrature. Drawing it honestly is the difference between a map that is
+       useful and a map that misleads someone about where the water is safe. */
+    const mapErr = lo < GEO_EAST_OF ? GEO_ACCURACY_EAST_M : GEO_ACCURACY_M;
+    const shown  = Math.sqrt(acc*acc + mapErr*mapErr);
+    meCircle=L.circle(ll,{radius:shown,color:"#1565c0",weight:1,fillOpacity:.14}).addTo(map);
+    meMarker=L.circleMarker(ll,{radius:8,color:"#fff",weight:3,fillColor:"#1565c0",fillOpacity:1}).addTo(map);
+    if(!L.latLngBounds(IMG_BOUNDS).contains(ll)){ say(t.outside,6000); map.fitBounds(IMG_BOUNDS); return; }
+    toast.classList.remove("show");
+    document.getElementById("locate").classList.add("on");
+    /* Surface the zone you are standing on, but ONLY when there is exactly one
+       credible answer.
+
+       The old rule was "nearest zone within 450 m", and that was unsafe. Cocles
+       ends 419 m from where Chiquita begins, which is inside 450 m, so along that
+       stretch both zones qualified and the winner was decided by a few metres of
+       vertex geometry sitting on top of a GPS fix and a georeference good to 75 m
+       at best. Cocles is danger and Chiquita is caution. The map would show one of
+       them, full screen, with no hint that it had guessed.
+
+       Now: the nearest zone must be close in absolute terms AND clearly closer
+       than the runner-up. If two zones are in contention the map says so and lets
+       the person choose, because a wrong verdict here is worse than no verdict. */
+    const near = ZONES.map(z=>({z, d: Math.min(...z.line.map(pt=>map.distance(ll,pt)))}))
+                      .sort((a,b)=>a.d-b.d);
+    const NEAR_M = 250, MARGIN_M = 150;
+    if(near[0] && near[0].d < NEAR_M &&
+       (!near[1] || near[1].d - near[0].d > MARGIN_M)){
+      openZone(near[0].z);
+    } else {
+      flyClear(meCircle.getBounds(), {maxZoom:16});
+      if(near[0] && near[0].d < 700) say(t.ambiguous, 7000);
+    }
+  },()=>say(T[lang].denied,5000),{enableHighAccuracy:true,timeout:9000,maximumAge:30000});
+};
+
+/* ---------- language ---------- */
+function setLang(l){
+  lang=l;
+  document.documentElement.lang=l;
+  document.getElementById("btn-es").setAttribute("aria-pressed",l==="es");
+  document.getElementById("btn-en").setAttribute("aria-pressed",l==="en");
+  document.getElementById("tagline").textContent=T[l].tagline;
+  buildPicker();
+  sheet.classList.remove("open");
+}
+document.getElementById("btn-es").onclick=()=>setLang("es");
+document.getElementById("btn-en").onclick=()=>setLang("en");
+
+/* ---------- QR deep links:  ?z=cocles   or   ?p=po4 ---------- */
+(function(){
+  setLang(lang);
+  say(T[lang].save,5200);
+  const q=new URLSearchParams(location.search);
+  const z=ZONES.find(x=>x.id===q.get("z"));
+  const p=POSTS.find(x=>x.id===q.get("p"));
+  /* Open from the full-coast view rather than jumping straight in. The fly is
+     what tells someone who just scanned a QR code where on the coast they are. */
+  if(z){ setTimeout(()=>openZone(z),350); }
+  else if(p){ setTimeout(()=>openPost(p),350); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "caribbean-guard-map",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Mobile-first coastal safety map for Caribbean Guard, Puerto Viejo to Manzanillo",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}

@@ -1,0 +1,40 @@
+# Bing tile cache and the mosaic built from it. 36 MB, and entirely reproducible
+# by rerunning tools/georef2.py. It is a cache, not a source.
+tools/tilecache/
+tools/ref_mosaic.jpg
+
+# Proof sheets and debug renders. Regenerate with validate.py / residual.py /
+# extract_annotations.py. Kept out because they are large and derived, but note
+# that annot_check.jpg and georef_check*.jpg are the evidence behind the
+# georeference, so regenerate them before trusting any change to it.
+tools/*_check.jpg
+tools/*_preview.png
+tools/dbg_*.png
+tools/cmp_*.jpg
+
+# Solved transforms and control points. Derived from refine.py / georef_annot.py.
+# georef.json is deliberately NOT ignored: web/index.html's bounds come from it
+# and the numbers need to be reviewable in the diff.
+tools/*.npy
+tools/georef_annot.json
+
+# Saved copies of the live Squarespace site, 2.6 MB of framework noise. They are
+# a snapshot of somebody else's site, refetchable, and they go stale.
+docs/site-revamp/_*.html
+
+# Source imagery lives in Downloads and is far too large to version.
+*.psd
+
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+tools/*check*.jpg
+
+# Python bytecode and remaining debug renders from the failed georeferencing runs
+__pycache__/
+*.pyc
+tools/align_overlay.png
+tools/mask_ref.png
+tools/dbg_*.jpg
+gl.json
