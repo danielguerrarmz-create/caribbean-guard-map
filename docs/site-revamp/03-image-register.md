@@ -202,9 +202,21 @@ concerned.
    heaviest page on the site.
 4. **Then replace both with the interactive map**, which makes the annotations
    real data rather than pixels. That work is already underway: the sheet has been
-   georeferenced to a 1.2 m median residual and its annotations extracted to
+   georeferenced against Bing and its annotations extracted to
    `web/data/cg-hazards.geojson` as 11 rip currents, 4 rescue stations and one
    deliberately unlabelled polygon. See `04-map-integration.md`.
+
+   **Do not quote a metre figure for those hazard positions from this document.**
+   An earlier draft of this line said "georeferenced to a 1.2 m median residual",
+   which is a RANSAC residual on the selected inliers, the same self-consistency
+   measure that misled a draft of `04-map-integration.md` into claiming the base
+   image was accurate to 4 m. The meaningful signal in that fit is **294 inliers
+   against the base image's 14**, because the annotation sheet is untouched artwork
+   while the base is generatively upscaled, and that is a statement about which
+   fit can be trusted rather than about metres on the ground. The hazard features
+   also inherit the base image's own registration error, which is **75 m west of
+   Punta Uva and not confirmable east of it**. Those are the numbers the map itself
+   uses, and they are the numbers to quote.
 
 Steps 1 to 3 do not depend on step 4 and should not wait for it.
 

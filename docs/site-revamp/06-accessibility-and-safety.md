@@ -757,14 +757,20 @@ after.
 
 ## 2.3 The georeference, and how to be honest about it
 
-> **Numbers in this section are superseded, and the reasoning is not.** This was
-> written against the pre-2026-07-30 file, when the working figure was "roughly
-> 50 m" from the 07-29 handoff. The measured figures are now **75 m from Puerto
-> Viejo to Punta Uva and 150 m east of it**, from `tools/residual.py`, and they
-> are the constants in the code (`GEO_ACCURACY_M`, `GEO_ACCURACY_EAST_M`) and in
-> `04-map-integration.md`. Where this section says 50 m, read 75 m, and the
-> conclusions get stronger rather than weaker, because the dot was understating
-> the error by more than I calculated.
+> **The accuracy figures below have been corrected to the measured values.**
+> This section was drafted against the pre-2026-07-30 file, when the working
+> figure was "roughly 50 m" from the 07-29 handoff. The measured position is:
+>
+> - **Puerto Viejo to Punta Uva: 5 to 75 m, across 8 confirmed points.**
+> - **East of Punta Uva: not confirmable.** 150 m is a working estimate, not a
+>   measurement. The generative upscale replaced the water and reef with invented
+>   texture, so there is nothing real there to match against.
+>
+> Source is `tools/residual.py`. These are the constants in the code
+> (`GEO_ACCURACY_M = 75`, `GEO_ACCURACY_EAST_M = 150`) and in
+> `04-map-integration.md`. The conclusions in this section get **stronger**, not
+> weaker, because the dot was understating its error by more than I originally
+> calculated.
 >
 > **Do not quote 4.0 m as the accuracy.** That figure in `tools/georef.json` is
 > the RANSAC residual on 14 self-selected inliers out of 109 control points. It
@@ -785,12 +791,12 @@ the one already derived. Fix that regardless of everything below.
 
 At zoom 17 and latitude 9.65, ground resolution is **1.18 m per pixel**. So:
 
-- A 50 m georeference error is **42 px** of radius.
+- A 75 m georeference error is **64 px** of radius.
 - `meMarker` is drawn at `radius:8` (line 379), so **16 px** across.
 - `meCircle` uses `radius: acc` (line 378), the **GPS** accuracy only. On an open
   beach with `enableHighAccuracy` that is typically 5 to 20 m, so 4 to 17 px.
 
-The circle the user is shown is between 2.5x and 10x too small in radius, because
+The circle the user is shown is between roughly 4x and 15x too small in radius, because
 it omits the georeference error entirely. And `map.setView(ll, 17)` (line 383)
 zooms in hard, which amplifies the impression of precision. Zooming past your own
 uncertainty is a lie told by the camera.
@@ -798,9 +804,9 @@ uncertainty is a lie told by the camera.
 ### Recommendations
 
 1. **Combine the two error terms.** Radius should be
-   `sqrt(gpsAccuracy² + georefSigma²)`, roughly 52 m for a 15 m GPS fix against a
-   50 m georeference. Publish `georefSigma` as a named constant.
-2. **Make the sigma vary along the coast.** The west is good to roughly 50 m; the
+   `sqrt(gpsAccuracy² + georefSigma²)`, roughly **76 m** for a 15 m GPS fix
+   against a 75 m georeference. Publish `georefSigma` as a named constant.
+2. **Make the sigma vary along the coast.** The west is measured at 5 to 75 m; the
    east toward Manzanillo is less certain. One number for 16.5 km of coast is
    itself a false precision. If the eastern sigma is genuinely unknown, either
    use a much larger disc there or disable position display east of the last
@@ -822,7 +828,7 @@ uncertainty is a lie told by the camera.
    mid-segment the nearest vertex can be 250 m away while you are standing
    directly on the zone.
 8. **State the accuracy in words** in the sheet: "Su ubicación es aproximada,
-   unos 50 m" / "Your location is approximate, about 50 m", alongside a permanent
+   unos 75 m" / "Your location is approximate, about 75 m", alongside a permanent
    line saying the sign on the beach and the lifeguard are the authority, not
    this map.
 9. **Unassessed coast is a status.** Five zones cover 16.5 km. Between them the
