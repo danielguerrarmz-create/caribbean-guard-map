@@ -88,6 +88,15 @@
     width:52px;height:52px;border-radius:50%;border:0;background:#fff;
     box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;cursor:pointer}
   .fab svg{width:24px;height:24px}
+  .compass{position:absolute;right:12px;z-index:1000;
+    bottom:calc(var(--safe-pad) + 156px);
+    width:44px;height:44px;border-radius:50%;border:0;background:#fff;
+    box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;
+    cursor:pointer;padding:0;font:inherit}
+  .compass svg{width:30px;height:30px;overflow:visible}
+  .compass #needle{transform-origin:22px 22px;transition:transform .18s linear}
+  .compass.live{outline:2px solid #1565c0;outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){.compass #needle{transition:none}}
   .fab.on svg{color:#1565c0}
 
   /* ---------- bottom sheet ---------- */
@@ -178,6 +187,22 @@
   </svg>
 </button>
 
+<!-- North arrow. On a phone with a compass this becomes a live heading
+     indicator: the needle keeps pointing north while you turn, which is the
+     question somebody on the sand actually has ("which way am I facing?").
+     Without a compass it stays a plain north arrow, which is still correct
+     because the imagery is rectified north-up. -->
+<button class="compass" id="compass" aria-label="Norte" aria-live="off">
+  <svg viewBox="0 0 44 44" aria-hidden="true">
+    <g id="needle">
+      <path d="M22 7 L27.4 24 L22 20.6 L16.6 24 Z" fill="#c62828"/>
+      <path d="M22 37 L16.6 20 L22 23.4 L27.4 20 Z" fill="#8ea3b6"/>
+    </g>
+    <text x="22" y="6.4" text-anchor="middle" font-size="7.5" font-weight="800"
+          fill="#0b1c2c" font-family="inherit">N</text>
+  </svg>
+</button>
+
 <div class="picker" id="picker"></div>
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="false">
@@ -207,6 +232,18 @@
    roughly 150 m until better imagery replaces it.
    ============================================================ */
 const IMG_BOUNDS = [[9.621462, -82.790863], [9.671534, -82.639053]]; // [[S,W],[N,E]]
+/* The largest axis-aligned rectangle that fits INSIDE the rotated image.
+
+   IMG_BOUNDS is the bounding box of a quad sitting at 3.37 degrees, so its four
+   corners are transparent wedges. Cover-fitting the bounding box therefore still
+   shows page colour in the corners: the image fills the box, but the box is not
+   all image. This is the inscribed rectangle, and it is what the desktop zoom
+   floor and the pan limit use so no background is reachable at all.
+
+   It costs 35% of the height, which is the honest price of using rectified
+   imagery from a rotated source. */
+const IMG_SAFE = [[9.630126, -82.788391], [9.662873, -82.641518]]; // [[S,W],[N,E]]
+
 const GEO_ACCURACY_M = 75;      // what we can defend in the west
 const GEO_ACCURACY_EAST_M = 150;
 const GEO_EAST_OF = -82.699;    // longitude where confidence drops
@@ -325,6 +362,17 @@ const T = {
       reviewedBy:(who,when)=>`Revisado por ${who} el ${when}`,
       here:"Usted está aquí", nearest:"Estación más cercana", hours:"Equipo",
       station:"Estación",
+      close:"Cerrar",
+      north:"Norte, rumbo",
+      compassDenied:"Sin acceso a la brújula. La flecha sigue marcando el norte.",
+      compassNone:"Este dispositivo no tiene brújula. La flecha marca el norte.",
+      ripTitle:"Corriente de resaca",
+      ripLen:m=>`Aproximadamente ${m} m, tira hacia mar abierto`,
+      ripWhy:"Si te agarra: no luches contra ella. Nada en paralelo a la playa hasta salir, y después hacia la orilla. Levanta el brazo y grita si necesitas ayuda.",
+      areaTitle:"Zona marcada, sin definir",
+      areaWhy:"El mapa de Caribbean Guard marca esta zona en rojo, pero su leyenda no dice qué significa. Podría ser una zona peligrosa o una zona segura de bañado. No la interpretes hasta que la asociación lo confirme.",
+      annotSource:"Tomado del mapa anotado de Caribbean Guard, que no tiene fecha. Pendiente de confirmación.",
+      annotCoverage:n=>`${n} corrientes mapeadas entre Chiquita y Punta Uva. El resto de la costa no está mapeada: eso no significa que sea segura.`,
       stationHolds:"Estructura fija con implementos de flotación para rescate: tubos y torpedos, caja de mecate de 200 metros, salvavidas, chaleco y silbato. Si alguien es arrastrado por el mar, cualquier persona cerca tiene con qué ayudar.",
       save:"Guarde esta página. La señal es débil en la playa."},
   en:{tagline:"Coastal safety map", safe:"SWIMMING OK", caution:"CAUTION",
@@ -339,6 +387,17 @@ const T = {
       reviewedBy:(who,when)=>`Reviewed by ${who} on ${when}`,
       here:"You are here", nearest:"Nearest station", hours:"Equipment",
       station:"Station",
+      close:"Close",
+      north:"North, heading",
+      compassDenied:"No compass access. The arrow still points north.",
+      compassNone:"This device has no compass. The arrow points north.",
+      ripTitle:"Rip current",
+      ripLen:m=>`About ${m} m, pulls out to sea`,
+      ripWhy:"If it catches you: do not fight it. Swim parallel to the beach until you are out of it, then back in. Raise an arm and shout if you need help.",
+      areaTitle:"Marked area, meaning unclear",
+      areaWhy:"Caribbean Guard's map shades this area red, but its legend does not say what that means. It could be a hazard zone or a designated safe swimming zone. Do not read it either way until the association confirms.",
+      annotSource:"Taken from Caribbean Guard's annotated map, which carries no date. Pending confirmation.",
+      annotCoverage:n=>`${n} rip currents mapped between Chiquita and Punta Uva. The rest of the coast is not mapped, which does not mean it is safe.`,
       stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
       save:"Save this page. Signal is weak on the beach."}
 };
@@ -358,6 +417,7 @@ const COLOR = {safe:"#1f9d55", caution:"#f5b942", danger:"#c62828"};
 
 /* ---------- map ---------- */
 const BB = L.latLngBounds(IMG_BOUNDS);
+const SAFE = L.latLngBounds(IMG_SAFE);
 const map = L.map("map",{
   zoomControl:false, attributionControl:true,
   maxBounds:BB.pad(0.02), maxBoundsViscosity:1.0,
@@ -409,17 +469,47 @@ function chrome(){
     bot: (document.querySelector(".picker")?.offsetHeight || 96) + 8
   };
 }
+/* Wide viewports COVER, narrow ones CONTAIN, and the difference is not cosmetic.
+
+   The coast is a 3:1 strip. On a landscape desktop window the image can fill the
+   frame, so there is no reason to ever show the page behind it: the floor is set
+   to the cover zoom and the background never appears. On a portrait phone cover
+   would blow the image up until you can see about 370 m of a 16.6 km coast, all
+   water and no landmark, which is the failure this file already fixed once. So
+   there the floor stays at contain and the empty bands are page colour on purpose.
+
+   maxBounds is tightened to the image itself at the same time, otherwise you can
+   still pan the background into view without zooming at all. */
+function wide(){ return window.matchMedia("(min-width:760px) and (orientation:landscape)").matches; }
+
 function fitCoast(){
   const c = chrome();
   // Clear the floor first. getBoundsZoom clamps its own result to the current
   // minZoom, so setting minZoom from it ratchets upward on every call and the
   // map slowly loses the ability to show the whole coast.
   map.setMinZoom(0);
-  // Pad by the header and picker heights so the strip centres in the band the
-  // user can actually see, not behind the chrome. The fit is width-limited, so
-  // this recentres without making the coast any smaller.
-  map.fitBounds(BB, {paddingTopLeft:[8, c.top], paddingBottomRight:[8, c.bot]});
-  map.setMinZoom(map.getZoom() - 0.5);
+
+  if(wide()){
+    // cover the INSCRIBED rectangle, not the bounding box: the box includes the
+    // rotation wedges, which are transparent, so covering it still shows corners
+    const z = map.getBoundsZoom(SAFE, true);    // true = cover
+    map.setMinZoom(z);
+    map.setMaxBounds(SAFE);                     // no background reachable by panning
+    if(map.getZoom() < z) map.setView(SAFE.getCenter(), z);
+  } else {
+    // Pad by the header and picker heights so the strip centres in the band the
+    // user can actually see, not behind the chrome. The fit is width-limited, so
+    // this recentres without making the coast any smaller.
+    const pad = L.point(8, c.top).add(L.point(8, c.bot));
+    // Derive the floor from getBoundsZoom, NOT from getZoom() after fitBounds.
+    // fitBounds animates, so on the next line getZoom() is still the OLD zoom and
+    // the floor lands above the fit: the map then sits below its own minimum and
+    // snaps upward on the first interaction.
+    const z = map.getBoundsZoom(BB, false, pad);
+    map.fitBounds(BB, {paddingTopLeft:[8, c.top], paddingBottomRight:[8, c.bot]});
+    map.setMinZoom(z - 0.5);
+    map.setMaxBounds(BB.pad(0.02));
+  }
 }
 map.setView(BB.getCenter(), 14);
 fitCoast();
@@ -660,6 +750,153 @@ function setLang(l){
 }
 document.getElementById("btn-es").onclick=()=>setLang("es");
 document.getElementById("btn-en").onclick=()=>setLang("en");
+
+
+/* ============================================================
+   CARIBBEAN GUARD'S OWN ANNOTATIONS
+   Everything drawn here comes from web/data/cg-hazards.geojson, machine-read off
+   the sheet Caribbean Guard already publishes on /programa-playa-organizada and
+   georeferenced against Bing at 294 inliers, 1.2 m.
+
+   It covers 1.82 km of a 16.66 km coast, which is what their sheet covers. The
+   absence of arrows elsewhere means nobody has mapped it, NOT that it is clear,
+   and the layer says so when you open it.
+
+   Nothing here is authored by this map. Every feature carries needs_confirmation
+   and the sheet has no date on it.
+   ============================================================ */
+const ANNOT = {rips:[], stations:[], areas:[]};
+
+function arrowHead(a, b, colour){
+  // A rip is a direction, not a place, so it needs a head. Leaflet has no arrow,
+  // so this is two short segments rotated onto the bearing of the last leg.
+  const p1 = map.latLngToLayerPoint(a), p2 = map.latLngToLayerPoint(b);
+  // NOT named L: that shadows Leaflet's own L inside this function and the very
+  // next line, L.point(...), throws "L.point is not a function".
+  const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x), LEN = 13, SPREAD = 0.42;
+  const wing = d => map.layerPointToLatLng(
+    L.point(p2.x - LEN * Math.cos(ang + d), p2.y - LEN * Math.sin(ang + d)));
+  return L.polyline([wing(-SPREAD), b, wing(SPREAD)],
+                    {color:colour, weight:5, opacity:1, lineCap:"round", lineJoin:"round"});
+}
+
+function drawAnnotations(gj){
+  const layer = L.layerGroup().addTo(map);
+  gj.features.forEach(f=>{
+    const k = f.properties.kind, g = f.geometry;
+    if(k === "rip_current"){
+      const pts = g.coordinates.map(c=>[c[1], c[0]]);
+      // white casing first so a red arrow survives dark water and bright surf
+      layer.addLayer(L.polyline(pts,{color:"#fff",weight:9,opacity:.75,lineCap:"round"}));
+      layer.addLayer(L.polyline(pts,{color:"#e53935",weight:5,opacity:1,
+                                     dashArray:"9 6",lineCap:"round"}));
+      const head = arrowHead(pts[pts.length-2] || pts[0], pts[pts.length-1], "#e53935");
+      layer.addLayer(head);
+      const hit = L.polyline(pts,{color:"#000",weight:30,opacity:0}).addTo(layer);
+      hit.on("click", ()=>openAnnot("rip", f));
+      ANNOT.rips.push({f, layers:[head]});
+    }
+    else if(k === "shaded_area_meaning_unknown"){
+      const ring = g.coordinates[0].map(c=>[c[1], c[0]]);
+      // Deliberately NOT red and NOT green. The sheet's legend does not define
+      // this polygon, so it could be a hazard zone or a designated safe swimming
+      // zone, and either colour would assert an answer nobody has given.
+      const poly = L.polygon(ring,{color:"#5b6b7a",weight:2,dashArray:"6 6",
+                                   fillColor:"#5b6b7a",fillOpacity:.16}).addTo(layer);
+      poly.on("click", ()=>openAnnot("area", f));
+      ANNOT.areas.push({f});
+    }
+  });
+  // arrow heads are drawn in screen space, so they must be rebuilt on zoom
+  map.on("zoomend", ()=>{
+    ANNOT.rips.forEach(r=>{
+      const pts = r.f.geometry.coordinates.map(c=>[c[1], c[0]]);
+      r.layers[0].setLatLngs(
+        arrowHead(pts[pts.length-2] || pts[0], pts[pts.length-1], "#e53935").getLatLngs());
+    });
+  });
+  return layer;
+}
+
+function openAnnot(kind, f){
+  const t = T[lang];
+  const body = kind === "rip"
+    ? `<span class="status danger">${t.ripTitle}</span>
+       <h2>${t.ripTitle}</h2>
+       <p class="sub">${t.ripLen(f.properties.length_m)}</p>
+       <p class="why">${t.ripWhy}</p>`
+    : `<span class="status station" style="background:#5b6b7a">${t.areaTitle}</span>
+       <h2>${t.areaTitle}</h2>
+       <p class="why">${t.areaWhy}</p>`;
+  sheetBody.innerHTML = body + `
+    <p class="prov unverified">${t.annotSource}</p>
+    <div class="actions">
+      <a class="btn primary" href="tel:911">${t.call}</a>
+      <button class="btn" onclick="document.getElementById('sheet').classList.remove('open')">${t.close}</button>
+    </div>`;
+  sheet.classList.add("open");
+}
+
+fetch("data/cg-hazards.geojson")
+  .then(r=>r.ok ? r.json() : Promise.reject(r.status))
+  .then(gj=>{
+    drawAnnotations(gj);
+    const n = gj.features.filter(f=>f.properties.kind === "rip_current").length;
+    if(n) setTimeout(()=>say(T[lang].annotCoverage(n), 7000), 6000);
+  })
+  .catch(()=>{ /* the map is still usable without the overlay; stay quiet */ });
+
+
+/* ---------- north arrow ----------
+   The imagery is rectified north-up, so a static arrow is already truthful. The
+   useful version is live: on a phone with a magnetometer the needle holds north
+   while you turn, which answers the question somebody standing on sand actually
+   has, which is not "where is north" but "which way am I facing".
+
+   iOS needs an explicit permission gesture, so the button asks for it on tap and
+   stays a plain arrow if it is refused or unavailable. */
+(function(){
+  const btn = document.getElementById("compass");
+  const needle = document.getElementById("needle");
+  if(!btn || !needle) return;
+  let live = false;
+
+  function onOrient(e){
+    // webkitCompassHeading is degrees clockwise from north; alpha is counter
+    const heading = (typeof e.webkitCompassHeading === "number")
+      ? e.webkitCompassHeading
+      : (e.absolute && typeof e.alpha === "number" ? 360 - e.alpha : null);
+    if(heading == null || Number.isNaN(heading)) return;
+    if(!live){ live = true; btn.classList.add("live"); }
+    // rotate the needle AGAINST the heading so it keeps pointing at true north
+    needle.style.transform = `rotate(${-heading}deg)`;
+    btn.setAttribute("aria-label", `${T[lang].north} ${Math.round(heading)}°`);
+  }
+
+  function start(){
+    window.addEventListener("deviceorientationabsolute", onOrient, true);
+    window.addEventListener("deviceorientation", onOrient, true);
+  }
+
+  btn.addEventListener("click", ()=>{
+    const DOE = window.DeviceOrientationEvent;
+    if(DOE && typeof DOE.requestPermission === "function"){
+      DOE.requestPermission()
+        .then(r=>{ if(r === "granted") start(); else say(T[lang].compassDenied, 4500); })
+        .catch(()=>say(T[lang].compassDenied, 4500));
+    } else if(DOE){
+      start();
+      // no event within a second means there is no magnetometer behind the API
+      setTimeout(()=>{ if(!live) say(T[lang].compassNone, 4000); }, 1200);
+    } else {
+      say(T[lang].compassNone, 4000);
+    }
+  });
+
+  // Android and desktop with a sensor can start without a gesture
+  if(window.DeviceOrientationEvent &&
+     typeof window.DeviceOrientationEvent.requestPermission !== "function") start();
+})();
 
 /* ---------- QR deep links:  ?z=cocles   or   ?p=po4 ---------- */
 (function(){
