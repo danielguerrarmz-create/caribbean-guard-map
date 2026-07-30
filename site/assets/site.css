@@ -83,29 +83,41 @@ header.site{border-bottom:1px solid var(--rule);background:var(--paper);
   position:sticky;top:0;z-index:50}
 header.site .wrap{display:flex;align-items:center;gap:var(--s2);
   min-height:60px;padding-top:.5rem;padding-bottom:.5rem}
+/* Was display:flex, which laid the name and the tagline out as a ROW, so the
+   header read "Caribbean Guard  CARIBE SUR, COSTA RICA" with both halves
+   wrapping. It is a stack. */
 .brand{font-family:var(--f-head);font-weight:700;font-size:16px;letter-spacing:-.01em;
-  color:var(--ink);text-decoration:none;line-height:1.1;display:flex;
-  align-items:center;min-height:var(--tap)}
-.brand span{display:block;font-weight:400;font-size:10.5px;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--muted);margin-top:2px}
+  color:var(--ink);text-decoration:none;line-height:1.15;
+  display:flex;flex-direction:column;justify-content:center;
+  min-height:var(--tap);white-space:nowrap;flex:0 0 auto}
+.brand span{font-weight:400;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);margin-top:1px}
 .spacer{flex:1}
 
 .menu-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;
   min-width:var(--tap);min-height:var(--tap);padding:0 .7rem;
   background:transparent;border:1px solid var(--rule);border-radius:8px;
   font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
-@media (min-width:900px){.menu-btn{display:none}}
 
 nav.main{display:none}
 nav.main ul{list-style:none;margin:0;padding:0}
 nav.main a{display:flex;align-items:center;min-height:var(--tap);
   color:var(--ink);text-decoration:none;font-size:15px;font-weight:500}
 nav.main a[aria-current="page"]{color:var(--signal);font-weight:700}
-@media (min-width:900px){
+/* 1040, not 900. Seven labels plus the wordmark plus the donate button need
+   about 940px to sit on one line; below that every label was breaking in half
+   and the bar became two ragged rows of fragments. */
+@media (min-width:1040px){
   nav.main{display:block}
-  nav.main ul{display:flex;gap:1.15rem;align-items:center}
+  nav.main ul{display:flex;gap:1.1rem;align-items:center}
+  nav.main a{white-space:nowrap;font-size:14.5px;position:relative}
   nav.main a:hover{color:var(--signal)}
+  /* underline the current page as well as colouring it, so the state does not
+     depend on colour alone */
+  nav.main a[aria-current="page"]::after{content:"";position:absolute;
+    left:0;right:0;bottom:9px;height:2px;background:var(--signal)}
 }
+@media (min-width:1040px){.menu-btn{display:none}}
 /* mobile drawer */
 nav.main.open{display:block;position:absolute;top:100%;left:0;right:0;
   background:var(--paper);border-bottom:1px solid var(--rule);
@@ -139,9 +151,13 @@ section.alt{background:var(--wash);border-top:1px solid var(--rule);
 .lede{font-size:1.08rem}
 
 /* ---------- the map card: the one thing someone may open twice ---------- */
-.mapcard{display:block;background:var(--ink);color:#fff;border-radius:var(--radius);
-  padding:var(--s3);text-decoration:none;border:1px solid var(--ink)}
+/* The primary action on the site, so it gets a full-width band rather than a
+   box sitting inside the column. Nothing else on the page is this colour. */
+.mapcard{display:block;background:var(--ink);color:#fff;
+  padding:var(--s4) var(--gutter);text-decoration:none;
+  margin:var(--s3) calc(var(--gutter) * -1) 0;border-top:3px solid var(--signal)}
 .mapcard:hover{background:#12293E}
+@media (min-width:760px){.mapcard{border-radius:2px}}
 .mapcard h2{color:#fff;font-size:1.2rem}
 .mapcard p{color:#CBD9E6;font-size:15px;margin:var(--s1) 0 var(--s2)}
 .mapcard .go{display:inline-flex;align-items:center;gap:.4rem;
@@ -149,16 +165,24 @@ section.alt{background:var(--wash);border-top:1px solid var(--rule);
 .mapcard .rev{font-size:12.5px;color:#9FB4C8;margin:0}
 
 /* ---------- cards and lists ---------- */
-.grid{display:grid;gap:var(--s3);margin-top:var(--s3)}
-@media (min-width:620px){.grid.two{grid-template-columns:1fr 1fr}}
-@media (min-width:900px){.grid.three{grid-template-columns:repeat(3,1fr)}}
-.card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:var(--s3);display:flex;flex-direction:column;gap:var(--s1)}
-/* cards carry h2 or h3 depending on whether they are the page's sections or
-   sit under one; both render at the same size */
-.card h2,.card h3{font-size:1.12rem;font-weight:600;margin-bottom:.1rem;letter-spacing:0}
-.card p{font-size:15.5px;margin:0}
-.card .more{margin-top:auto;padding-top:var(--s2);font-weight:600;font-size:15px}
+/* Rows, not cards. A boxed card puts a border around every idea whether or not
+   the idea needs one, and three of them side by side turns a page into a
+   catalogue. These are entries in a list: a hairline, a picture, a name, a
+   sentence, a way in. The rule does the separating that the box was doing. */
+.rows{display:flex;flex-direction:column;margin-top:var(--s4)}
+.row{display:grid;gap:var(--s2);padding:var(--s4) 0;
+  border-top:1px solid var(--rule)}
+.rows .row:last-child{border-bottom:1px solid var(--rule)}
+@media (min-width:720px){
+  .row{grid-template-columns:15rem minmax(0,1fr);gap:var(--s4);align-items:start}
+}
+.row .shot{margin:0}
+.row .shot img{border-radius:6px;width:100%}
+.row h2,.row h3{font-size:1.25rem;font-weight:700;letter-spacing:-.01em;
+  margin-bottom:var(--s1)}
+.row p{font-size:16px;margin:0 0 var(--s2)}
+.row .more{font-weight:700;font-size:15.5px;display:inline-flex;align-items:center;
+  min-height:var(--tap);gap:.35rem}
 
 .stack{display:flex;flex-direction:column;gap:var(--s4);margin-top:var(--s4)}
 .item{border-top:1px solid var(--rule);padding-top:var(--s3)}
@@ -210,7 +234,7 @@ details.equiv li{font-size:15px;margin-bottom:.3rem}
 .people{display:grid;gap:var(--s3);grid-template-columns:1fr;margin-top:var(--s3)}
 @media (min-width:560px){.people{grid-template-columns:1fr 1fr}}
 @media (min-width:900px){.people{grid-template-columns:repeat(3,1fr)}}
-.person{border:1px solid var(--rule);border-radius:var(--radius);padding:var(--s3)}
+.person{border-top:1px solid var(--rule);padding-top:var(--s2)}
 .person h2{font-size:1.02rem;letter-spacing:0}
 .person p{font-size:15px;color:var(--muted);margin:.2rem 0 0}
 
@@ -233,3 +257,11 @@ footer.site ul a:hover{text-decoration:underline}
 .skip{position:absolute;left:-9999px;top:0;background:var(--signal);color:#fff;
   padding:.7rem 1rem;z-index:100;text-decoration:none;border-radius:0 0 8px 0}
 .skip:focus{left:0}
+
+/* ---------- reserved photography ---------- */
+figure.shot{margin:var(--s3) 0}
+figure.shot img{width:100%;border:1px solid var(--rule);border-radius:6px}
+figure.shot figcaption{font-size:13.5px;color:var(--muted);margin-top:var(--s1)}
+.hero .shot{margin:var(--s4) 0 0}
+.hero .shot img{border-color:rgba(255,255,255,.18)}
+.hero .shot figcaption{color:#9FB4C8}

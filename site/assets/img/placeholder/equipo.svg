@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"
+     width="1000" height="1000" role="img"
+     aria-label="Espacio reservado para fotografía: Retrato de equipo">
+  <rect width="1000" height="1000" fill="#EFEADF"/>
+  <rect x="6" y="6" width="988" height="988" fill="none"
+        stroke="#CFC6B6" stroke-width="3" stroke-dasharray="14 10"/>
+  <path d="M75 124.5 h88.0" stroke="#0B1C2C" stroke-width="7"/>
+  <text x="75" y="196.0" font-family="Poppins, system-ui, sans-serif"
+        font-size="55" font-weight="700" fill="#0B1C2C">Retrato de equipo</text>
+  <text x="75" y="262.0" font-family="ui-monospace, Menlo, Consolas, monospace"
+        font-size="36" fill="#7A8894">FOTOGRAFÍA PENDIENTE · 1000×1000</text>
+  <text x="75" y="878.6"
+        font-family="system-ui, sans-serif" font-size="32" fill="#0B1C2C"
+        opacity=".78"><tspan x="75" dy="0">Cuadrado, cara visible y ocupando buena parte del</tspan><tspan x="75" dy="46.4">encuadre. Sin lentes de sol.</tspan></text>
+</svg>

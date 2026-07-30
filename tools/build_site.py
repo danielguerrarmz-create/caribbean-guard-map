@@ -147,6 +147,18 @@ def write(path, contents):
     return path
 
 
+def shot(slug, up="", caption=None):
+    """Reserve the photograph's slot, at the ratio the layout expects.
+
+    Nothing here pretends to be a photograph. The frame states which picture
+    belongs in it and what it needs to show, so the gaps read as a shot list
+    rather than as an oversight.
+    """
+    cap = f'<figcaption>{esc(caption)}</figcaption>' if caption else ""
+    return (f'<figure class="shot"><img src="{up}assets/img/placeholder/{slug}.svg" '
+            f'alt="" loading="lazy" decoding="async">{cap}</figure>')
+
+
 def map_card(up="", reviewed=None, title="Mapa de Seguridad"):
     """The link card. Deliberately makes no claim of being live or lifeguard-authored.
 
@@ -230,6 +242,7 @@ def build():
       <a class="cta" href="mapa/">Ver el mapa de seguridad</a>
       <a class="cta ghost" href="involucrate/">Involúcrate</a>
     </div>
+    {shot("hero")}
   </div>
 </section>
 
@@ -251,24 +264,33 @@ def build():
 <section>
   <div class="wrap">
     <h2>Tres clubes, abiertos a la comunidad</h2>
-    <div class="grid three">
-      <div class="card">
-        <h3>Lifesaving Club</h3>
-        <p>Guardias, entrenamiento de salvamento, educación continua y una red de
-           alerta de emergencias con más de 70 miembros.</p>
-        <a class="more" href="lifesaving-club/">Conocer el club →</a>
+    <div class="rows">
+      <div class="row">
+        {shot("lifesaving")}
+        <div>
+          <h3>Lifesaving Club</h3>
+          <p>Guardias, entrenamiento de salvamento, educación continua y una red de
+             alerta de emergencias con más de 70 miembros.</p>
+          <a class="more" href="lifesaving-club/">Conocer el club →</a>
+        </div>
       </div>
-      <div class="card">
-        <h3>Swim Club</h3>
-        <p>Natación en aguas abiertas y piscina, gratuita. Tres entrenamientos por
-           semana en Punta Uva y Playa Negra, más la Swim School para la infancia.</p>
-        <a class="more" href="swim-club/">Ver horarios →</a>
+      <div class="row">
+        {shot("swim")}
+        <div>
+          <h3>Swim Club</h3>
+          <p>Natación en aguas abiertas y piscina, gratuita. Tres entrenamientos por
+             semana en Punta Uva y Playa Negra, más la Swim School para la infancia.</p>
+          <a class="more" href="swim-club/">Ver horarios →</a>
+        </div>
       </div>
-      <div class="card">
-        <h3>Freediving Club</h3>
-        <p>La unidad más nueva. Apnea con enseñanza segura, en una comunidad marina
-           con amplia experiencia en buceo a pulmón.</p>
-        <a class="more" href="freediving-club/">Conocer el club →</a>
+      <div class="row">
+        {shot("freediving")}
+        <div>
+          <h3>Freediving Club</h3>
+          <p>La unidad más nueva. Apnea con enseñanza segura, en una comunidad marina
+             con amplia experiencia en buceo a pulmón.</p>
+          <a class="more" href="freediving-club/">Conocer el club →</a>
+        </div>
       </div>
     </div>
   </div>
@@ -297,23 +319,18 @@ def build():
     {map_card(title="Abrir el mapa en el teléfono")}
 
     <h2 style="margin-top:2rem">Qué muestra</h2>
-    <div class="grid three">
-      <div class="card">
-        <h3><span class="status danger">No nadar</span></h3>
-        <p>Corrientes de resaca frecuentes o fondo peligroso. En el mapa se dibuja
-           con la línea más gruesa y continua.</p>
-      </div>
-      <div class="card">
-        <h3><span class="status caution">Precaución</span></h3>
-        <p>Seguro sólo en ciertas condiciones: marea, oleaje u hora del día.
-           Línea entrecortada.</p>
-      </div>
-      <div class="card">
-        <h3><span class="status safe">Se puede nadar</span></h3>
-        <p>La zona más protegida del tramo. Línea punteada fina. No es una promesa:
-           el mar cambia.</p>
-      </div>
-    </div>
+    <dl class="facts legend">
+      <dt><span class="status danger">No nadar</span></dt>
+      <dd>Corrientes de resaca frecuentes o fondo peligroso. En el mapa es la línea
+          más gruesa y continua: la marca más fuerte es siempre la más peligrosa.</dd>
+      <dt><span class="status caution">Precaución</span></dt>
+      <dd>Seguro sólo en ciertas condiciones: marea, oleaje u hora del día.
+          Línea entrecortada.</dd>
+      <dt><span class="status safe">Se puede nadar</span></dt>
+      <dd>La zona más protegida del tramo. Línea punteada fina. No es una promesa:
+          el mar cambia.</dd>
+    </dl>
+    {shot("mapa", "../")}
 
     <h2 style="margin-top:2rem">Corrientes y estaciones registradas</h2>
     <p>Este es el contenido del mapa anotado, escrito en texto para que se pueda
@@ -340,6 +357,7 @@ def build():
     <p class="lede">Banderas, líneas de supervivencia, estaciones de salvamento y un
        plan de emergencia acordado con los negocios de cada playa. Es el sistema que
        el mapa de seguridad documenta.</p>
+    {shot("playa-organizada", "../")}
 
     {map_card()}
 
@@ -389,6 +407,7 @@ def build():
     <p class="lede">Desde la creación de la organización nunca murió nadie en nuestras
        guardias. Patrullamos los domingos, el día con más incidencias de ahogamiento
        del país.</p>
+    {shot("lifesaving", "../")}
     <div class="stack">
 {ls}
     </div>
@@ -403,6 +422,7 @@ def build():
     <p class="eyebrow">Gratuito y abierto a la comunidad</p>
     <h1>Swim Club</h1>
     {paras(c["swim-club"]["body_blocks"][0], "lede")}
+    {shot("swim", "../")}
     <h2 style="margin-top:2rem">Entrenamientos</h2>
     <dl class="facts">
       <dt>Punta Uva</dt><dd>Jueves, 7:15 h</dd>
@@ -421,33 +441,34 @@ def build():
     <p class="eyebrow">La unidad más nueva</p>
     <h1>Freediving Club</h1>
     {paras(c["freediving-club"]["body_blocks"][0], "lede")}
+    {shot("freediving", "../")}
     <p style="margin-top:2rem"><a class="cta" href="../involucrate/">Quiero unirme</a></p>
   </div>
 </section>
 """, "Apnea y buceo a pulmón con enseñanza segura en el Caribe Sur de Costa Rica.")))
 
     # ---- Nosotros hub + children ----
-    written.append(write("nosotros/index.html", page("nosotros", "Nosotros", """
+    written.append(write("nosotros/index.html", page("nosotros", "Nosotros", f"""
 <section>
   <div class="wrap">
     <h1>Nosotros</h1>
     <p class="lede">Una asociación comunitaria nacida en Semana Santa de 2021, cuando
        treinta vecinos salieron a patrullar seis playas para que nadie se muriera.</p>
-    <div class="grid two">
-      <div class="card"><h2>Historia</h2>
+    <div class="rows">
+      <div class="row">{shot("historia", "../")}<div><h2>Historia</h2>
         <p>De una campaña de videos a una asociación con más de 70 miembros y 400
            personas formadas.</p>
-        <a class="more" href="historia/">Leer la historia →</a></div>
-      <div class="card"><h2>Visión</h2>
+        <a class="more" href="historia/">Leer la historia →</a></div></div>
+      <div class="row"><div class="shot"></div><div><h2>Visión</h2>
         <p>Quién debe ser responsable del salvamento acuático en Costa Rica, y la
            ley de tercios.</p>
-        <a class="more" href="vision/">Leer la visión →</a></div>
-      <div class="card"><h2>Equipo</h2>
+        <a class="more" href="vision/">Leer la visión →</a></div></div>
+      <div class="row">{shot("equipo", "../")}<div><h2>Equipo</h2>
         <p>Quiénes patrullan, enseñan y coordinan.</p>
-        <a class="more" href="equipo/">Ver el equipo →</a></div>
-      <div class="card"><h2>Proyectos</h2>
+        <a class="more" href="equipo/">Ver el equipo →</a></div></div>
+      <div class="row">{shot("proyectos", "../")}<div><h2>Proyectos</h2>
         <p>Lo que todavía necesitamos: bodega, guardia móvil y el centro acuático.</p>
-        <a class="more" href="proyectos/">Ver los proyectos →</a></div>
+        <a class="more" href="proyectos/">Ver los proyectos →</a></div></div>
     </div>
   </div>
 </section>
@@ -460,6 +481,7 @@ def build():
     <p class="eyebrow">Nosotros</p>
     <h1>Historia</h1>
     <p class="lede">“Quien salva una vida, salva al mundo entero.”</p>
+    {shot("historia", "../../")}
     {hist}
   </div>
 </section>
@@ -508,6 +530,7 @@ def build():
     <h1>Proyectos</h1>
     <p class="lede">Lo que todavía necesitamos para trabajar mejor. La bodega es la
        prioridad número uno de la asociación.</p>
+    {shot("proyectos", "../../")}
     <div class="stack">
 {proj}
     </div>
@@ -523,6 +546,7 @@ def build():
   <div class="wrap">
     <h1>Involúcrate</h1>
     {inv}
+    {shot("involucrate", "../")}
   </div>
 </section>
 
