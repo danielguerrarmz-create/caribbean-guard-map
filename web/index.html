@@ -105,6 +105,7 @@
   /* white text on a solid fill, so these take the -text tier */
   .status.safe{background:var(--safe-text)} .status.caution{background:var(--caution-text)}
   .status.danger{background:var(--danger-text)}
+  .status.station{background:#1565c0}
   .sheet h2{margin:12px 0 2px;font-size:22px;line-height:1.2}
   .sheet .sub{margin:0 0 14px;color:var(--muted);font-size:13px}
   .why{background:#f4f6f8;border-left:4px solid var(--ink);border-radius:0 10px 10px 0;
@@ -131,8 +132,10 @@
   .po{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
     background:#fff;border:3px solid var(--ink);font-weight:800;font-size:13px;
     box-shadow:0 2px 8px rgba(0,0,0,.4)}
-  .po.staffed{border-color:var(--safe)}
-  .po.proposed{border-style:dashed;opacity:.85}
+  /* One kind now: these are Caribbean Guard's real fixed rescue stations, not a
+     mix of staffed and proposed posts I had invented. Blue, because a station is
+     infrastructure rather than a swim verdict, and must not read as a status. */
+  .po.station{border-color:#1565c0}
 
   /* ---------- offline / signal banner ---------- */
   .toast{position:absolute;left:12px;right:12px;z-index:1400;
@@ -286,14 +289,26 @@ const ZONES = [
 ];
 
 const POSTS = [
-  {id:"po1", n:"1", kind:"staffed",  ll:[9.6552,-82.7536],
-   name:{es:"Puesto Puerto Viejo",  en:"Puerto Viejo post"},  hours:{es:"9:00 a 17:00", en:"9:00 to 17:00"}},
-  {id:"po2", n:"2", kind:"staffed",  ll:[9.6486,-82.7338],
-   name:{es:"Puesto Cocles",        en:"Cocles post"},        hours:{es:"9:00 a 17:00", en:"9:00 to 17:00"}},
-  {id:"po3", n:"3", kind:"proposed", ll:[9.6432,-82.7128],
-   name:{es:"Propuesto Chiquita",   en:"Proposed Chiquita"},  hours:{es:"Sin personal", en:"Not yet staffed"}},
-  {id:"po4", n:"4", kind:"staffed",  ll:[9.6400,-82.6928],
-   name:{es:"Puesto Punta Uva",     en:"Punta Uva post"},     hours:{es:"9:00 a 17:00", en:"9:00 to 17:00"}}
+  {id:"est1", n:"1", kind:"station", ll:[9.64474,-82.719],
+   name:{es:"Estación de salvamento · Playa Chiquita 1", en:"Rescue station · Playa Chiquita 1"},
+   hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
+          en:"Equipment put out at dawn and taken in at dusk by local partners"},
+   reviewed: null},
+  {id:"est2", n:"2", kind:"station", ll:[9.64333,-82.71809],
+   name:{es:"Estación de salvamento · Playa Chiquita 2", en:"Rescue station · Playa Chiquita 2"},
+   hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
+          en:"Equipment put out at dawn and taken in at dusk by local partners"},
+   reviewed: null},
+  {id:"est3", n:"3", kind:"station", ll:[9.64137,-82.71073],
+   name:{es:"Estación de salvamento · Playa Chiquita 3", en:"Rescue station · Playa Chiquita 3"},
+   hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
+          en:"Equipment put out at dawn and taken in at dusk by local partners"},
+   reviewed: null},
+  {id:"est4", n:"4", kind:"station", ll:[9.64029,-82.70878],
+   name:{es:"Estación de salvamento · Playa Chiquita 4", en:"Rescue station · Playa Chiquita 4"},
+   hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
+          en:"Equipment put out at dawn and taken in at dusk by local partners"},
+   reviewed: null}
 ];
 
 /* ============================================================ */
@@ -305,9 +320,12 @@ const T = {
       outside:"Usted está fuera de esta costa. El mapa cubre Puerto Viejo hasta Punta Uva.",
       ambiguous:"Está entre dos playas. Toque el nombre de la playa donde está.",
       unverified:"Sin verificar. Caribbean Guard aún no ha revisado esta playa. Pregunte a un guardavidas antes de entrar al mar.",
+      unverifiedStation:"Ubicación tomada del mapa anotado de Caribbean Guard, sin fecha. Confirme que la estación sigue ahí antes de contar con ella.",
       stale:d=>`Revisado hace más de ${d} días. Las condiciones pueden haber cambiado.`,
       reviewedBy:(who,when)=>`Revisado por ${who} el ${when}`,
-      here:"Usted está aquí", nearest:"Puesto más cercano", hours:"Horario",
+      here:"Usted está aquí", nearest:"Estación más cercana", hours:"Equipo",
+      station:"Estación",
+      stationHolds:"Estructura fija con implementos de flotación para rescate: tubos y torpedos, caja de mecate de 200 metros, salvavidas, chaleco y silbato. Si alguien es arrastrado por el mar, cualquier persona cerca tiene con qué ayudar.",
       save:"Guarde esta página. La señal es débil en la playa."},
   en:{tagline:"Coastal safety map", safe:"SWIMMING OK", caution:"CAUTION",
       danger:"DO NOT SWIM", legendSafe:"Swim", legendCaution:"Caution", legendDanger:"No swim",
@@ -316,9 +334,12 @@ const T = {
       outside:"You are outside this coastline. The map covers Puerto Viejo to Punta Uva.",
       ambiguous:"You are between two beaches. Tap the name of the beach you are on.",
       unverified:"Not verified. Caribbean Guard has not reviewed this beach yet. Ask a lifeguard before you go in.",
+      unverifiedStation:"Location taken from Caribbean Guard’s annotated map, which carries no date. Confirm the station is still there before relying on it.",
       stale:d=>`Reviewed more than ${d} days ago. Conditions may have changed.`,
       reviewedBy:(who,when)=>`Reviewed by ${who} on ${when}`,
-      here:"You are here", nearest:"Nearest post", hours:"Hours",
+      here:"You are here", nearest:"Nearest station", hours:"Equipment",
+      station:"Station",
+      stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
       save:"Save this page. Signal is weak on the beach."}
 };
 let lang = (navigator.language||"es").toLowerCase().startsWith("en") ? "en" : "es";
@@ -461,9 +482,12 @@ document.getElementById("sheet-close").onclick = ()=>sheet.classList.remove("ope
    has checked everything. It also turns the claim from a guarantee into a
    timestamped observation, which is the difference that matters if this is ever
    read back to somebody after an accident. */
-function provenance(z){
+function provenance(z, kind){
   const t=T[lang];
-  if(!z.reviewed) return `<p class="prov unverified">${t.unverified}</p>`;
+  if(!z.reviewed){
+    const msg = kind === "station" ? t.unverifiedStation : t.unverified;
+    return `<p class="prov unverified">${msg}</p>`;
+  }
   // Build the date in LOCAL time. new Date("2026-07-01") parses as UTC midnight,
   // and formatting that anywhere west of Greenwich renders the previous day, so a
   // review dated the 1st displayed as "30 June". On the one field whose entire
@@ -515,9 +539,11 @@ function flyClear(bounds, opts){
 function openPost(p){
   const t=T[lang];
   sheetBody.innerHTML = `
-    <span class="status ${p.kind==="staffed"?"safe":"caution"}">${p.n}</span>
+    <span class="status station">${t.station} ${p.n}</span>
     <h2>${p.name[lang]}</h2>
-    <p class="sub">${t.hours}: ${p.hours[lang]}</p>
+    <p class="sub">${p.hours[lang]}</p>
+    <p class="why">${t.stationHolds}</p>
+    ${provenance(p, "station")}
     <div class="actions">
       <a class="btn primary" href="tel:911">${t.call}</a>
       <a class="btn" target="_blank" rel="noopener"
