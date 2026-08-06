@@ -2,10 +2,31 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- maximum-scale=5 and no user-scalable=no, DELIBERATELY. Beachsafe, Protected
+     Planet, SINAC and OVSICORI all disable pinch zoom on public safety maps. This
+     is read in bright sun by people who may not have their glasses. Do not "fix". -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
 <meta name="theme-color" content="#0b1c2c">
+<meta name="description" content="Mapa de seguridad costera de Caribbean Guard, de Puerto Viejo a Manzanillo.">
 <title>Caribbean Guard | Mapa de Seguridad</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="manifest" href="manifest.json">
+<!-- Named explicitly so the browser stops requesting /favicon.ico, which the map
+     does not ship and which 404s on every single load. -->
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Caribbean Guard">
+<!-- Self-hosted, not unpkg, and with no CDN fallback on purpose.
+     Measured against unpkg from a good home link: 1.27 s of TLS negotiation alone
+     before the first byte of Leaflet arrived, to a host we do not control, with no
+     integrity attribute on the tag. Chrome partitioned its HTTP cache in 2020, so
+     the old cross-site caching argument for a public CDN no longer holds in any
+     current browser. Leaflet's latest dist-tag has been 1.9.4 since 2023-05-18, so
+     vendoring commits us to chasing nothing.
+     A fallback would put the CDN back in the threat model to buy nothing: if the
+     local copy is shipped anyway, ship only the local copy. -->
+<link rel="stylesheet" href="vendor/leaflet.css">
 <style>
   :root{
     /* Two tiers on purpose.
@@ -15,15 +36,30 @@
        4.5:1. White on the old #1f9d55 measured 3.49:1 and on #c77700 measured
        3.46:1, so both status pills were failing outright. 13px bold does not
        qualify for the large-text exception, which needs about 18.66px bold.
-       Old --caution #c77700 also had almost exactly the same luminance as --safe
-       (0.254 vs 0.251), so in direct sun, which kills hue first, "caution" and
-       "swimming ok" were the same colour. */
-    --safe:#1f9d55;        --safe-text:#178049;
-    --caution:#9c5c00;     --caution-text:#9c5c00;
-    --danger:#c62828;      --danger-text:#c62828;
+       Old --moderate #c77700 also had almost exactly the same luminance as --low
+       (0.254 vs 0.251), so in direct sun, which kills hue first, the two middle
+       tiers were the same colour.
+
+       These are named for the three HAZARD TIERS, low / moderate / high. They were
+       named safe / caution / danger, and --safe in particular was the wrong name:
+       nothing on this map is entitled to say safe. See the CHARACTER block. */
+    --low:#1f9d55;         --low-text:#178049;
+    --moderate:#9c5c00;    --moderate-text:#9c5c00;
+    --high:#c62828;        --high-text:#c62828;
     --ink:#0b1c2c; --paper:#ffffff; --muted:#5b6b7a;
+    /* Absence has its own colour and it is not a hazard colour. Amber says "you
+       are missing something", grey says "nobody has been here". Neither may be
+       mistaken for a verdict, so neither is red, amber-as-caution, or green. */
+    --gap:#7a4a00;   --gap-bg:#fdf4e3;  --gap-line:#e7cf9e;
+    --void:#4a5764;  --void-bg:#eef1f4;  --void-line:#c9d2da;
+    /* Today's bulletin has its own colour and it is deliberately outside the
+       hazard palette, so a thing a guard said this morning can never be mistaken
+       for what this beach is. Violet also survives red-green colour blindness
+       against all three tiers. */
+    --today:#7b1fa2;
     --sheet-r:20px;
     --safe-pad: env(safe-area-inset-bottom, 0px);
+    --dock-h: 96px;    /* set from JS; the fab and compass stack above the dock */
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;
@@ -67,14 +103,16 @@
 
   /* ---------- emergency ---------- */
   .sos{pointer-events:auto;display:flex;align-items:center;gap:6px;
-    background:var(--danger);color:#fff;text-decoration:none;font-weight:800;font-size:13px;
+    background:var(--high);color:#fff;text-decoration:none;font-weight:800;font-size:13px;
     padding:9px 14px;min-height:40px;border-radius:999px;
     box-shadow:0 3px 12px rgba(0,0,0,.4)}
 
-  /* ---------- beach picker (primary bottom control) ---------- */
-  .picker{position:absolute;left:0;right:0;z-index:1000;
-    bottom:calc(var(--safe-pad) + 10px);
-    display:flex;gap:9px;padding:6px 12px;overflow-x:auto;scrollbar-width:none;
+  /* ---------- bottom dock: offline bar + beach picker ---------- */
+  /* One positioned container rather than two, so chrome() has a single thing to
+     measure and the fab stack has a single height to clear. */
+  .dock{position:absolute;left:0;right:0;z-index:1000;
+    bottom:calc(var(--safe-pad) + 10px)}
+  .picker{display:flex;gap:9px;padding:6px 12px;overflow-x:auto;scrollbar-width:none;
     -webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
   .picker::-webkit-scrollbar{display:none}
   .card{flex:0 0 auto;scroll-snap-align:center;min-width:146px;
@@ -87,20 +125,42 @@
   .card .st{display:flex;align-items:center;gap:6px;margin-top:5px;
     font-size:11.5px;font-weight:800;letter-spacing:.03em}
   /* coloured text on white, so also the -text tier */
-  .card .st.safe{color:var(--safe-text)} .card .st.caution{color:var(--caution-text)}
-  .card .st.danger{color:var(--danger-text)}
+  .card .st.low{color:var(--low-text)} .card .st.moderate{color:var(--moderate-text)}
+  .card .st.high{color:var(--high-text)}
   /* was an 11px square identical for all three statuses, so it carried no
      information beyond its fill. Now it is a sample of the actual map stroke. */
   .sw{flex:0 0 auto;display:block}
 
+  /* Absence, rendered on the card so it is visible before anything is tapped.
+     Three different absences get three different marks, never one banner: see the
+     ABSENCE block in the script. Deliberately typographic, not coloured like a
+     status, so a missing verdict can never be read as a verdict. */
+  .gaps{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .gap{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;
+    letter-spacing:.01em;padding:2px 5px;border-radius:5px;border:1px solid;
+    white-space:nowrap}
+  .gap.never,.gap.expired{color:var(--gap);background:var(--gap-bg);border-color:var(--gap-line)}
+  .gap.unsurveyed{color:var(--void);background:var(--void-bg);border-color:var(--void-line)}
+  .gap .mk{font-size:11px;line-height:1}
+
+  /* The card for the coast this map does not describe. It sits in the picker
+     alongside the beaches on purpose: an absence listed as a peer of the presences
+     is the only version of it somebody will actually see. Hatched, so it does not
+     read as one more beach. */
+  .card.void{background:
+      repeating-linear-gradient(135deg,#eef1f4 0 7px,#e3e8ed 7px 14px);
+    border-color:var(--void-line)}
+  .card.void .nm{color:var(--void)}
+  .card.void .st{color:var(--void)}
+
   /* ---------- locate button ---------- */
   .fab{position:absolute;right:12px;z-index:1000;
-    bottom:calc(var(--safe-pad) + 96px);
+    bottom:calc(var(--safe-pad) + var(--dock-h) + 16px);
     width:52px;height:52px;border-radius:50%;border:0;background:#fff;
     box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;cursor:pointer}
   .fab svg{width:24px;height:24px}
   .compass{position:absolute;right:12px;z-index:1000;
-    bottom:calc(var(--safe-pad) + 156px);
+    bottom:calc(var(--safe-pad) + var(--dock-h) + 76px);
     width:44px;height:44px;border-radius:50%;border:0;background:#fff;
     box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;
     cursor:pointer;padding:0;font:inherit}
@@ -123,20 +183,75 @@
   .status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;
     padding:7px 14px;font-size:13px;font-weight:800;color:#fff;letter-spacing:.02em}
   /* white text on a solid fill, so these take the -text tier */
-  .status.safe{background:var(--safe-text)} .status.caution{background:var(--caution-text)}
-  .status.danger{background:var(--danger-text)}
+  .status.low{background:var(--low-text)} .status.moderate{background:var(--moderate-text)}
+  .status.high{background:var(--high-text)}
   .status.station{background:#1565c0}
   .sheet h2{margin:12px 0 2px;font-size:22px;line-height:1.2}
   .sheet .sub{margin:0 0 14px;color:var(--muted);font-size:13px}
   .why{background:#f4f6f8;border-left:4px solid var(--ink);border-radius:0 10px 10px 0;
     padding:12px 14px;font-size:14.5px;line-height:1.5;margin:0 0 14px}
-  /* Provenance sits directly under the verdict it qualifies, not in a footer.
-     Muted when there is a real reviewer and a fresh date; amber and bordered when
-     nobody has checked or the check has expired, because that is a caveat the
-     reader has to actually see before acting on the verdict above it. */
-  .prov{margin:-4px 0 14px;font-size:12.5px;line-height:1.45;color:var(--muted)}
-  .prov.unverified{color:#7a4a00;background:#fdf4e3;border:1px solid #e7cf9e;
+
+  /* ---------- the two axes, rendered so they cannot be confused ----------
+     beaches.ie displays a standing classification and a current reading side by
+     side and labels both, and encodes them differently on purpose. Same here.
+     CHARACTER is a coloured pill in the hazard palette and it carries the map
+     stroke. TODAY is a dark bordered block with a name and a timestamp on it, and
+     it never borrows a hazard colour, so nothing about it can be mistaken for the
+     standing character above it. */
+  .axis{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 6px}
+  .today{border:1.5px solid var(--ink);border-radius:12px;padding:10px 13px;margin:0 0 14px}
+  .today .verdict{font-size:14px;font-weight:800;line-height:1.25;margin:0}
+  .today .stamp{margin:5px 0 0;font-size:12px;line-height:1.45;color:var(--muted)}
+  .today .rider{margin:7px 0 0;font-size:12.5px;line-height:1.45}
+  /* nobody has signed a bulletin today. This is the ordinary state on a 16 km
+     coast with one association, so it is stated plainly and greyly. Amber every
+     single day would teach people that amber means nothing. */
+  .today.none{border-color:var(--void-line);border-style:dashed}
+  .today.none .verdict{color:var(--void);font-weight:700}
+  .today.signed{border-color:var(--today);border-width:2px}
+  .today.signed .verdict{color:var(--today)}
+  .today.stale{border-style:dashed}
+  .today .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;color:#fff;background:var(--today);border-radius:5px;
+    padding:2px 6px;margin-right:7px;vertical-align:2px}
+  .today.none .badge{background:var(--void)}
+  /* the card marker for a beach that has a bulletin today */
+  .gap.today{color:#fff;background:var(--today);border-color:var(--today)}
+
+  /* An exception that modifies the character, sitting where it can act on it,
+     rather than stranded in a facts bullet nothing reads. */
+  .caveat{margin:0 0 12px;padding:9px 12px;font-size:13px;line-height:1.45;
+    border-radius:10px;background:#f4f6f8;border-left:4px solid var(--moderate-text)}
+
+  /* The rule that still works when this map is wrong, rendered under every level.
+     Deliberately NOT styled like a caveat: a caveat qualifies the verdict above
+     it, and this outranks the verdict above it. Solid ink, full border, no fill,
+     so it reads as the standing rule rather than as one more exception. */
+  .defer{margin:0 0 14px;padding:10px 13px;font-size:13px;line-height:1.45;
+    font-weight:600;border:1.5px solid var(--ink);border-radius:10px;color:var(--ink)}
+
+  /* Provenance sits directly under the claim it qualifies, not in a footer.
+     Two lines, not one, following OVSICORI: what produced this record, and whether
+     a human has confirmed it. They are different claims and collapsing them is how
+     a machine reading gets read as a lifeguard's word. */
+  .prov{margin:-4px 0 14px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+  .prov b{font-weight:700;color:var(--ink)}
+  .prov .row{display:block}
+  .prov.unverified{color:var(--gap);background:var(--gap-bg);border:1px solid var(--gap-line);
     border-radius:10px;padding:9px 12px;font-weight:600}
+  .prov.unverified b{color:var(--gap)}
+
+  /* Absence in the sheet: the same three marks as on the card, stacked, each with
+     its own sentence. Never one banner for three different facts. */
+  .gaplist{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px}
+  .gaplist li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;
+    border-radius:10px;padding:9px 12px;border:1px solid}
+  .gaplist li.never,.gaplist li.expired{color:var(--gap);background:var(--gap-bg);border-color:var(--gap-line)}
+  .gaplist li.unsurveyed{color:var(--void);background:var(--void-bg);border-color:var(--void-line)}
+  .gaplist .mk{flex:0 0 18px;text-align:center;font-weight:800}
+  .gaplist b{display:block;font-weight:800}
+
   .facts{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:9px}
   .facts li{display:flex;gap:10px;font-size:14px;line-height:1.45;align-items:flex-start}
   .facts .ic{flex:0 0 22px;text-align:center;font-size:15px}
@@ -144,7 +259,8 @@
   .btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;
     border-radius:12px;border:1.5px solid rgba(11,28,44,.15);background:#fff;
     font:inherit;font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;cursor:pointer}
-  .btn.primary{background:var(--danger);border-color:var(--danger);color:#fff}
+  .btn.primary{background:var(--high);border-color:var(--high);color:#fff}
+  .btn.wide{grid-column:1 / -1}
   .close{position:absolute;top:8px;right:10px;width:38px;height:38px;border-radius:50%;
     border:0;background:rgba(11,28,44,.07);font-size:20px;line-height:1;cursor:pointer;color:var(--ink)}
 
@@ -164,6 +280,46 @@
     font-size:13px;line-height:1.4;box-shadow:0 4px 18px rgba(0,0,0,.4);
     display:none}
   .toast.show{display:block}
+
+  /* ---------- the saved-copy bar ----------
+     Material Money's triple, in one strip: a LABELLED timestamp, a plain statement
+     of the refresh cadence, and a manual refresh affordance. It is permanent
+     rather than a toast, because "when was this saved" is a question somebody has
+     at the moment they act on the verdict, not six seconds after load.
+     Beachsafe's default value for a cache that has never populated is the literal
+     word "Never". That is the honest pattern and it is copied here. */
+  .saved{display:flex;align-items:center;gap:8px;margin:0 12px 8px;
+    background:rgba(11,28,44,.88);backdrop-filter:blur(8px);color:#fff;
+    border-radius:10px;padding:0 4px 0 11px;min-height:34px;
+    box-shadow:0 3px 12px rgba(0,0,0,.3)}
+  .saved .txt{flex:1;font-size:11.5px;line-height:1.3;font-weight:600;
+    background:none;border:0;color:inherit;font-family:inherit;text-align:left;
+    padding:7px 0;cursor:pointer;text-decoration:underline;text-underline-offset:2px;
+    text-decoration-color:rgba(255,255,255,.4)}
+  .saved .rf{flex:0 0 auto;width:34px;height:30px;border:0;border-radius:8px;
+    background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font:inherit;
+    display:grid;place-items:center}
+  .saved .rf svg{width:16px;height:16px}
+  .saved .rf[disabled]{opacity:.45}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .saved .rf.busy svg{animation:spin .9s linear infinite}
+  @media (prefers-reduced-motion:reduce){.saved .rf.busy svg{animation:none}}
+
+  /* ---------- new build available ----------
+     Surfrider's pattern. A cache-first safety map with no way to say "the verdicts
+     you are reading are the old ones" will show a stale verdict forever, which is
+     the exact failure the provenance machinery exists to prevent, one layer down. */
+  .update{position:absolute;left:12px;right:12px;z-index:1500;
+    top:calc(env(safe-area-inset-top,0px) + 62px);
+    display:none;align-items:center;gap:10px;
+    background:#fff;color:var(--ink);border-radius:12px;padding:10px 10px 10px 13px;
+    box-shadow:0 4px 20px rgba(0,0,0,.45);font-size:13px;line-height:1.35}
+  .update.show{display:flex}
+  .update .msg{flex:1;font-weight:600}
+  .update button{border:0;font:inherit;font-size:13px;font-weight:800;cursor:pointer;
+    border-radius:9px;min-height:38px;padding:0 13px}
+  .update .go{background:var(--ink);color:#fff}
+  .update .no{background:transparent;color:var(--muted);padding:0 8px;min-width:38px}
 
   .leaflet-control-attribution{font-size:9px}
   @media (min-width:820px){
@@ -214,7 +370,24 @@
   </svg>
 </button>
 
-<div class="picker" id="picker"></div>
+<div class="dock" id="dock">
+  <div class="saved" id="saved" hidden>
+    <button class="txt" id="saved-txt" type="button"></button>
+    <button class="rf" id="saved-refresh" type="button" aria-label="Actualizar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" aria-hidden="true">
+        <path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 5v6h-6"/>
+      </svg>
+    </button>
+  </div>
+  <div class="picker" id="picker"></div>
+</div>
+
+<div class="update" id="update" role="status" aria-live="polite">
+  <span class="msg" id="update-msg"></span>
+  <button class="go" id="update-go"></button>
+  <button class="no" id="update-no" aria-label="Cerrar">&times;</button>
+</div>
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="false">
   <div class="grab"></div>
@@ -222,7 +395,7 @@
   <div class="sheet-body" id="sheet-body"></div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="vendor/leaflet.js"></script>
 <script>
 /* ============================================================
    1. GEOREFERENCE  <-- solved 2026-07-30, do not hand-edit
@@ -262,171 +435,656 @@ const GEO_EAST_OF = -82.699;    // longitude where confidence drops
 /* ============================================================
    2. SAFETY DATA  <-- must be authored by Caribbean Guard, not by satellite
    Edit this block to update the map. Nothing else needs to change.
-   status: safe | caution | danger
 
-   PROVENANCE IS NOT OPTIONAL. Give every zone a `reviewed` object:
-       reviewed: {by:"name of the person", on:"YYYY-MM-DD"}
-   Leave it null and the interface says out loud that nobody has verified this,
-   which is the honest state today: every description below was written from
-   general knowledge, not by a guard who has stood on that sand.
+   ---- IDS ----------------------------------------------------------------
+   Ids are namespaced  <org>:<type>/<local>  and they are a join key, not a
+   label. Caribbean Guard already has towers at Cocles and at a "Playa Grande",
+   and Playa Grande Lifeguards is a separate founding member of the same national
+   federation, named after a different Playa Grande on the Pacific side. The
+   collision exists inside this data set before any second organisation is
+   involved.
+
+   The cost of doing this now is a prefix. The cost of doing it later is
+   rewriting every provenance record that has already been signed and dated, and
+   a provenance record's whole value is being an unaltered timestamped statement
+   of who said what. That is the one migration this system must never perform.
+
+   The `local` part is what the QR deep links carry (?z=cocles, ?p=est2), so it
+   stays short and stays stable. Do not renumber est1..est4.
+
+   ---- TWO AXES, NOT ONE --------------------------------------------------
+   `status` used to be one word carrying two different claims: that Cocles is the
+   beach with the most rescues on this coast (true for years) and that Cocles is
+   dangerous today (true for hours). Flipping it to say the water is calm this
+   week also said the standing fact was no longer true. In the other direction it
+   was worse: a beach whose standing character is benign could not be called
+   dangerous today without permanently relabelling the beach, which is exactly why
+   Punta Uva was `safe` while our own copy said to avoid the east channel.
+
+   Ireland's EPA refuses to merge these and labels both prominently. So:
+
+     character  what this beach IS.        Changes in years.   Carries the map stroke.
+     today      what a guard signed about  Changes in hours.   Never touches the stroke.
+                it right now.
+
+   character.class is one of four, mapped to three visual tiers in CHARACTER
+   below. Four classes because "never swim here" (Salsa Brava) and "swim only in
+   front of the guard post" (Cocles) are different instructions, and one word for
+   both is the same flattening this split exists to undo. Three tiers because the
+   stroke vocabulary's brightness ladder only works with three.
+
+   beaches.ie carries its long-run scale as a COUNT OF STARS rather than a colour,
+   so it cannot be confused with the current reading. That specific device does not
+   transfer: a star count is an ordinal quality rating averaged over four seasons
+   of sampling, we have no sampling programme, and a hazard character is not
+   better-or-worse, it is a different kind of water. What transfers is the
+   principle, that the two axes must be encoded in different channels. Here the
+   character is colour plus stroke weight plus dash, and today is a dated bordered
+   block with a person's name on it and no hazard colour at all.
+
+   ---- PROVENANCE IS NOT OPTIONAL -----------------------------------------
+   Two fields, not one, following OVSICORI, whose every earthquake popup carries
+   `Autor` (what process produced this record) and `Revisado` (has a human checked
+   it, currently rendering "-"):
+
+       authored: "desk" | "sheet" | "field"     what produced this text
+       reviewed: {by:"person", org:"Caribbean Guard", on:"YYYY-MM-DD"} | null
+
+   `org` and not just `by`, because if this map becomes the federation's de facto
+   safety page, the question is which organisation stands behind the verdict, not
+   only which person typed it.
+
+   Leave `reviewed` null and the interface says out loud that nobody has confirmed
+   this, which is the honest state today: every description below is `desk`, which
+   means written from general knowledge, not by a guard who has stood on that sand.
 
    The interface must never claim more currency or more authority than this block
    actually carries. No "real time", no "live conditions", no attribution to
    Caribbean Guard's guards until a real name and date sit here. Stale defaults to
-   unknown, never to safe. A map that admits what it has not checked is more
-   trustworthy than one that implies it has checked everything.
+   unknown, never to safe. Nothing here says safe at all: see CHARACTER.
    ============================================================ */
-const REVIEW_VALID_DAYS = 120;   // past this, a review is stale and says so
+
+/* A standing characterisation confirmed more than a year ago is worth
+   re-confirming; a bulletin signed this morning is worth half a day. They are
+   different kinds of claim, so they get different clocks. That is the point of
+   splitting them and it is the first place the split pays for itself.
+
+   TODAY_VALID_HOURS is a placeholder. It should be whatever Caribbean Guard's
+   actual patrol shift is, and nobody has told us yet. */
+const CHARACTER_VALID_DAYS = 365;
+const TODAY_VALID_HOURS    = 12;
 
 const ZONES = [
   {
-    id:"playa-negra", status:"safe",
-    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    id:"cg:zone/playa-negra",
     name:{es:"Playa Negra", en:"Playa Negra"},
     sub:{es:"Puerto Viejo oeste", en:"West of Puerto Viejo"},
-    why:{es:"Fondo de arena, pendiente suave y poca corriente la mayor parte del año. La zona más segura para familias y niños.",
-         en:"Sand bottom, gentle slope and little current most of the year. The safest stretch for families and children."},
-    facts:{es:["Sin arrecife cerca de la orilla","Oleaje bajo salvo en marejadas de diciembre a marzo","Puesto de rescate a 600 m al este"],
-           en:["No reef near the shore","Low surf except during December to March swells","Rescue post 600 m to the east"]},
+    character:{
+      class:"lower-risk",
+      authored:"desk", reviewed:null,
+      why:{es:"Fondo de arena, pendiente suave y poca corriente la mayor parte del año. Es la zona más tranquila de la costa para familias y niños.",
+           en:"Sand bottom, gentle slope and little current most of the year. The calmest stretch on this coast for families and children."},
+      facts:{es:["Sin arrecife cerca de la orilla","Oleaje bajo salvo en marejadas de diciembre a marzo","Puesto de rescate a 600 m al este"],
+             en:["No reef near the shore","Low surf except during December to March swells","Rescue post 600 m to the east"]}
+    },
+    today:null,
     line:[[9.65805,-82.77001],[9.65734,-82.76852],[9.65669,-82.76702],[9.65608,-82.76551],[9.65548,-82.76401],[9.65508,-82.76252],[9.6548,-82.76102],[9.65471,-82.75952],[9.65479,-82.75801]]
   },
   {
-    id:"salsa-brava", status:"danger",
-    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    id:"cg:zone/salsa-brava",
     name:{es:"Salsa Brava", en:"Salsa Brava"},
     sub:{es:"Puerto Viejo centro", en:"Puerto Viejo town"},
-    why:{es:"Ola de arrecife que rompe sobre coral vivo en agua muy poco profunda. No es zona de baño. Riesgo de corte y golpe contra el arrecife incluso con mar en calma.",
-         en:"Reef break over live coral in very shallow water. This is not a swimming area. Risk of laceration and impact on the reef even when the sea looks calm."},
-    facts:{es:["Prohibido nadar. Solo surfistas con experiencia","Arrecife a menos de 1 m bajo la superficie","Corriente de retorno en el canal del lado este"],
-           en:["No swimming. Experienced surfers only","Reef less than 1 m below the surface","Rip current in the channel on the east side"]},
+    character:{
+      class:"no-swim",
+      authored:"desk", reviewed:null,
+      why:{es:"Ola de arrecife que rompe sobre coral vivo en agua muy poco profunda. No es zona de baño. Riesgo de corte y golpe contra el arrecife incluso con mar en calma.",
+           en:"Reef break over live coral in very shallow water. This is not a swimming area. Risk of laceration and impact on the reef even when the sea looks calm."},
+      facts:{es:["Prohibido nadar. Solo surfistas con experiencia","Arrecife a menos de 1 m bajo la superficie","Corriente de retorno en el canal del lado este"],
+             en:["No swimming. Experienced surfers only","Reef less than 1 m below the surface","Rip current in the channel on the east side"]}
+    },
+    today:null,
     line:[[9.65902,-82.7556],[9.65947,-82.75497],[9.65955,-82.75433],[9.65847,-82.7537],[9.65814,-82.75306],[9.65911,-82.75242],[9.65971,-82.75179],[9.66003,-82.75116],[9.6605,-82.75051]]
   },
   {
-    id:"cocles", status:"danger",
-    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    id:"cg:zone/cocles",
     name:{es:"Playa Cocles", en:"Playa Cocles"},
     sub:{es:"Corrientes de retorno frecuentes", en:"Frequent rip currents"},
-    why:{es:"La playa con más rescates de la costa. Bancos de arena cambiantes generan corrientes de retorno que salen mar adentro sin aviso. Bañarse solo frente al puesto de guardavidas.",
-         en:"The beach with the most rescues on this coast. Shifting sandbars create rip currents that pull straight out with no warning. Swim only in front of the lifeguard post."},
-    facts:{es:["Guardavidas de 9:00 a 17:00","Si lo arrastra la corriente: no luche, nade paralelo a la playa","Banderas rojas marcan los canales activos"],
-           en:["Lifeguards 9:00 to 17:00","If caught in a rip: do not fight it, swim parallel to the beach","Red flags mark the active channels"]},
+    character:{
+      class:"high-risk",
+      authored:"desk", reviewed:null,
+      why:{es:"La playa con más rescates de la costa. Bancos de arena cambiantes generan corrientes de retorno que salen mar adentro sin aviso. Báñate solo frente al puesto de guardavidas.",
+           en:"The beach with the most rescues on this coast. Shifting sandbars create rip currents that pull straight out with no warning. Swim only in front of the lifeguard post."},
+      facts:{es:["Guardavidas de 9:00 a 17:00","Si te arrastra la corriente: no luches, nada paralelo a la playa","Banderas rojas marcan los canales activos"],
+             en:["Lifeguards 9:00 to 17:00","If a rip catches you: do not fight it, swim parallel to the beach","Red flags mark the active channels"]}
+    },
+    today:null,
     line:[[9.65957,-82.748],[9.65884,-82.74539],[9.65838,-82.74276],[9.6556,-82.74014],[9.65273,-82.73751],[9.65078,-82.73489],[9.64875,-82.73226],[9.64736,-82.72965],[9.64543,-82.72702]]
   },
   {
-    id:"chiquita", status:"caution",
-    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    id:"cg:zone/chiquita",
     name:{es:"Playa Chiquita", en:"Playa Chiquita"},
-    sub:{es:"Seguro solo con marea alta", en:"Safe at high tide only"},
-    why:{es:"Pequeñas piscinas de arrecife protegidas con marea alta. Con marea baja el coral queda expuesto y el acceso al agua es cortante y resbaloso.",
-         en:"Small protected reef pools at high tide. At low tide the coral is exposed and entering the water is sharp and slippery."},
-    facts:{es:["Consultar tabla de mareas antes de entrar","Usar calzado de agua","Sin guardavidas permanente"],
-           en:["Check the tide table before entering","Wear water shoes","No permanent lifeguard"]},
+    sub:{es:"Depende de la marea", en:"Depends on the tide"},
+    character:{
+      class:"conditional",
+      authored:"desk", reviewed:null,
+      why:{es:"Pequeñas piscinas de arrecife protegidas con marea alta. Con marea baja el coral queda expuesto y el acceso al agua es cortante y resbaloso.",
+           en:"Small protected reef pools at high tide. At low tide the coral is exposed and entering the water is sharp and slippery."},
+      caveats:[{es:"Con marea baja esta playa no es un lugar para entrar al agua. El coral queda expuesto y el fondo corta.",
+                en:"At low tide this is not a place to enter the water. The coral is exposed and the bottom cuts."}],
+      facts:{es:["Consulta la tabla de mareas antes de entrar","Usa calzado de agua","Sin guardavidas permanente"],
+             en:["Check the tide table before entering","Wear water shoes","No permanent lifeguard"]}
+    },
+    today:null,
     line:[[9.6451,-82.7265],[9.64404,-82.72395],[9.64598,-82.72139],[9.64542,-82.71882],[9.64283,-82.71626],[9.6432,-82.7137],[9.64231,-82.71114],[9.64088,-82.70858],[9.64107,-82.70601]]
   },
   {
-    id:"punta-uva", status:"safe",
-    reviewed: null,   // nobody at Caribbean Guard has verified this yet
+    id:"cg:zone/punta-uva",
     name:{es:"Punta Uva", en:"Punta Uva"},
     sub:{es:"Bahía protegida por arrecife", en:"Reef protected bay"},
-    why:{es:"El arrecife exterior rompe el oleaje antes de llegar a la orilla. Agua tranquila, poca corriente y entrada de arena. La mejor opción para nadar en toda la costa.",
-         en:"The outer reef breaks the swell before it reaches the shore. Calm water, little current and a sand entry. The best swimming on this coast."},
-    facts:{es:["Aguas tranquilas casi todo el año","Evitar el canal del extremo este, ahí sí hay corriente","Puesto de observación P.O. 4"],
-           en:["Calm water nearly year round","Avoid the channel at the far east end, there is current there","Observation post P.O. 4"]},
+    character:{
+      class:"lower-risk",
+      authored:"desk", reviewed:null,
+      why:{es:"El arrecife exterior rompe el oleaje antes de llegar a la orilla. Agua tranquila, poca corriente y entrada de arena. Es la parte más resguardada de esta costa.",
+           en:"The outer reef breaks the swell before it reaches the shore. Calm water, little current and a sand entry. The most sheltered part of this coast."},
+      /* This exception used to live in a `facts` bullet, where nothing could act
+         on it: the beach said SE PUEDE NADAR and the third bullet said there is
+         current at the east end. A reef, a channel and a headland are precisely
+         the structures NOAA names in its LOWEST tier. Now it modifies the
+         character where the character is read. */
+      caveats:[{es:"El canal del extremo este es la excepción: ahí sí hay corriente y sale hacia afuera. No entres al agua en esa punta.",
+                en:"The channel at the far east end is the exception: there is current there and it runs out to sea. Do not enter the water at that point."}],
+      facts:{es:["Aguas tranquilas casi todo el año","Entrada de arena, sin coral en la orilla","Puesto de observación P.O. 4"],
+             en:["Calm water nearly year round","Sand entry, no coral at the shoreline","Observation post P.O. 4"]}
+    },
+    today:null,
     line:[[9.64078,-82.70551],[9.63979,-82.70333],[9.63926,-82.70114],[9.63847,-82.69895],[9.63813,-82.69676],[9.63865,-82.69459],[9.6413,-82.6924],[9.64145,-82.69021],[9.64251,-82.68802]]
   }
 ];
 
+/* Rescue stations: the copy is authored here, the POSITION is not.
+
+   cg-hazards.geojson carried four `rescue_station` points whose coordinates
+   matched these to five decimal places, and nothing read them: drawAnnotations()
+   handled rip currents and the shaded polygon, and the string `rescue_station`
+   did not appear in this file at all. Two sources of truth, and the dead one was
+   the copy inside the file called "the data file". Anybody who moved a station
+   there, which is the obvious place to move it, changed nothing.
+
+   Resolved by joining rather than by deleting either copy, because each holds
+   something the other cannot. The geojson holds the geometry, which is what an
+   extraction produces and what a guard would correct. This block holds the name,
+   the hours and the equipment copy, which no machine reading a graphic can
+   produce.
+
+   `ll` below is a FALLBACK ONLY. The map draws from it immediately so the
+   stations are on screen with no signal and before any fetch resolves, then moves
+   each marker onto the authoritative position when the geojson lands, joining on
+   id. If the two have drifted apart it says so in the console rather than
+   silently preferring one. Do not edit `ll` to move a station: edit the geojson.
+
+   FOUR here. Caribbean Guard's own press says NINE along the whole coast. Both
+   can be true, because the annotated sheet these came off covers 1.86 km of
+   16.66 km. We do not know which, so every station sheet says out loud that these
+   are the ones inside the surveyed window and not necessarily all of them. */
 const POSTS = [
-  {id:"est1", n:"1", kind:"station", ll:[9.64474,-82.719],
+  {id:"cg:station/est1", n:"1", kind:"station", ll:[9.64474,-82.719],
    name:{es:"Estación de salvamento · Playa Chiquita 1", en:"Rescue station · Playa Chiquita 1"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
-   reviewed: null},
-  {id:"est2", n:"2", kind:"station", ll:[9.64333,-82.71809],
+   authored:"sheet", reviewed:null},
+  {id:"cg:station/est2", n:"2", kind:"station", ll:[9.64333,-82.71809],
    name:{es:"Estación de salvamento · Playa Chiquita 2", en:"Rescue station · Playa Chiquita 2"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
-   reviewed: null},
-  {id:"est3", n:"3", kind:"station", ll:[9.64137,-82.71073],
+   authored:"sheet", reviewed:null},
+  {id:"cg:station/est3", n:"3", kind:"station", ll:[9.64137,-82.71073],
    name:{es:"Estación de salvamento · Playa Chiquita 3", en:"Rescue station · Playa Chiquita 3"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
-   reviewed: null},
-  {id:"est4", n:"4", kind:"station", ll:[9.64029,-82.70878],
+   authored:"sheet", reviewed:null},
+  {id:"cg:station/est4", n:"4", kind:"station", ll:[9.64029,-82.70878],
    name:{es:"Estación de salvamento · Playa Chiquita 4", en:"Rescue station · Playa Chiquita 4"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
-   reviewed: null}
+   authored:"sheet", reviewed:null}
 ];
 
-/* ============================================================ */
+/* The four character classes, and the three visual tiers they map onto.
+
+   `tier` drives the stroke and the pill colour. `class` drives the words. Two
+   classes share the `high` tier on purpose: Salsa Brava and Cocles are both loud
+   on the map, and they say different things when you open them. */
+const CHARACTER = {
+  "no-swim":     {tier:"high"},
+  "high-risk":   {tier:"high"},
+  "conditional": {tier:"moderate"},
+  "lower-risk":  {tier:"low"}
+};
+const tierOf = z => CHARACTER[z.character.class].tier;
+
+/* The local part of a namespaced id, which is what the QR deep links carry. */
+const localId = id => id.slice(id.indexOf("/") + 1);
+
+/* ============================================================
+   COPY
+
+   Spanish is tú throughout, not usted. The rest of Caribbean Guard's site writes
+   in tú, and so does every Latin American volunteer water safety organisation
+   studied. Usted reads correctly for a government authority issuing instructions
+   from outside a community; Caribbean Guard is the opposite kind of body, and
+   usted on this one artefact made the piece doing the most safety critical work
+   sound like it came from a more distant organisation than the one whose name is
+   on it. If you add a string, write it in tú.
+
+   THREE RULES GOVERN THE LEVEL NAMES. All three, not one.
+
+   1. EVERY LEVEL NAME IS AN INSTRUCTION, never a colour and never a rating.
+      SMN Argentina's severity levels are "Informate", "Preparate", "Segui
+      instrucciones oficiales": the level name IS the action. A rating tells you
+      how bad somebody thinks it is; an instruction tells you what to do, which is
+      the only thing a person standing on sand can act on. Nobody may "simplify"
+      these into colour names or into a risk scale later. RIESGO ALTO is a rating
+      and it is not good enough.
+
+   2. NO LEVEL NAME MAY READ AS PERMISSION. The old lowest tier read SE PUEDE
+      NADAR / SWIMMING OK, which is a stronger claim than the lowest tier of the
+      United States' national rip current forecast is willing to make, on imagery
+      uncertain to 75 m, about beaches no guard has reviewed. NOAA's LOW tier does
+      not contain the word safe. Ours is TEN CUIDADO IGUAL / TAKE CARE ANYWAY,
+      which is an instruction that grants nothing, and charLowerRiskRider carries
+      NOAA's sentence naming the structures where rips persist anyway, adapted to
+      the structures that exist on this coast.
+
+   3. EVERY LEVEL DEFERS DOWNWARD, to the guards and to the flags on the sand.
+      Every NOAA tier does this. RNLI reduces its entire public message to "No
+      Flags = No Lifeguards". SLSA's disclaimer does the same third move that we
+      were missing: after downgrading the artefact and naming the reason, hand the
+      reader a rule that still works when the artefact is wrong. That is `defer`,
+      and it renders under EVERY character, not only the lowest one.
+
+      Note how `defer` is phrased. Caribbean Guard's rescue towers at Cocles and
+      Playa Grande are verified. A red flag SYSTEM along this coast is NOT: our own
+      Cocles copy asserts "banderas rojas marcan los canales activos" and nobody
+      has confirmed it. So the sentence is conditional, "if there is a guard or a
+      flag", which is true whether or not the system exists and is stronger than
+      asserting it. Do not rewrite it into "obey the flags" until Caribbean Guard
+      confirms there are flags to obey.
+   ============================================================ */
 const T = {
-  es:{tagline:"Mapa de seguridad costera", safe:"SE PUEDE NADAR", caution:"PRECAUCIÓN",
-      danger:"NO NADAR", legendSafe:"Nadar", legendCaution:"Precaución", legendDanger:"No nadar",
-      why:"Por qué", call:"Llamar al 911", route:"Cómo llegar", locating:"Buscando su ubicación...",
-      denied:"Active la ubicación en su teléfono para ver dónde está.",
-      outside:"Usted está fuera de esta costa. El mapa cubre Puerto Viejo hasta Punta Uva.",
-      ambiguous:"Está entre dos playas. Toque el nombre de la playa donde está.",
-      unverified:"Sin verificar. Caribbean Guard aún no ha revisado esta playa. Pregunte a un guardavidas antes de entrar al mar.",
-      unverifiedStation:"Ubicación tomada del mapa anotado de Caribbean Guard, sin fecha. Confirme que la estación sigue ahí antes de contar con ella.",
-      stale:d=>`Revisado hace más de ${d} días. Las condiciones pueden haber cambiado.`,
-      reviewedBy:(who,when)=>`Revisado por ${who} el ${when}`,
-      here:"Usted está aquí", nearest:"Estación más cercana", hours:"Equipo",
-      station:"Estación",
-      close:"Cerrar",
+  es:{tagline:"Mapa de seguridad costera",
+      /* character classes. Each one is an instruction. See the three rules above. */
+      "no-swim":"NO ENTRES AL AGUA", "high-risk":"SOLO CON GUARDAVIDAS",
+      "conditional":"REVISA ANTES DE ENTRAR", "lower-risk":"TEN CUIDADO IGUAL",
+      charLowerRiskRider:"Que el riesgo sea menor no quiere decir que sea seguro. Todavía puede haber corrientes de resaca peligrosas junto a los arrecifes, los canales, las puntas y las bocas de río.",
+      defer:"Si hay un guardavidas o una bandera en la playa, eso manda sobre este mapa. Este mapa no ve el mar de hoy.",
+      axisCharacter:"Esta playa, siempre",
+      axisToday:"Hoy",
+      /* today notices */
+      todayNoSwim:"Hoy no entres al agua",
+      todayCare:"Hoy hay que tener más cuidado de lo normal",
+      todayNormal:"Hoy sin novedad",
+      todayNormalRider:"Sin novedad no quiere decir seguro. Lo que dice arriba sobre esta playa sigue valiendo.",
+      todayNone:"Nadie ha firmado un parte hoy",
+      todayNoneWhy:"Esta playa no tiene un parte de hoy. Lo que ves arriba es cómo es esta playa en general, no cómo está el mar en este momento.",
+      todaySigned:(who,org,when)=>`Firmado por ${who}, ${org}, ${when}`,
+      todayStale:h=>`Este parte tiene más de ${h} horas. El mar cambia más rápido que eso.`,
+      /* provenance, two fields following OVSICORI */
+      provAuthor:"Autor",
+      provReviewed:"Revisado",
+      authoredDesk:"escrito desde conocimiento general, sin visita al sitio",
+      authoredSheet:"leído del mapa anotado de Caribbean Guard, que no tiene fecha",
+      authoredField:"levantado en el sitio",
+      reviewedNobody:"nadie todavía",
+      reviewedBy:(who,org,when)=>`${who}, ${org}, el ${when}`,
+      charStale:d=>`Revisado hace más de ${d} días.`,
+      /* the three absences, each with its own mark and its own sentence */
+      /* Two label lengths on purpose. The card gets a word, because the picker is
+         the primary navigation and a card wide enough for a full phrase means one
+         beach fills the screen and the coast stops being scannable. The sheet,
+         where somebody has already stopped to read, gets the sentence. */
+      gapNeverTag:"Sin revisar",
+      gapNeverShort:"Sin revisar",
+      gapNever:"Nadie de Caribbean Guard ha revisado esta playa todavía. Pregunta a un guardavidas antes de entrar al mar.",
+      gapExpiredTag:"Vencida",
+      gapExpiredShort:"Revisión vencida",
+      gapExpired:"Alguien revisó esta playa, pero hace demasiado. Las condiciones pueden haber cambiado desde entonces.",
+      gapUnsurveyedTag:"Sin relevar",
+      gapUnsurveyedShort:"Fuera del relevamiento",
+      gapUnsurveyed:"Esta playa queda fuera del tramo que Caribbean Guard relevó en su mapa anotado. No hay corrientes marcadas aquí porque nadie las marcó, no porque no las haya.",
+      gapPartialTag:"En parte",
+      gapPartialShort:"Relevada en parte",
+      gapPartial:"Solo una parte de esta playa entra en el tramo que Caribbean Guard relevó. Fuera de ese tramo no hay corrientes marcadas porque nadie las marcó.",
+      /* the coast this map does not describe, as a card in the picker */
+      voidName:"El resto de la costa",
+      voidStatus:"Sin describir",
+      voidWhy:(total,zoned,surveyed)=>`Este mapa cubre ${total} km de costa. Cinco playas están descritas, y suman unos ${zoned} km. El mapa anotado de Caribbean Guard, del que salen las corrientes marcadas, cubre ${surveyed} km. El resto no está descrito ni relevado por nadie.`,
+      voidRule:"Que no haya nada dibujado en un tramo no quiere decir que ese tramo sea seguro. Quiere decir que nadie lo ha mirado.",
+      /* stations */
+      here:"Estás aquí", hours:"Equipo", station:"Estación",
+      stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo relevado. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
+      stationHolds:"Estructura fija con implementos de flotación para rescate: tubos y torpedos, caja de mecate de 200 metros, salvavidas, chaleco y silbato. Si alguien es arrastrado por el mar, cualquier persona cerca tiene con qué ayudar.",
+      /* chrome */
+      why:"Por qué", call:"Llamar al 911", route:"Cómo llegar", close:"Cerrar",
+      locating:"Buscando tu ubicación...",
+      denied:"Activa la ubicación en tu teléfono para ver dónde estás.",
+      outside:"Estás fuera de esta costa. El mapa cubre de Puerto Viejo a Manzanillo.",
+      ambiguous:"Estás entre dos playas. Toca el nombre de la playa donde estás.",
       north:"Norte, rumbo",
       compassDenied:"Sin acceso a la brújula. La flecha sigue marcando el norte.",
       compassNone:"Este dispositivo no tiene brújula. La flecha marca el norte.",
+      /* annotations */
       ripTitle:"Corriente de resaca",
       ripLen:m=>`Aproximadamente ${m} m desde la orilla`,
       ripDir:"La flecha apunta mar afuera, perpendicular a la playa. La ubicación es la que marcó Caribbean Guard; el rumbo exacto de su mapa no se pudo leer y no se afirma aquí.",
       ripWhy:"Si te agarra: no luches contra ella. Nada en paralelo a la playa hasta salir, y después hacia la orilla. Levanta el brazo y grita si necesitas ayuda.",
       areaTitle:"Zona marcada, sin definir",
       areaWhy:"El mapa de Caribbean Guard marca esta zona en rojo, pero su leyenda no dice qué significa. Podría ser una zona peligrosa o una zona segura de bañado. No la interpretes hasta que la asociación lo confirme.",
-      annotSource:"Tomado del mapa anotado de Caribbean Guard, que no tiene fecha. Pendiente de confirmación.",
-      annotCoverage:n=>`${n} corrientes mapeadas entre Chiquita y Punta Uva. El resto de la costa no está mapeada: eso no significa que sea segura.`,
-      stationHolds:"Estructura fija con implementos de flotación para rescate: tubos y torpedos, caja de mecate de 200 metros, salvavidas, chaleco y silbato. Si alguien es arrastrado por el mar, cualquier persona cerca tiene con qué ayudar.",
-      save:"Guarde esta página. La señal es débil en la playa."},
-  en:{tagline:"Coastal safety map", safe:"SWIMMING OK", caution:"CAUTION",
-      danger:"DO NOT SWIM", legendSafe:"Swim", legendCaution:"Caution", legendDanger:"No swim",
-      why:"Why", call:"Call 911", route:"Directions", locating:"Finding your location...",
+      /* the saved copy */
+      savedNever:"No guardado en este teléfono",
+      savedAt:when=>`Guardado en este teléfono · ${when}`,
+      savedNoStore:"Este navegador no guarda la página",
+      savedRefreshing:"Actualizando...",
+      savedFailed:"Sin señal. Sigues viendo la copia guardada.",
+      savedTitle:"La copia guardada",
+      savedWhatIs:"Esta página se guarda entera en tu teléfono la primera vez que la abres: el mapa, las playas y los textos. Después funciona sin señal.",
+      savedCadence:"Se actualiza sola cada vez que la abres con señal. Sin señal, ves la última copia guardada, con la fecha de arriba.",
+      savedIos:"En iPhone, si pasas como una semana usando Safari sin volver a abrir esta página, el sistema puede borrar la copia. Añadirla a la pantalla de inicio evita eso.",
+      savedInstalled:"Ya está en tu pantalla de inicio. La copia guardada se queda.",
+      savedNoSw:"Este navegador no puede guardar la página para usarla sin señal. Toma una foto de la pantalla de tu playa antes de bajar a la arena.",
+      installBtn:"Añadir a la pantalla de inicio",
+      installIos:"Para añadirla: toca el botón Compartir de Safari, abajo, y elige Añadir a inicio.",
+      installNudge:"Añade esta página a tu pantalla de inicio. Así se queda guardada en el teléfono y funciona sin señal.",
+      /* new build */
+      updateMsg:"Hay una versión más nueva de este mapa.",
+      updateGo:"Actualizar"},
+
+  en:{tagline:"Coastal safety map",
+      "no-swim":"STAY OUT OF THE WATER", "high-risk":"ONLY WITH LIFEGUARDS",
+      "conditional":"CHECK BEFORE YOU GO IN", "lower-risk":"TAKE CARE ANYWAY",
+      charLowerRiskRider:"Lower risk does not mean safe. Life threatening rip currents are still possible near reefs, channels, headlands and river mouths.",
+      defer:"If there is a lifeguard or a flag on the beach, that beats this map. This map cannot see today's sea.",
+      axisCharacter:"This beach, always",
+      axisToday:"Today",
+      todayNoSwim:"Stay out of the water today",
+      todayCare:"More care than usual today",
+      todayNormal:"Nothing unusual today",
+      todayNormalRider:"Nothing unusual does not mean safe. What it says above about this beach still applies.",
+      todayNone:"Nobody has signed a bulletin today",
+      todayNoneWhy:"There is no bulletin for this beach today. What you see above is what this beach is like in general, not what the sea is doing right now.",
+      todaySigned:(who,org,when)=>`Signed by ${who}, ${org}, ${when}`,
+      todayStale:h=>`This bulletin is more than ${h} hours old. The sea changes faster than that.`,
+      provAuthor:"Author",
+      provReviewed:"Reviewed",
+      authoredDesk:"written from general knowledge, not from a site visit",
+      authoredSheet:"read off Caribbean Guard's annotated map, which carries no date",
+      authoredField:"recorded on site",
+      reviewedNobody:"nobody yet",
+      reviewedBy:(who,org,when)=>`${who}, ${org}, on ${when}`,
+      charStale:d=>`Reviewed more than ${d} days ago.`,
+      gapNeverTag:"Not reviewed",
+      gapNeverShort:"Not reviewed",
+      gapNever:"Nobody at Caribbean Guard has reviewed this beach yet. Ask a lifeguard before you go in.",
+      gapExpiredTag:"Expired",
+      gapExpiredShort:"Review expired",
+      gapExpired:"Somebody did review this beach, but too long ago. Conditions may have changed since.",
+      gapUnsurveyedTag:"Not surveyed",
+      gapUnsurveyedShort:"Outside the survey",
+      gapUnsurveyed:"This beach falls outside the stretch Caribbean Guard surveyed on its annotated map. There are no rip currents marked here because nobody marked any, not because there are none.",
+      gapPartialTag:"Partly",
+      gapPartialShort:"Partly surveyed",
+      gapPartial:"Only part of this beach falls inside the stretch Caribbean Guard surveyed. Outside that stretch nothing is marked because nobody marked it.",
+      voidName:"The rest of the coast",
+      voidStatus:"Not described",
+      voidWhy:(total,zoned,surveyed)=>`This map covers ${total} km of coast. Five beaches are described and they add up to about ${zoned} km. Caribbean Guard's annotated map, which is where the marked rip currents come from, covers ${surveyed} km. The rest is described and surveyed by nobody.`,
+      voidRule:"A stretch with nothing drawn on it is not a stretch that is safe. It is a stretch nobody has looked at.",
+      here:"You are here", hours:"Equipment", station:"Station",
+      stationScope:"These are the four stations that appear inside the surveyed stretch. Caribbean Guard mentions nine along the whole coast. We do not know where the others are, so do not count on these being all of them.",
+      stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
+      why:"Why", call:"Call 911", route:"Directions", close:"Close",
+      locating:"Finding your location...",
       denied:"Turn on location on your phone to see where you are.",
-      outside:"You are outside this coastline. The map covers Puerto Viejo to Punta Uva.",
+      outside:"You are outside this coastline. The map covers Puerto Viejo to Manzanillo.",
       ambiguous:"You are between two beaches. Tap the name of the beach you are on.",
-      unverified:"Not verified. Caribbean Guard has not reviewed this beach yet. Ask a lifeguard before you go in.",
-      unverifiedStation:"Location taken from Caribbean Guard’s annotated map, which carries no date. Confirm the station is still there before relying on it.",
-      stale:d=>`Reviewed more than ${d} days ago. Conditions may have changed.`,
-      reviewedBy:(who,when)=>`Reviewed by ${who} on ${when}`,
-      here:"You are here", nearest:"Nearest station", hours:"Equipment",
-      station:"Station",
-      close:"Close",
       north:"North, heading",
       compassDenied:"No compass access. The arrow still points north.",
       compassNone:"This device has no compass. The arrow points north.",
       ripTitle:"Rip current",
       ripLen:m=>`About ${m} m from the shore`,
-      ripDir:"The arrow points out to sea, perpendicular to the beach. The position is Caribbean Guard’s; the exact bearing on their map could not be read and is not claimed here.",
+      ripDir:"The arrow points out to sea, perpendicular to the beach. The position is Caribbean Guard's; the exact bearing on their map could not be read and is not claimed here.",
       ripWhy:"If it catches you: do not fight it. Swim parallel to the beach until you are out of it, then back in. Raise an arm and shout if you need help.",
       areaTitle:"Marked area, meaning unclear",
       areaWhy:"Caribbean Guard's map shades this area red, but its legend does not say what that means. It could be a hazard zone or a designated safe swimming zone. Do not read it either way until the association confirms.",
-      annotSource:"Taken from Caribbean Guard's annotated map, which carries no date. Pending confirmation.",
-      annotCoverage:n=>`${n} rip currents mapped between Chiquita and Punta Uva. The rest of the coast is not mapped, which does not mean it is safe.`,
-      stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
-      save:"Save this page. Signal is weak on the beach."}
+      savedNever:"Not saved on this phone",
+      savedAt:when=>`Saved on this phone · ${when}`,
+      savedNoStore:"This browser does not save the page",
+      savedRefreshing:"Refreshing...",
+      savedFailed:"No signal. You are still seeing the saved copy.",
+      savedTitle:"The saved copy",
+      savedWhatIs:"This page saves itself onto your phone the first time you open it: the map, the beaches and the text. After that it works with no signal.",
+      savedCadence:"It refreshes itself every time you open it with signal. With no signal you see the last saved copy, dated above.",
+      savedIos:"On iPhone, if about a week of Safari use goes by without you opening this page again, the system may clear the saved copy. Adding it to your home screen prevents that.",
+      savedInstalled:"It is already on your home screen. The saved copy stays.",
+      savedNoSw:"This browser cannot save the page for use without signal. Take a screenshot of your beach before you go down to the sand.",
+      installBtn:"Add to home screen",
+      installIos:"To add it: tap Safari's Share button at the bottom, then choose Add to Home Screen.",
+      installNudge:"Add this page to your home screen. It stays saved on the phone and works with no signal.",
+      updateMsg:"There is a newer version of this map.",
+      updateGo:"Refresh"}
 };
-let lang = (navigator.language||"es").toLowerCase().startsWith("en") ? "en" : "es";
+/* Follow the phone's locale, with Spanish as the floor.
+
+   Following the locale is right: this coast is mostly read by tourists, and a
+   tourist's phone is usually in their own language. Spanish as the floor is also
+   right: Caribbean Guard is a Costa Rican organisation writing in Spanish, so an
+   unrecognised locale should land on the language of the place, not on English.
+
+   Walking `navigator.languages` rather than only `navigator.language` matters for
+   the case in between. A German phone set to ["de-DE", "en-GB"] has stated that
+   it prefers English over nothing, and we publish English, so it gets English.
+   A phone set to ["de-DE"] alone has stated no preference we can honour, and
+   falls to Spanish. That is a preference being respected in the first case and a
+   fallback being applied in the second, which are different things.
+
+   The two-language check is deliberately explicit rather than
+   `startsWith("en") ? "en" : "es"`. That earlier form silently sent every
+   non-English locale to Spanish, which happens to be the same answer most of the
+   time and for the wrong reason. */
+function pickLang(){
+  const tags = (navigator.languages && navigator.languages.length)
+    ? navigator.languages
+    : [navigator.language || ""];
+  for(const tag of tags){
+    const base = String(tag).toLowerCase().split("-")[0];
+    if(base === "en") return "en";
+    if(base === "es") return "es";
+  }
+  return "es";   // the floor, and it is the language of the coast
+}
+let lang = pickLang();
 
 /* Map graphics drawn straight onto photography, so the job
-   here is separating the three statuses FROM EACH OTHER rather than from a page
+   here is separating the three tiers FROM EACH OTHER rather than from a page
    background. They are separated by brightness, not hue, because hue is the first
    thing a sun-washed screen loses:
-       caution  L 0.545   ---- 3.19:1 ----+
-       safe     L 0.251   -- 1.98:1 --+   |
-       danger   L 0.137   -- 1.52:1 --+---+
-   The dark #9C5C00 caution is deliberately NOT used here: against danger it
+       moderate  L 0.545   ---- 3.19:1 ----+
+       low       L 0.251   -- 1.98:1 --+   |
+       high      L 0.137   -- 1.52:1 --+---+
+   The dark #9C5C00 moderate is deliberately NOT used here: against high it
    measures 1.06:1, which on a map line is indistinguishable. It stays reserved
    for text and dots on white, where it is the value that passes 4.5:1. */
-const COLOR = {safe:"#1f9d55", caution:"#f5b942", danger:"#c62828"};
+const COLOR = {low:"#1f9d55", moderate:"#f5b942", high:"#c62828"};
+
+/* ============================================================
+   3. THE TWO AXES, AND THE THREE WAYS OF NOT KNOWING
+
+   Absence gets drawn, never hidden. Safeswim publishes eleven pin types and two
+   of them are kinds of not knowing: grey means the feed broke, and a separate
+   "water safety information only" pin means this beach was never in the
+   programme at all. Different facts, different marks.
+
+   Ours has three, and they can co-occur, so they render as a STACK of marks and
+   never as one banner:
+
+     never       nobody at Caribbean Guard has ever reviewed this beach
+     expired     somebody did, too long ago
+     unsurveyed  this stretch is outside the annotated sheet the hazards came off
+
+   The third is the one that matters most and it was the one least visible: the
+   sheet covers 1.86 km of 16.66 km, and the map used to say so in a toast that
+   fired six seconds after load and then vanished. An absence rendered as nothing
+   is indistinguishable from an absence of hazard, which is the precise misreading
+   the coverage caveat exists to prevent. It is now a permanent card in the picker
+   and a permanent mark on every beach it applies to.
+   ============================================================ */
+
+/* The stretch Caribbean Guard's annotated sheet actually covers, in longitude.
+   Seeded from the shipped data so the picker can render before the fetch
+   resolves, then recomputed from the fetched features so it can never drift from
+   what is drawn. The coast runs broadly east to west, so a longitude interval is
+   the right shape for this and a bounding box would overstate it. */
+let SURVEY = {w:-82.724144, e:-82.707199};
+
+function surveyRelation(z){
+  const lons = z.line.map(p=>p[1]);
+  const lo = Math.min(...lons), hi = Math.max(...lons);
+  if(hi < SURVEY.w || lo > SURVEY.e) return "out";
+  if(lo >= SURVEY.w && hi <= SURVEY.e) return "in";
+  return "partial";
+}
+
+/* Days elapsed since a YYYY-MM-DD, built in LOCAL time.
+   new Date("2026-07-01") parses as UTC midnight, and formatting that anywhere
+   west of Greenwich renders the previous day, so a review dated the 1st displayed
+   as 30 June. On fields whose entire purpose is saying when, an off by one day is
+   not acceptable. */
+function localDate(ymd){
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function fmtDate(d){
+  return d.toLocaleDateString(lang === "es" ? "es-CR" : "en-GB",
+                              {year:"numeric", month:"long", day:"numeric"});
+}
+function fmtStamp(d){
+  return d.toLocaleString(lang === "es" ? "es-CR" : "en-GB",
+                          {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
+}
+
+/* ---- axis 1: character ---- */
+function characterState(z){
+  const r = z.character.reviewed;
+  if(!r) return {gap:"never"};
+  const on = localDate(r.on);
+  const days = Math.floor((Date.now() - on.getTime()) / 86400000);
+  return days > CHARACTER_VALID_DAYS
+    ? {gap:"expired", reviewed:r, on, days}
+    : {reviewed:r, on, days};
+}
+
+/* ---- axis 2: today ---- */
+function todayState(z){
+  const t = z.today;
+  if(!t) return null;
+  const at = new Date(t.at);
+  const hours = (Date.now() - at.getTime()) / 3600000;
+  return {notice:t.notice, at, hours, stale: hours > TODAY_VALID_HOURS, rec:t};
+}
+/* Only a signed, unexpired notice draws on the map, and `normal` draws nothing:
+   "a guard looked and found nothing unusual" adds no mark, because the mark would
+   read as an all clear and that is not what it says. */
+function todayHalo(z){
+  const s = todayState(z);
+  if(!s || s.stale || s.notice === "normal") return null;
+  return "#7b1fa2";
+}
+
+/* ---- the three absences, as data ---- */
+function absences(z){
+  const t = T[lang], out = [];
+  const c = characterState(z);
+  //                 css            mark   card tag           sheet heading + sentence
+  if(c.gap === "never")
+    out.push({css:"never",      mk:"?", tag:t.gapNeverTag,      short:t.gapNeverShort,      long:t.gapNever});
+  if(c.gap === "expired")
+    out.push({css:"expired",    mk:"!", tag:t.gapExpiredTag,    short:t.gapExpiredShort,    long:t.gapExpired});
+  const rel = surveyRelation(z);
+  if(rel === "out")
+    out.push({css:"unsurveyed", mk:"⌀", tag:t.gapUnsurveyedTag, short:t.gapUnsurveyedShort, long:t.gapUnsurveyed});
+  if(rel === "partial")
+    out.push({css:"unsurveyed", mk:"◐", tag:t.gapPartialTag,    short:t.gapPartialShort,    long:t.gapPartial});
+  return out;
+}
+
+/* One row of marks on the card: a signed bulletin first if there is one, then
+   every absence that applies. One container, so a beach that is both unreviewed
+   and unsurveyed shows two marks side by side rather than two stacked rows. */
+function cardChips(z){
+  const t = T[lang], s = todayState(z);
+  const chips = [];
+  if(s && !s.stale)
+    chips.push(`<span class="gap today"><span class="mk" aria-hidden="true">●</span>${t.axisToday}</span>`);
+  absences(z).forEach(a=>
+    chips.push(`<span class="gap ${a.css}"><span
+      class="mk" aria-hidden="true">${a.mk}</span>${a.tag}</span>`));
+  return chips.length ? `<span class="gaps">${chips.join("")}</span>` : "";
+}
+function gapList(z){
+  const g = absences(z);
+  if(!g.length) return "";
+  return `<ul class="gaplist">${g.map(a=>
+    `<li class="${a.css}">
+       <span class="mk" aria-hidden="true">${a.mk}</span>
+       <span><b>${a.short}</b>${a.long}</span>
+     </li>`).join("")}</ul>`;
+}
+
+/* ---- provenance, two fields, following OVSICORI ----
+   Autor and Revisado are different claims and they render as different rows.
+   Collapsing them is how a machine reading of a published graphic gets read as a
+   lifeguard's word. The empty review state renders visibly rather than hiding:
+   theirs prints a bare "-", ours says who is missing. */
+function provenance(rec){
+  const t = T[lang];
+  const authored = t["authored" + rec.authored.charAt(0).toUpperCase() + rec.authored.slice(1)];
+  const r = rec.reviewed;
+  let reviewed, stale = "";
+  if(!r){
+    reviewed = t.reviewedNobody;
+  } else {
+    const on = localDate(r.on);
+    const days = Math.floor((Date.now() - on.getTime()) / 86400000);
+    reviewed = t.reviewedBy(r.by, r.org, fmtDate(on));
+    if(days > CHARACTER_VALID_DAYS) stale = " " + t.charStale(CHARACTER_VALID_DAYS);
+  }
+  return `<p class="prov${!r || stale ? " unverified" : ""}">
+    <span class="row"><b>${t.provAuthor}:</b> ${authored}</span>
+    <span class="row"><b>${t.provReviewed}:</b> ${reviewed}${stale}</span>
+  </p>`;
+}
+
+/* ---- the today block, always rendered, including when it is empty ----
+   Rendered empty and grey rather than empty and amber. Nobody signing a bulletin
+   is the ordinary state on 16 km of coast run by one association, and an amber
+   alarm shown every single day teaches people that amber means nothing. */
+function todayBlock(z){
+  const t = T[lang], s = todayState(z);
+  if(!s){
+    return `<p class="axis">${t.axisToday}</p>
+      <div class="today none">
+        <p class="verdict"><span class="badge">${t.axisToday}</span>${t.todayNone}</p>
+        <p class="stamp">${t.todayNoneWhy}</p>
+      </div>`;
+  }
+  const label = {"no-swim":t.todayNoSwim, "care":t.todayCare, "normal":t.todayNormal}[s.notice];
+  const rider = s.notice === "normal" ? `<p class="rider">${t.todayNormalRider}</p>` : "";
+  const old   = s.stale ? `<p class="rider">${t.todayStale(TODAY_VALID_HOURS)}</p>` : "";
+  return `<p class="axis">${t.axisToday}</p>
+    <div class="today signed${s.stale ? " stale" : ""}">
+      <p class="verdict"><span class="badge">${t.axisToday}</span>${label}</p>
+      <p class="stamp">${t.todaySigned(s.rec.by, s.rec.org, fmtStamp(s.at))}</p>
+      ${old}${rider}
+    </div>`;
+}
 
 /* ---------- map ---------- */
 const BB = L.latLngBounds(IMG_BOUNDS);
@@ -483,8 +1141,39 @@ map.attributionControl.setPrefix("").addAttribution("Caribbean Guard");
 function chrome(){
   return {
     top: (document.querySelector(".topbar")?.offsetHeight || 64) + 8,
-    bot: (document.querySelector(".picker")?.offsetHeight || 96) + 8
+    // the dock, not the picker: the saved-copy bar sits above the cards inside it
+    bot: (document.querySelector(".dock")?.offsetHeight || 96) + 8
   };
+}
+
+/* The chrome must never be allowed to consume the viewport.
+
+   getBoundsZoom() subtracts the padding from the map size. Hand it a padding
+   larger than the map and the scale it computes is garbage, which Leaflet then
+   clamps to maxZoom. That garbage becomes the zoom floor via setMinZoom(), and
+   every branch below lands on it. Measured before this clamp existed: a 400x200
+   viewport, where the topbar and dock total 216 px, drew the 744 px coast at
+   28,299 px wide, a 38x overzoom that is stable rather than transient because the
+   floor has latched.
+
+   That is reachable two ways. A genuinely short landscape window, and, more
+   importantly, the middle of a phone rotation: the viewport passes through very
+   short intermediate shapes, and the refit fires immediately on rotation by
+   design, so it fires straight into one.
+
+   Capping total padding at 60 percent of the axis means the dock may overlap the
+   map on a very short window. That is strictly better than the map being
+   unreadable, and it only ever engages below about 360 px of height. */
+function fitPadding(){
+  const c = chrome(), size = map.getSize();
+  let top = c.top, bot = c.bot;
+  const capY = size.y * 0.6;
+  if(top + bot > capY && top + bot > 0){
+    const k = capY / (top + bot);
+    top = Math.floor(top * k);
+    bot = Math.floor(bot * k);
+  }
+  return {top, bot, x: Math.min(8, size.x * 0.3)};
 }
 /* Wide viewports COVER, narrow ones CONTAIN, and the difference is not cosmetic.
 
@@ -499,11 +1188,45 @@ function chrome(){
    still pan the background into view without zooming at all. */
 function wide(){ return window.matchMedia("(min-width:760px) and (orientation:landscape)").matches; }
 
-function fitCoast(){
-  const c = chrome();
-  // Clear the floor first. getBoundsZoom clamps its own result to the current
+/* `keepView` is passed by the resize path and by nothing else.
+
+   A viewport change always has to recompute the zoom floor, the backdrop and the
+   pan limit, because all three are derived from what the viewport can reach. It
+   does NOT have to move the camera. Somebody who has zoomed into Cocles and then
+   rotates the phone wants to still be looking at Cocles: refitting the whole
+   coast under them throws away the thing they navigated to, which on a 16 km
+   strip means finding their beach again. So the limits are always recomputed and
+   the camera is only reset when it was sitting at the floor anyway, where a
+   refit is exactly what is wanted. */
+function fitCoast(opts){
+  const keepView = !!(opts && opts.keepView);
+  const hadZoom = map.getZoom(), hadCentre = map.getCenter();
+
+  /* Refresh Leaflet's cached container size FIRST, before anything reads it.
+     Leaflet caches the container size in map._size and only recomputes it in
+     invalidateSize(). Without this line getSize(), getBoundsZoom(), fitBounds()
+     and sizeBackdrop() all compute against the viewport as it was at load, so
+     rotating a phone to landscape left a 1052 px wide image inside a 502 px
+     viewport. On a 3:1 coast, rotating to see more of it is the most natural
+     gesture there is, and it produced a dark blurred rectangle with no
+     coastline. Do not remove this. */
+  map.invalidateSize({animate:false, pan:false});
+
+  /* Release the pan limit BEFORE fitting, and only then recompute it.
+     maxBounds is derived from the backdrop, which is itself sized for the
+     viewport that was current when it was last computed. Leaving the old limit
+     in force means fitBounds gets dragged back toward the previous viewport's
+     centre, and because each fit then starts from an already-displaced centre
+     the error compounds: successive resizes walked the map to y=1350, entirely
+     below the fold. */
+  map.setMaxBounds(null);
+
+  // Clear the floor too. getBoundsZoom clamps its own result to the current
   // minZoom, so setting minZoom from it ratchets upward on every call and the
   // map slowly loses the ability to show the whole coast.
+  // Read whether the user was at the floor BEFORE clearing it, or the comparison
+  // is against 0 and every view looks zoomed in.
+  const wasAtFloor = Math.abs(hadZoom - map.getMinZoom()) < 0.01;
   map.setMinZoom(0);
 
   // Contain everywhere. Seeing all 16.6 km at once is worth more than never
@@ -511,13 +1234,20 @@ function fitCoast(){
   // which beach you are looking at, and a cover fit on this 3:1 strip zooms in
   // far enough to lose that on every viewport shape. The empty bands are the
   // app's own navy, so they read as a deliberate letterbox rather than a gap.
-  const pad = L.point(8, c.top).add(L.point(8, c.bot));
+  // Padding is read AFTER invalidateSize, because it is clamped against the map
+  // size and that size has just changed.
+  const c = fitPadding();
+  const pad = L.point(c.x, c.top).add(L.point(c.x, c.bot));
   // Derive the floor from getBoundsZoom, NOT from getZoom() after fitBounds.
   // fitBounds animates, so on the next line getZoom() is still the OLD zoom and
   // the floor lands above the fit: the map then sits below its own minimum and
   // snaps upward on the first interaction.
-  const z = map.getBoundsZoom(BB, false, pad);
-  map.fitBounds(BB, {paddingTopLeft:[8, c.top], paddingBottomRight:[8, c.bot]});
+  let z = map.getBoundsZoom(BB, false, pad);
+  // Belt and braces. fitPadding() makes a degenerate padding impossible, but a
+  // non-finite floor here would latch into setMinZoom and poison every later
+  // fit, so it is worth one line to never store one.
+  if(!isFinite(z)) z = map.getBoundsZoom(BB, false, L.point(0, 0));
+
   // No slack below the fit. Zooming out past the whole coast only ever buys more
   // empty space, so the floor IS the fit.
   map.setMinZoom(z);
@@ -528,6 +1258,39 @@ function fitCoast(){
   // zone the user just asked about ends up behind the sheet. The backdrop is
   // large enough to absorb that offset and there is no flat fill inside it.
   map.setMaxBounds(backdrop.getBounds());
+
+  if(keepView && !wasAtFloor){
+    // Limits rebuilt for the new viewport, camera left where the user put it.
+    // Math.max because the new floor can be HIGHER than the old zoom: rotating a
+    // phone to landscape raised the floor from 12 to 12.75 here, and leaving the
+    // camera below its own minimum is the bug the getBoundsZoom comment above
+    // describes. setMaxBounds has already been applied, so an off-limit centre is
+    // clamped by Leaflet rather than by us.
+    map.setView(hadCentre, Math.max(hadZoom, z), {animate:false});
+
+    /* Safety net, and it is the whole point of this function.
+
+       maxBounds is the BACKDROP rather than the image, deliberately, so that
+       flyClear can offset the centre off the image to clear the bottom sheet.
+       The backdrop is sized for the viewport at the ZOOM FLOOR, so it is enormous
+       in geographic terms, and a centre that is a harmless few pixels off the
+       image at the floor is thousands of pixels off it when zoomed in. Rotating
+       from that state left the coast 2,900 px above the viewport: measured, box
+       [-235, -2925, 742, -2257] in an 845x502 window.
+
+       So preserving the view is conditional on the view still containing some
+       coast. If keeping it would show nothing but blurred backdrop, it is not a
+       view worth keeping, and the whole coast is strictly better than a blank
+       rectangle. This makes "the map is gone" structurally unreachable from any
+       viewport change, rather than fixed one cause at a time. */
+    if(map.getBounds().intersects(BB)) return;
+  }
+  // animate:false because this is a layout correction, not a journey. An
+  // animated refit during a rotation is a camera moving under somebody's thumb,
+  // and it also leaves the map in an intermediate state that nothing can assert
+  // against.
+  map.fitBounds(BB, {paddingTopLeft:[c.x, c.top], paddingBottomRight:[c.x, c.bot],
+                     animate:false});
 }
 /* Stretch the backdrop to cover whatever the viewport can reach at the zoom
    floor, computed rather than guessed: a portrait phone leaves bands several
@@ -549,23 +1312,101 @@ fitCoast();
 // after the opening fit has finished animating, not immediately: fitBounds emits
 // zoomend asynchronously, so arming synchronously still catches its own event
 map.whenReady(()=>setTimeout(armBaseUpgrade, 400));
-window.addEventListener("resize", fitCoast);
 
-/* Pattern and weight carry the status independently of colour, so the map still
+/* Refit on anything that changes the viewport, debounced.
+
+   `resize` alone is not enough coverage. iOS Safari fires `orientationchange`
+   and then reports the OLD innerHeight for a frame or two, so a refit scheduled
+   off that event measures the pre-rotation viewport and lands wrong; hence the
+   trailing second pass. `visualViewport` covers the on-screen keyboard and the
+   collapsing address bar, which resize does not reliably report on mobile.
+
+   ROTATION IS NOT DEBOUNCED, and that is the point.
+
+   A drag-resize on a desktop fires continuously and the intermediate sizes are
+   meaningless, so it waits. A rotation is one discrete event whose intermediate
+   size is the OLD one, and every millisecond spent waiting is a millisecond the
+   coast is drawn at the previous orientation's width. Measured at a 150 ms
+   debounce: 120 ms after rotating to landscape the strip was still 442 px wide in
+   an 846 px viewport, reaching its correct 744 px only by 300 ms. Nobody rotates
+   this map to recentre it; they rotate it to get more coast, so the thing they
+   asked for must not be the thing that lags. */
+let refitTimer = null, refitTrailing = null, rotateUntil = 0;
+function runRefit(){
+  measureDock(false);   // update --dock-h, do not let it fit as well
+  fitCoast({keepView:true});
+}
+function refit(delay){
+  // A rotation also emits `resize`, in either order and sometimes twice. While
+  // a rotation is in flight every viewport event belongs to it, so none of them
+  // may reintroduce the delay.
+  clearTimeout(refitTimer);
+  refitTimer = setTimeout(runRefit, Date.now() < rotateUntil ? 0 : delay);
+}
+window.addEventListener("resize", ()=>refit(150));
+window.addEventListener("orientationchange", ()=>{
+  rotateUntil = Date.now() + 800;
+  refit(0);
+  // iOS Safari reports the old innerHeight for a frame or two after this event,
+  // so the immediate pass can land on stale metrics. Run again once it settles.
+  clearTimeout(refitTrailing);
+  refitTrailing = setTimeout(runRefit, 500);
+});
+if(window.visualViewport) window.visualViewport.addEventListener("resize", ()=>refit(150));
+
+/* Watch the CONTAINER, not only the window, and this is the one that closes the
+   load-during-resize case.
+
+   The opening fit runs inline at parse time, against whatever the container
+   measured at that instant. If the window is still being resized while the page
+   is coming up, that measurement is of a viewport that no longer exists by the
+   time anything is painted, and no `resize` event necessarily follows, because
+   the resize was already in progress before any listener was attached. The map
+   then sits at the wrong scale and offset until a reload: measured in a real
+   Chrome window, the base landed at y=1278 in a 932 tall viewport, showing only
+   the blurred backdrop.
+
+   That is not a hypothetical. Rotating a phone while the page is still loading
+   on weak signal is exactly the case, and weak signal is the condition this map
+   is built for.
+
+   A ResizeObserver reports the container's box whenever it changes, including
+   changes that happened before it was attached, so the first callback is itself
+   the correction. It also covers the mobile address bar collapsing, which
+   `resize` reports inconsistently. It cannot loop: `#map` is `position:absolute;
+   inset:0`, so fitting the map never changes the container's size. */
+if(window.ResizeObserver){
+  let seenFirst = false;
+  new ResizeObserver(()=>{
+    // The first callback fires on observe with the current box. Take it
+    // immediately rather than debounced, because during load it IS the fix.
+    refit(seenFirst ? 150 : 0);
+    seenFirst = true;
+  }).observe(document.getElementById("map"));
+}
+// Belt and braces for browsers without ResizeObserver, and for a viewport that
+// settles after the document finishes loading.
+window.addEventListener("load", ()=>refit(0));
+
+/* Pattern and weight carry the tier independently of colour, so the map still
    works in sunlight, on a cheap screen, and for the 1 in 12 men who cannot
    separate red from green.
 
    The polarity here is deliberate and it is the reverse of what this file used to
-   do. It previously drew danger as a fine dotted line and safe as a solid one,
-   which made the most dangerous thing on the map the faintest mark on it. Every
-   convention a tourist already carries, road markings, hazard tape, warning
-   signage, says the loud mark is the dangerous one. So danger is now the heaviest
-   and most solid, and safe is the lightest. At a glance the map should shout
-   danger and merely note safety, not the other way round. */
+   do. It previously drew the worst tier as a fine dotted line and the best as a
+   solid one, which made the most dangerous thing on the map the faintest mark on
+   it. Every convention a tourist already carries, road markings, hazard tape,
+   warning signage, says the loud mark is the dangerous one. So high is now the
+   heaviest and most solid, and low is the lightest. At a glance the map should
+   shout hazard and merely note its absence, not the other way round.
+
+   These three carry the CHARACTER, which is a property of the place. A bulletin a
+   guard signed this morning is a property of the moment, so it never recolours
+   these: it draws its own halo underneath. See todayHalo(). */
 const STROKE = {
-  danger:  {weight:11, dash:null},     // heaviest, unbroken: a wall
-  caution: {weight:8,  dash:"16 10"},  // broken: proceed with care
-  safe:    {weight:5,  dash:"2 8"}     // lightest: a suggestion, not a promise
+  high:     {weight:11, dash:null},     // heaviest, unbroken: a wall
+  moderate: {weight:8,  dash:"16 10"},  // broken: proceed with care
+  low:      {weight:5,  dash:"2 8"}     // lightest: a note, not a promise
 };
 
 /* Stroke weight and dash length are a function of zoom, not constants.
@@ -579,8 +1420,8 @@ const STROKE = {
    Both scale, and the RATIO between the three weights is preserved at every
    zoom, because that ranking is the thing doing the work: the loudest mark is
    always the most dangerous one. */
-function zoneStroke(status){
-  const base = STROKE[status];
+function zoneStroke(tier){
+  const base = STROKE[tier];
   const t = Math.max(0, Math.min(1, (map.getZoom() - 11.5) / 5.5));
   // 0.42x at the whole-coast view, 1.5x on a single beach. The low end matters
   // more than it looks: on a portrait phone the strip is only about 130 px tall,
@@ -603,83 +1444,109 @@ function restyleZones(){
   if(!zonesReady) return;
   ZONES.forEach(z=>{
     const l = layers[z.id]; if(!l) return;
-    const st = zoneStroke(z.status);
+    const st = zoneStroke(tierOf(z));
     l.line.setStyle({weight: st.weight * (l.current ? 1.25 : 1),
                      dashArray: st.dashArray || null});
+    if(l.halo) l.halo.setStyle({weight: st.weight * 2.4 + 6});
   });
 }
 
 /* ---------- draw zones ---------- */
 const layers = {};
 ZONES.forEach(z=>{
+  const g = L.layerGroup().addTo(map);
+  const st0 = zoneStroke(tierOf(z));
+
+  /* A bulletin signed today draws UNDER the character stroke, never over it and
+     never instead of it. If a guard signs "stay out today" at Punta Uva, the map
+     has to shout, but recolouring the line would erase the standing character the
+     moment somebody signed one calm morning, which is the exact conflation the
+     two axis split exists to undo. A halo is additive: both claims stay legible
+     and the character stroke stays on top. */
+  const halo = todayHalo(z);
+  let haloLayer = null;
+  if(halo){
+    haloLayer = L.polyline(z.line,{color:halo, weight:st0.weight * 2.4 + 6,
+                                   opacity:.5, lineCap:"round"}).addTo(g);
+  }
+
   // No casing. A translucent white stroke under every line read as a grey
   // sausage the colour sat inside, which is worse than the legibility problem it
   // was there to solve. The strokes carry their own contrast: the map darkens
   // under them instead (see .leaflet-overlay-pane filter).
-  const st0 = zoneStroke(z.status);
-  const line = L.polyline(z.line,{color:COLOR[z.status],
+  const line = L.polyline(z.line,{color:COLOR[tierOf(z)],
                                   weight:st0.weight,
                                   dashArray:st0.dashArray || null,
-                                  opacity:1,lineCap:"round"});
-  const g = L.layerGroup([line]).addTo(map);
+                                  opacity:1,lineCap:"round"}).addTo(g);
   const hit = L.polyline(z.line,{color:"#000",weight:44,opacity:0}).addTo(g);
   hit.on("click",()=>openZone(z));
-  layers[z.id]={line};
+  layers[z.id]={line, halo:haloLayer};
 });
 zonesReady = true;
 map.on("zoomend", restyleZones);
 restyleZones();
 
+const postMarkers = {};
 POSTS.forEach(p=>{
   const icon = L.divIcon({className:"", html:`<div class="po ${p.kind}">${p.n}</div>`,
     iconSize:[30,30], iconAnchor:[15,15]});
-  L.marker(p.ll,{icon}).addTo(map).on("click",()=>openPost(p));
+  postMarkers[p.id] = L.marker(p.ll,{icon}).addTo(map).on("click",()=>openPost(p));
 });
+
+/* Move the markers onto the authoritative geometry once it arrives, and say so
+   if the inline fallback had drifted. Silent preference for one of two copies is
+   how the duplicate went unnoticed for as long as it did. */
+function joinStations(gj){
+  gj.features.forEach(f=>{
+    if(f.properties.kind !== "rescue_station") return;
+    const p = POSTS.find(x=>x.id === f.id);
+    if(!p){ console.warn("[cg] station in the data with no copy here:", f.id); return; }
+    const ll = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+    const drift = map.distance(p.ll, ll);
+    if(drift > 1) console.warn(`[cg] ${f.id}: fallback is ${drift.toFixed(1)} m from the data. Update the ll in POSTS.`);
+    p.ll = ll;
+    postMarkers[p.id].setLatLng(ll);
+  });
+  const missing = POSTS.filter(p=>!gj.features.some(f=>f.id === p.id));
+  if(missing.length) console.warn("[cg] stations with no record in the data:", missing.map(p=>p.id));
+}
 
 /* ---------- bottom sheet ---------- */
 const sheet = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
 document.getElementById("sheet-close").onclick = ()=>sheet.classList.remove("open");
 
-/* Who said this, and when. Rendered on every verdict, never omitted.
+/* The sheet renders TODAY first and CHARACTER second, and labels both.
 
-   A map that says DO NOT SWIM has to be able to say who decided that and when,
-   and the honest answer today is nobody. Saying so out loud costs some of the
-   artifact's authority, and that is the correct trade: an organization that
-   admits what it has not checked is more trustworthy than one that implies it
-   has checked everything. It also turns the claim from a guarantee into a
-   timestamped observation, which is the difference that matters if this is ever
-   read back to somebody after an accident. */
-function provenance(z, kind){
-  const t=T[lang];
-  if(!z.reviewed){
-    const msg = kind === "station" ? t.unverifiedStation : t.unverified;
-    return `<p class="prov unverified">${msg}</p>`;
-  }
-  // Build the date in LOCAL time. new Date("2026-07-01") parses as UTC midnight,
-  // and formatting that anywhere west of Greenwich renders the previous day, so a
-  // review dated the 1st displayed as "30 June". On the one field whose entire
-  // purpose is saying when, an off-by-one day is not acceptable.
-  const [yy, mm, dd] = z.reviewed.on.split("-").map(Number);
-  const on = new Date(yy, mm - 1, dd);
-  const days = Math.floor((Date.now() - on.getTime()) / 86400000);
-  const when = on.toLocaleDateString(lang==="es"?"es-CR":"en-GB",
-                        {year:"numeric", month:"long", day:"numeric"});
-  const line = t.reviewedBy(z.reviewed.by, when);
-  return days > REVIEW_VALID_DAYS
-    ? `<p class="prov unverified">${line}. ${t.stale(REVIEW_VALID_DAYS)}</p>`
-    : `<p class="prov">${line}</p>`;
-}
+   Today first because it is the more perishable claim and the one somebody is
+   about to act on. Character second because it is what survives when nobody has
+   signed anything, which is the state all five beaches are in right now.
 
+   A map that says NOT A SWIMMING AREA has to be able to say who decided that and
+   when, and the honest answer today is nobody. Saying so out loud costs some of
+   the artefact's authority, and that is the correct trade: an organisation that
+   admits what it has not checked is more trustworthy than one that implies it has
+   checked everything. It also turns the claim from a guarantee into a timestamped
+   observation, which is the difference that matters if this is ever read back to
+   somebody after an accident. */
 function openZone(z){
-  const t=T[lang];
+  const t = T[lang], c = z.character;
+  const rider = c.class === "lower-risk"
+    ? `<p class="caveat">${t.charLowerRiskRider}</p>` : "";
+  const caveats = (c.caveats || [])
+    .map(cv=>`<p class="caveat">${cv[lang]}</p>`).join("");
   sheetBody.innerHTML = `
-    <span class="status ${z.status}">${t[z.status]}</span>
     <h2>${z.name[lang]}</h2>
     <p class="sub">${z.sub[lang]}</p>
-    <p class="why">${z.why[lang]}</p>
-    ${provenance(z)}
-    <ul class="facts">${z.facts[lang].map(f=>`<li><span class="ic">•</span><span>${f}</span></li>`).join("")}</ul>
+    ${todayBlock(z)}
+    <p class="axis">${t.axisCharacter}</p>
+    <span class="status ${tierOf(z)}">${t[c.class]}</span>
+    <p class="why">${c.why[lang]}</p>
+    ${rider}${caveats}
+    <p class="defer">${t.defer}</p>
+    ${provenance(c)}
+    ${gapList(z)}
+    <ul class="facts">${c.facts[lang].map(f=>`<li><span class="ic">•</span><span>${f}</span></li>`).join("")}</ul>
     <div class="actions">
       <a class="btn primary" href="tel:911">${t.call}</a>
       <a class="btn" target="_blank" rel="noopener"
@@ -688,7 +1555,31 @@ function openZone(z){
   sheet.classList.add("open");
   markCurrent(z.id);
   flyClear(L.latLngBounds(z.line).pad(0.55));
-  history.replaceState(null,"","?z="+z.id);
+  history.replaceState(null,"","?z=" + localId(z.id));
+}
+
+/* The coast this map does not describe, opened from its own card in the picker.
+   Every number in it is computed from the data that is actually loaded, so it
+   cannot drift from what is drawn. */
+function openVoid(){
+  const t = T[lang];
+  const km = m => (m / 1000).toFixed(m < 3000 ? 2 : 1);
+  const total = map.distance([9.646, IMG_BOUNDS[0][1]], [9.646, IMG_BOUNDS[1][1]]);
+  const zoned = ZONES.reduce((sum, z) =>
+    sum + z.line.slice(1).reduce((s, p, i) => s + map.distance(z.line[i], p), 0), 0);
+  const surveyed = map.distance([9.643, SURVEY.w], [9.643, SURVEY.e]);
+  sheetBody.innerHTML = `
+    <span class="status" style="background:var(--void)">${t.voidStatus}</span>
+    <h2>${t.voidName}</h2>
+    <p class="why">${t.voidWhy(km(total), km(zoned), km(surveyed))}</p>
+    <p class="caveat">${t.voidRule}</p>
+    <p class="defer">${t.defer}</p>
+    <div class="actions">
+      <a class="btn primary wide" href="tel:911">${t.call}</a>
+    </div>`;
+  sheet.classList.add("open");
+  markCurrent(null);
+  history.replaceState(null, "", location.pathname);
 }
 
 /* Fly so the subject lands in the strip the sheet is NOT covering. Without this
@@ -711,7 +1602,8 @@ function openPost(p){
     <h2>${p.name[lang]}</h2>
     <p class="sub">${p.hours[lang]}</p>
     <p class="why">${t.stationHolds}</p>
-    ${provenance(p, "station")}
+    <p class="caveat">${t.stationScope}</p>
+    ${provenance(p)}
     <div class="actions">
       <a class="btn primary" href="tel:911">${t.call}</a>
       <a class="btn" target="_blank" rel="noopener"
@@ -719,7 +1611,7 @@ function openPost(p){
     </div>`;
   sheet.classList.add("open");
   flyClear(L.latLngBounds([p.ll]).pad(0.002), {maxZoom:16.5});
-  history.replaceState(null,"","?p="+p.id);
+  history.replaceState(null,"","?p=" + localId(p.id));
 }
 
 /* ---------- beach picker ----------
@@ -732,26 +1624,41 @@ function openPost(p){
    never reference them anywhere, which meant the pattern vocabulary existed on
    the map but was taught nowhere. A user cannot learn that solid means stop if
    nothing ever tells them. */
-function swatch(status){
-  const s = STROKE[status];   // the card shows the reference weights, not the
+function swatch(tier){
+  const s = STROKE[tier];     // the card shows the reference weights, not the
                               // current zoom's, so the legend stays stable
   return `<svg class="sw" width="26" height="12" viewBox="0 0 26 12" aria-hidden="true" focusable="false">
-    <line x1="1" y1="6" x2="25" y2="6" stroke="${COLOR[status]}"
+    <line x1="1" y1="6" x2="25" y2="6" stroke="${COLOR[tier]}"
           stroke-width="${Math.max(3, s.weight * 0.6)}" stroke-linecap="round"
           ${s.dash ? `stroke-dasharray="${s.dash.split(" ").map(n=>+n*0.6).join(" ")}"` : ""}/>
   </svg>`;
 }
 
 function buildPicker(){
-  const t=T[lang];
-  document.getElementById("picker").innerHTML = ZONES.map(z=>`
+  const t = T[lang];
+  // Character on the card, because the character is what the map stroke says and
+  // the card is the legend for the stroke. A signed bulletin adds a mark; it
+  // never replaces the character label.
+  const cards = ZONES.map(z=>`
     <button class="card" data-id="${z.id}" aria-current="false">
       <span class="nm">${z.name[lang]}</span>
-      <span class="st ${z.status}">${swatch(z.status)}${t[z.status]}</span>
+      <span class="st ${tierOf(z)}">${swatch(tierOf(z))}${t[z.character.class]}</span>
+      ${cardChips(z)}
     </button>`).join("");
+  // The absence, listed as a peer of the presences. Last, because it is the rest.
+  const voidCard = `<button class="card void" data-id="void" aria-current="false">
+      <span class="nm">${t.voidName}</span>
+      <span class="st">${t.voidStatus}</span>
+    </button>`;
+  document.getElementById("picker").innerHTML = cards + voidCard;
   document.querySelectorAll(".card").forEach(c=>{
-    c.onclick=()=>openZone(ZONES.find(z=>z.id===c.dataset.id));
+    c.onclick = c.dataset.id === "void"
+      ? openVoid
+      : ()=>openZone(ZONES.find(z=>z.id === c.dataset.id));
   });
+  // after layout, not during it: offsetHeight read in the same frame as the
+  // innerHTML write returns the height of the markup that has not been laid out
+  requestAnimationFrame(measureDock);
 }
 function markCurrent(id){
   document.querySelectorAll(".card").forEach(c=>{
@@ -763,6 +1670,31 @@ function markCurrent(id){
     o.line.setStyle({opacity: k===id ? 1 : .55}));
   Object.entries(layers).forEach(([k,o])=>{ o.current = (k===id); });
   restyleZones();
+}
+
+/* The dock's height is not a constant and it is not knowable up front: it grows
+   when the saved-copy bar appears and when a card grows absence marks. Two things
+   depend on it. The fab and the compass stack above it, and fitCoast() pads the
+   letterbox by it, so a dock that grows after the opening fit pushes the coast up
+   off centre and leaves a band of nothing under it.
+
+   Re-fitting is conditional on the map still being at its floor. If somebody has
+   zoomed into a beach, moving the camera under them because a chip appeared would
+   be worse than an imperfect letterbox. */
+let lastDockH = 0;
+function measureDock(mayFit = true){
+  const dock = document.getElementById("dock");
+  if(!dock) return;
+  const h = dock.offsetHeight;
+  if(h === lastDockH) return;
+  const first = lastDockH === 0;
+  lastDockH = h;
+  document.documentElement.style.setProperty("--dock-h", h + "px");
+  // `mayFit` is false when the caller is about to fit anyway, as refit() is.
+  // Without it a resize fits twice, and the first of the two runs against a
+  // dock height that has not been laid out yet.
+  if(!mayFit || !zonesReady) return;
+  if(first || Math.abs(map.getZoom() - map.getMinZoom()) < 0.01) fitCoast();
 }
 
 /* ---------- locate ---------- */
@@ -826,7 +1758,10 @@ function setLang(l){
   document.getElementById("btn-es").setAttribute("aria-pressed",l==="es");
   document.getElementById("btn-en").setAttribute("aria-pressed",l==="en");
   document.getElementById("tagline").textContent=T[l].tagline;
+  document.getElementById("locate").setAttribute("aria-label",
+    l==="es" ? "Mi ubicación" : "My location");
   buildPicker();
+  renderSaved();
   sheet.classList.remove("open");
 }
 document.getElementById("btn-es").onclick=()=>setLang("es");
@@ -893,6 +1828,9 @@ function shaftPoints(pts){
 function drawAnnotations(gj){
   const layer = L.layerGroup().addTo(map);
   gj.features.forEach(f=>{
+    // rescue_station is handled by joinStations(), not here: those markers are
+    // already on screen from POSTS before this fetch resolves, and drawing them
+    // again would double them.
     const k = f.properties.kind, g = f.geometry;
     if(k === "rip_current"){
       const pts = g.coordinates.map(c=>[c[1], c[0]]);
@@ -937,16 +1875,16 @@ function drawAnnotations(gj){
 function openAnnot(kind, f){
   const t = T[lang];
   const body = kind === "rip"
-    ? `<span class="status danger">${t.ripTitle}</span>
+    ? `<span class="status high">${t.ripTitle}</span>
        <h2>${t.ripTitle}</h2>
        <p class="sub">${t.ripLen(f.properties.length_m)}</p>
        <p class="why">${t.ripWhy}</p>
+       <p class="defer">${t.defer}</p>
        <p class="prov">${t.ripDir}</p>`
     : `<span class="status station" style="background:#5b6b7a">${t.areaTitle}</span>
        <h2>${t.areaTitle}</h2>
        <p class="why">${t.areaWhy}</p>`;
-  sheetBody.innerHTML = body + `
-    <p class="prov unverified">${t.annotSource}</p>
+  sheetBody.innerHTML = body + provenance(f.properties) + `
     <div class="actions">
       <a class="btn primary" href="tel:911">${t.call}</a>
       <button class="btn" onclick="document.getElementById('sheet').classList.remove('open')">${t.close}</button>
@@ -958,8 +1896,26 @@ fetch("data/cg-hazards.geojson")
   .then(r=>r.ok ? r.json() : Promise.reject(r.status))
   .then(gj=>{
     drawAnnotations(gj);
-    const n = gj.features.filter(f=>f.properties.kind === "rip_current").length;
-    if(n) setTimeout(()=>say(T[lang].annotCoverage(n), 7000), 6000);
+    joinStations(gj);
+    /* Recompute the surveyed window from what actually loaded, so the extent the
+       absence marks describe can never drift from the extent that is drawn.
+       The coverage used to be announced in a toast that fired six seconds after
+       load and then vanished; it is now the void card and the per beach marks,
+       which are still there when somebody looks up from the sand. */
+    const lons = [];
+    gj.features.forEach(f=>{
+      const g = f.geometry;
+      const cs = g.type === "Polygon" ? g.coordinates[0]
+               : g.type === "Point"   ? [g.coordinates]
+               : g.coordinates;
+      cs.forEach(c=>lons.push(c[0]));
+    });
+    if(lons.length){
+      SURVEY = {w:Math.min(...lons), e:Math.max(...lons)};
+      const open = document.querySelector('.card[aria-current="true"]');
+      buildPicker();
+      if(open) markCurrent(open.dataset.id);
+    }
   })
   .catch(()=>{ /* the map is still usable without the overlay; stay quiet */ });
 
@@ -1015,17 +1971,221 @@ fetch("data/cg-hazards.geojson")
      typeof window.DeviceOrientationEvent.requestPermission !== "function") start();
 })();
 
-/* ---------- QR deep links:  ?z=cocles   or   ?p=po4 ---------- */
+/* ============================================================
+   4. THE SAVED COPY
+
+   The old code ran say(T[lang].save) unconditionally on every load, which
+   displayed "Guarde esta página. La señal es débil en la playa." to every visitor
+   before they did anything. It was the most-seen string on the map and it
+   instructed the reader to perform something the page could not do. That is the
+   same class of failure as "en tiempo real", applied to capability instead of
+   data, shipping three functions away from the rule that forbids it.
+
+   So the capability now exists, and the copy is calibrated to what it actually
+   delivers on each platform:
+
+     - It says the page is SAVED ON THIS PHONE, not that it "works offline",
+       because on iOS Safari that second sentence is not ours to promise.
+     - It says when, with a label, always. Beachsafe's field for a cache that has
+       never populated reads the literal word "Never" and that is the right
+       default: an empty field reads as fine.
+     - It says how often it refreshes, and gives a button to do it by hand.
+     - It says, plainly, that iOS may clear the copy after about a week of Safari
+       use without a visit, and that the home screen is what prevents that.
+       WebKit documents both the seven day rule and the home screen exemption.
+
+   The nudge to install fires when installing is possible and useful, and says
+   something accurate when it is not.
+   ============================================================ */
+const SW_SUPPORTED = "serviceWorker" in navigator;
+const standalone = () => window.matchMedia("(display-mode: standalone)").matches ||
+                         navigator.standalone === true;
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+let installPrompt = null;     // Chromium's beforeinstallprompt, stashed
+let savedAt = null;           // when the cache was last written, from the worker
+
+const savedBar = document.getElementById("saved");
+const savedTxt = document.getElementById("saved-txt");
+const savedRf  = document.getElementById("saved-refresh");
+
+/* A failure message has to survive long enough to be read. The worker broadcasts
+   the saved date on several occasions, and an ordinary re-render arriving a
+   moment after a failed refresh would quietly replace "no signal" with a
+   reassuring date. Holding the failure for a few seconds is the difference
+   between telling somebody their refresh did not happen and pretending it did. */
+let failUntil = 0, failTimer = null;
+function renderSaved(state){
+  const t = T[lang];
+  if(state === "failed"){
+    failUntil = Date.now() + 8000;
+    // and then hand the date back, because the date is the more useful of the
+    // two things this strip can say and a bar stuck on an error has stopped
+    // answering "how old is what I am reading"
+    clearTimeout(failTimer);
+    failTimer = setTimeout(()=>{ failUntil = 0; renderSaved(); }, 8000);
+  } else if(!state && Date.now() < failUntil){
+    return;
+  }
+  savedBar.hidden = false;
+  savedTxt.textContent =
+      state === "refreshing" ? t.savedRefreshing
+    : state === "failed"     ? t.savedFailed
+    : !SW_SUPPORTED          ? t.savedNoStore
+    : savedAt                ? t.savedAt(fmtStamp(savedAt))
+    : t.savedNever;
+  savedRf.classList.toggle("busy", state === "refreshing");
+  savedRf.disabled = state === "refreshing";
+  measureDock();
+}
+
+/* The explanation, on tap. Everything in here is a statement about what this
+   page does, not a promise about what the sea is doing, so it is the one sheet
+   in the file with no hazard colour in it at all. */
+function openSaved(){
+  const t = T[lang];
+  const when = savedAt ? t.savedAt(fmtStamp(savedAt)) : t.savedNever;
+  let install = "";
+  if(standalone()){
+    install = `<p class="caveat">${t.savedInstalled}</p>`;
+  } else if(installPrompt){
+    install = `<div class="actions"><button class="btn primary wide" id="do-install">${t.installBtn}</button></div>`;
+  } else if(isIOS()){
+    install = `<p class="caveat">${t.installIos}</p>`;
+  }
+  sheetBody.innerHTML = `
+    <span class="status" style="background:var(--ink)">${when}</span>
+    <h2>${t.savedTitle}</h2>
+    ${SW_SUPPORTED
+      ? `<p class="why">${t.savedWhatIs}</p>
+         <p class="prov"><span class="row">${t.savedCadence}</span></p>
+         ${isIOS() && !standalone() ? `<p class="caveat">${t.savedIos}</p>` : ""}`
+      : `<p class="why">${t.savedNoSw}</p>`}
+    ${install}`;
+  const btn = document.getElementById("do-install");
+  if(btn) btn.onclick = ()=>{
+    const p = installPrompt; installPrompt = null;
+    sheet.classList.remove("open");
+    if(p) p.prompt();
+  };
+  sheet.classList.add("open");
+}
+savedTxt.onclick = openSaved;
+
+/* Manual refresh. Asks the worker to re-fetch everything from the network and
+   report back, then reloads so the page the user is looking at is the new one.
+   Without signal it says so and leaves the saved copy alone. */
+savedRf.onclick = ()=>{
+  if(!navigator.serviceWorker.controller){ location.reload(); return; }
+  renderSaved("refreshing");
+  const ch = new MessageChannel();
+  const done = setTimeout(()=>renderSaved("failed"), 15000);
+  ch.port1.onmessage = e=>{
+    clearTimeout(done);
+    if(e.data && e.data.ok){ location.reload(); }
+    else renderSaved("failed");
+  };
+  navigator.serviceWorker.controller.postMessage({action:"REFRESH"}, [ch.port2]);
+};
+
+window.addEventListener("beforeinstallprompt", e=>{
+  e.preventDefault();
+  installPrompt = e;
+});
+
+if(SW_SUPPORTED){
+  /* updateViaCache:"none" so the browser never serves a cached sw.js and the
+     update check is real. */
+  navigator.serviceWorker.register("sw.js", {updateViaCache:"none"})
+    .then(reg=>{
+      /* Surfrider's update prompt, which is the part people forget. A cache-first
+         safety map that cannot say "the verdicts you are reading are the old
+         ones, tap for today's" will show a stale verdict forever, which is the
+         failure the provenance machinery exists to prevent, one layer down. */
+      const banner = document.getElementById("update");
+      function offerUpdate(worker){
+        const t = T[lang];
+        document.getElementById("update-msg").textContent = t.updateMsg;
+        document.getElementById("update-go").textContent  = t.updateGo;
+        banner.classList.add("show");
+        document.getElementById("update-go").onclick = ()=>{
+          banner.classList.remove("show");
+          worker.postMessage({action:"SKIP_WAITING"});
+        };
+        document.getElementById("update-no").onclick = ()=>banner.classList.remove("show");
+      }
+      if(reg.waiting && navigator.serviceWorker.controller) offerUpdate(reg.waiting);
+      reg.addEventListener("updatefound", ()=>{
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener("statechange", ()=>{
+          // only when there is already a controller: the very first install is
+          // not an update and must not raise a banner
+          if(nw.state === "installed" && navigator.serviceWorker.controller) offerUpdate(nw);
+        });
+      });
+      // check again when the page comes back to the foreground, which on a phone
+      // is the moment somebody has walked down to the beach and reopened it
+      document.addEventListener("visibilitychange", ()=>{
+        if(!document.hidden) reg.update().catch(()=>{});
+      });
+    })
+    .catch(()=>{ /* no worker: renderSaved() already says the page is not saved */ });
+
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{
+    if(reloading) return;
+    reloading = true;
+    location.reload();
+  });
+
+  // the worker reports when it last wrote the cache
+  navigator.serviceWorker.addEventListener("message", e=>{
+    if(e.data && e.data.savedAt){
+      savedAt = new Date(e.data.savedAt);
+      renderSaved();
+    }
+  });
+  navigator.serviceWorker.ready.then(reg=>{
+    if(reg.active) reg.active.postMessage({action:"SAVED_AT"});
+  });
+
+  /* WebKit's storage policy grants persistence on heuristics, and one of them is
+     whether the site is a Home Screen web app. Asking costs one line and it is
+     the documented mechanism by which the cache survives on the platform most
+     tourists are carrying. */
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+}
+renderSaved();
+
+/* ---------- QR deep links:  ?z=cocles   or   ?p=est2 ----------
+   The URL carries the LOCAL part of the namespaced id, not the whole id. QR codes
+   go on aluminium bolted to a post and are the least revisable thing this project
+   will produce, so the shortest stable form wins and ?z=cocles keeps working. */
 (function(){
   setLang(lang);
-  say(T[lang].save,5200);
   const q=new URLSearchParams(location.search);
-  const z=ZONES.find(x=>x.id===q.get("z"));
-  const p=POSTS.find(x=>x.id===q.get("p"));
+  const z=ZONES.find(x=>localId(x.id)===q.get("z"));
+  const p=POSTS.find(x=>localId(x.id)===q.get("p"));
   /* Open from the full-coast view rather than jumping straight in. The fly is
      what tells someone who just scanned a QR code where on the coast they are. */
   if(z){ setTimeout(()=>openZone(z),350); }
   else if(p){ setTimeout(()=>openPost(p),350); }
+
+  /* The install nudge, which is what "Guarde esta página" was reaching for. It
+     fires only when it is true: installing is possible, the page is not already
+     installed, and the reader has not dismissed it before. */
+  if(standalone() || !SW_SUPPORTED) return;
+  let seen = false;
+  try{ seen = localStorage.getItem("cg-install-nudge") === "1"; }catch(e){}
+  if(seen) return;
+  setTimeout(()=>{
+    if(standalone()) return;
+    if(!installPrompt && !isIOS()) return;   // nothing to instruct on this platform
+    say(T[lang].installNudge, 7000);
+    try{ localStorage.setItem("cg-install-nudge","1"); }catch(e){}
+  }, 4000);
 })();
 </script>
 </body>

@@ -80,10 +80,17 @@ Output is **9000 px, 1.85 m/px, 2.52 MB**. Chosen by measurement: 5000 is 1.07 M
 2 m/px is largely invented and paying for it is the trade the tile pyramid was
 rejected for.
 
-Load strategy: the **1200 px, 63 KB overview** is all that loads on arrival. The
+Load strategy: the overview is all that loads on arrival. The
 full base is fetched only on first zoom or pan, so its weight is paid by people
 who ask for it. Someone who scans a QR code, reads their status and pockets the
 phone never downloads it.
+
+> **CORRECTION, 2026-08-06.** This paragraph said "the 1200 px, 63 KB overview".
+> The file on disk at the time was 1200x402 and **88,718 bytes**, so the figure
+> was wrong by 41 percent and it was quoted onward. `04-map-integration.md` had
+> already specced 1000x335 q70 and the export had never been done. It has now
+> been done, by `tools/export_overview.py`, and the shipping overview is
+> **1000x335, 35,932 bytes**. See `docs/handoffs/2026-08-06-map-schema-and-offline.md`.
 
 ### Zone geometry
 Redrawn by `tools/redraw_zones.py` against the **Bing mosaic**, not the base.
@@ -192,7 +199,9 @@ authored by Caribbean Guard.
 
 - `site/` the website, built by `tools/build_site.py`
 - `web/index.html` the map
-- `web/img/base.webp` 9000 px north-up base; `base-lo.webp` the 63 KB overview
+- `web/img/base.webp` 9000 px north-up base; `base-lo.webp` the overview
+  (was 88,718 B here, not the 63 KB this line originally claimed; re-exported
+  2026-08-06 to 1000x335 q70, **35,932 B**)
 - `web/data/cg-hazards.geojson` their annotations, 14 features
 - `tools/refine.py` georeference · `rectify.py` north-up resample
 - `tools/residual.py` **the accuracy measurement, the one that matters**

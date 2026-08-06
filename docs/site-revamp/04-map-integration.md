@@ -332,6 +332,35 @@ at low priority. Note `img/base-lo.webp` already in the repo is 118 KB at
 overview only has to be good enough to recognise the coast and place the beach
 cards, not to be read.
 
+> **CORRECTION, 2026-08-06. The 86 KB figure above is stale and it was quoted
+> onward as if it were current. Do not requote it.**
+>
+> Re-measured against the repo on 2026-08-06, before that day's work:
+>
+> | Asset | On the wire |
+> |---|---|
+> | `web/index.html` | 21,155 gz |
+> | `leaflet.js` (unpkg) | 42,481 gz |
+> | `leaflet.css` (unpkg) | 3,543 gz |
+> | `web/img/base-lo.webp` | 88,718 |
+> | `web/data/cg-hazards.geojson` | 1,179 gz |
+> | **Total** | **157,076 B = 153 KB, 5 requests, 2 origins** |
+>
+> 78 percent over the number in this document. Two causes, and only one of them
+> is an oversight: `index.html` had grown from 30 KB to 57.5 KB raw since this was
+> written, and the 1000x335 overview specced two paragraphs up was never actually
+> exported.
+>
+> **After the 2026-08-06 work it is 124,763 B = 122 KB over 7 requests and one
+> origin**, with the overview re-exported (35,932 B), Leaflet vendored, and the
+> manifest and one icon added. `index.html` grew again, to 37,455 gz, of which
+> 16,912 is the inline design commentary. See
+> `docs/handoffs/2026-08-06-map-schema-and-offline.md`.
+>
+> The lesson worth keeping: a critical-path figure in a plan is a measurement with
+> a date on it, not a property of the design. This one was three numbers stale and
+> nothing in the document said so.
+
 ### The data layer
 
 `web/data/cg-hazards.geojson`, 8,809 bytes, 16 features:
@@ -341,6 +370,13 @@ cards, not to be read.
 | LineString | `rip_current` | 11 |
 | Point | `rescue_station` | 4 |
 | Polygon | `shaded_area_meaning_unknown` | 1 |
+
+> **CORRECTION, 2026-08-06.** The counts above have not matched the file since the
+> rip extraction was fixed in `bf601ce`. The file is now **9,885 bytes, 14
+> features: 9 `rip_current`, 4 `rescue_station`, 1
+> `shaded_area_meaning_unknown`**, and every feature now carries a stable `id`
+> plus `authored` and `reviewed`. `needs_confirmation` is gone, replaced by
+> `reviewed: null`, which renders on screen instead of only existing in the file.
 
 It covers 1.82 km, about 11 percent of the 16.66 km base, and every feature
 carries `"needs_confirmation": true` plus a file-level warning that it was
@@ -616,6 +652,30 @@ over-promising here is worse than under-delivering.
   them under storage pressure. A tourist who installs the map in San José and
   arrives at Manzanillo two weeks later may find it empty. Never let the interface
   say "available offline" as an unqualified promise. Say when the data was cached.
+
+  > **CORRECTION, 2026-08-06. This is true, and it is stated in the form that
+  > hides the fix.** Read as written, it says offline on iOS is a lost cause and
+  > the most you can do is apologise with a timestamp. Two qualifications from
+  > WebKit's own documentation change what to build:
+  >
+  > 1. It is seven days **of Safari use without interaction on the site**, not
+  >    seven calendar days. A tourist who opens the map once a week keeps it.
+  > 2. **Home Screen web applications are exempted.** WebKit, verbatim: they have
+  >    "their own counter of days of use" reset by real interaction, and "We do not
+  >    expect the first-party in such a web application to have its website data
+  >    deleted." WebKit's storage-policy page adds that
+  >    `StorageManager.persist()` excludes data from eviction and that it grants
+  >    the request on heuristics including whether the site is a Home Screen web
+  >    app. `navigator.storage.persist()` has been Baseline since December 2021.
+  >
+  > So Add to Home Screen is not the nice-to-have that finding 5 below calls it.
+  > **It is the documented mechanism by which the cache survives on the platform
+  > most tourists carry, which makes the manifest and the service worker one
+  > feature rather than two.** Shipped 2026-08-06: manifest, worker, install
+  > prompt, and a `persist()` call. The interface still never says "works
+  > offline"; it says the page is saved on this phone, gives the date, states the
+  > refresh cadence, offers a manual refresh, and says plainly that iOS may clear
+  > it and that the home screen prevents that.
 - **The first scan must work with no cache.** A tourist scanning a QR code on the
   sand has never visited before. The service worker helps the second visit, not
   the first. This is why the 86 KB critical path matters more than any caching

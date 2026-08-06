@@ -12,9 +12,10 @@ and reported rather than guessed at, because a rip current in the wrong place is
 worse than a rip current missing.
 
 Output is a proposal for Caribbean Guard to confirm, not a published fact. Every
-feature carries source and needs_confirmation so that never gets lost downstream.
+feature carries its source, what authored it, and an empty `reviewed`, so none of
+that gets lost downstream.
 """
-import json, math, os
+import hashlib, json, math, os
 import numpy as np, cv2
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
@@ -36,6 +37,29 @@ LEGEND = (1960, 0, 2500, 240)      # x0, y0, x1, y1
 # 100 px. 150 was over-merging: it joined separate arrows into one path that
 # crossed the bay.
 CLUSTER_PX = 55
+
+
+def feature_id(kind, coords):
+    """A stable id, derived from the geometry rather than from loop order.
+
+    Every feature needs an id or there is nothing for a guard's confirmation to
+    attach to that survives the sheet being re-extracted. An index would not do:
+    connected-component order shifts when anything upstream changes, so review #3
+    would silently become a different rip current.
+
+    Hashing the rounded position instead means the id changes when, and only
+    when, the feature moves. That is the correct trigger: a rip current that has
+    moved is a different claim and its old confirmation should not follow it.
+
+    Six decimal places is about 0.1 m, well under the 1.2 m georeference residual,
+    so re-extracting an unchanged sheet reproduces the same ids exactly.
+
+    Namespaced `cg:` because ids are also the join key for provenance records,
+    and Caribbean Guard is not the only lifeguard organisation this project could
+    ever hold. See the id convention comment in web/index.html.
+    """
+    flat = ";".join(f"{lon:.6f},{lat:.6f}" for lon, lat in coords)
+    return "cg:%s/%s" % (kind, hashlib.sha1(flat.encode()).hexdigest()[:8])
 
 
 def tile2deg(x, y, z):
@@ -218,24 +242,52 @@ def main():
             continue
         head = tail + n * (length_m / mpp)
         path = [tail, head]
+        coords = to_ll(path)
         features.append({
             "type": "Feature",
-            "geometry": {"type": "LineString", "coordinates": to_ll(path)},
+            "id": feature_id("rip", coords),
+            "geometry": {"type": "LineString", "coordinates": coords},
             "properties": {"kind": "rip_current", "length_m": round(length_m),
                            "direction": "perpendicular to the beach, seaward. Position is Caribbean Guard's; the exact bearing on their sheet was not machine-readable and is not claimed here.",
-                           "source": SRC_URL, "needs_confirmation": True}})
+                           "source": SRC_URL,
+                           "authored": "sheet", "reviewed": None}})
 
     # ---- rescue stations ----------------------------------------------------
+    # These four points had a twin in POSTS in web/index.html, matching to five
+    # decimal places, and nothing read the copy here: drawAnnotations() handled rip
+    # currents and the shaded polygon, and the string `rescue_station` did not
+    # appear in that file at all. So the same four objects had two sources of truth
+    # and the dead one lived in the file called "the data file". Anybody who moved
+    # a station here, which is the obvious place to move it, changed nothing.
+    #
+    # Resolved by joining rather than by deleting either copy. THIS IS THE
+    # AUTHORITATIVE GEOMETRY. POSTS keeps the name, the hours and the equipment
+    # copy, which a machine reading a graphic cannot produce, plus a fallback
+    # coordinate used only when this file fails to load, because stations still
+    # have to draw with no signal. The map joins on `id` and warns in the console
+    # if the fallback and the real position have drifted apart.
+    #
+    # Station ids are POSITIONAL, west to east, not hashed like the rips. The
+    # numbering is already published on the markers and inside QR codes (?p=est2),
+    # so it has to survive a re-extraction even when a station moves. A fifth
+    # station appearing on a re-issued sheet is a renumbering decision for a human,
+    # and the count printed below is where it surfaces: Caribbean Guard's own press
+    # says nine along the whole coast and this sheet yields four.
+    stations_out = []
     for blob, st, cen in components(stations, 200):
         w_m = st[cv2.CC_STAT_WIDTH] * mpp
         if w_m > 90:
             skipped.append(f"orange blob at {cen[0]:.0f},{cen[1]:.0f} width {w_m:.0f} m")
             continue
-        features.append({
+        stations_out.append({
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": to_ll([cen])[0]},
             "properties": {"kind": "rescue_station", "source": SRC_URL,
-                           "needs_confirmation": True}})
+                           "authored": "sheet", "reviewed": None}})
+    stations_out.sort(key=lambda f: f["geometry"]["coordinates"][0])
+    for i, f in enumerate(stations_out, 1):
+        f["id"] = f"cg:station/est{i}"
+    features += stations_out
 
     # ---- shaded hazard area -------------------------------------------------
     for blob, st, cen in components(bay, 6000):
@@ -255,13 +307,15 @@ def main():
         # safety message. It stays unlabelled until Caribbean Guard says which it is.
         features.append({
             "type": "Feature",
+            "id": feature_id("area", ring),
             "geometry": {"type": "Polygon", "coordinates": [ring]},
             "properties": {"kind": "shaded_area_meaning_unknown",
                            "area_m2": round(cv2.contourArea(c) * mpp * mpp),
                            "note": ("Red shaded polygon with no legend entry. Could be "
                                     "a hazard zone or a designated safe swimming zone. "
                                     "MUST NOT be rendered with a status until confirmed."),
-                           "source": SRC_URL, "needs_confirmation": True}})
+                           "source": SRC_URL,
+                           "authored": "sheet", "reviewed": None}})
 
     counts = {}
     for f in features:
@@ -269,12 +323,25 @@ def main():
     print("extracted:", counts or "nothing")
     for sk in skipped:
         print("  skipped:", sk)
+    if counts.get("rescue_station", 0) != 4:
+        print("  NOTE: station count changed. web/index.html POSTS numbers its "
+              "markers est1..est4 west to east and QR codes carry those ids. "
+              "Renumbering is a human decision, not an automatic one.")
 
     out = {"type": "FeatureCollection",
            "properties": {
                "source": SRC_URL,
                "extracted_by": "tools/extract_annotations.py",
                "georeference_residual_m": gj["residual_median_m"],
+               "station_layer": ("Rescue stations are the ONE feature class with a "
+                                 "second record elsewhere: POSTS in web/index.html "
+                                 "carries their names, hours and equipment copy, "
+                                 "which a machine reading a graphic cannot produce. "
+                                 "The GEOMETRY HERE IS AUTHORITATIVE and the map "
+                                 "joins on `id`; the coordinates in POSTS are a "
+                                 "fallback used only when this fetch fails, and the "
+                                 "map logs a warning if the two disagree. Move a "
+                                 "station here, not there."),
                "warning": ("Machine-read off a published graphic. Every feature "
                            "must be confirmed and dated by Caribbean Guard before "
                            "it is shown to the public as safety guidance.")},

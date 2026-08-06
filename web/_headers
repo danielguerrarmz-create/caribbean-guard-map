@@ -1,0 +1,55 @@
+# Cloudflare Pages reads this file from the root of the deployed folder.
+# It must stay in web/ so that "drag the web folder into Cloudflare" is the
+# whole deploy. Nothing here needs editing to move between mapa.caribbeanguard.org
+# and a *.pages.dev address: every rule is path based, not host based.
+
+# ---------------------------------------------------------------------------
+# The document carries the safety verdicts, so it is never cached.
+# The service worker already serves it network-first with a cached fallback; this
+# makes the browser's own cache agree with that rather than fight it.
+/
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+/index.html
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# The worker itself. `no-cache` means revalidate every time, which is what makes
+# the update banner able to notice a new build at all.
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+# ---------------------------------------------------------------------------
+# Imagery and Leaflet: a year, immutable.
+#
+# READ THIS BEFORE RE-EXPORTING THE IMAGERY. `immutable` is only safe on files
+# whose NAME changes when their contents change, and ours do not: base.webp and
+# base-lo.webp keep their names across a re-export. A browser that has cached
+# them will not ask again for a year.
+#
+# If the imagery is ever re-exported, rename the file (base-lo-2.webp) and update
+# the reference in index.html and the CRITICAL list in sw.js. Deploying alone is
+# not enough. Cloudflare purges its own edge cache on every deploy, so this only
+# affects browsers that already hold a copy, and the service worker re-fetches
+# with `cache: "reload"` which bypasses it, so the exposure is a returning visitor
+# whose worker has been evicted. Visual staleness only: no safety verdict lives
+# in an image.
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Leaflet is version pinned at 1.9.4 and genuinely never changes under this path.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ---------------------------------------------------------------------------
+# The hazard annotations are the one file a guard's edit could reach without a
+# code change, so it revalidates quickly and serves the old copy meanwhile.
+/data/*
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
