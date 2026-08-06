@@ -19,11 +19,31 @@ SAND = "#EFEADF"
 RULE = "#CFC6B6"
 MUTED = "#7A8894"
 
+# What the precedents actually photograph, from docs/precedents/02-visual-language.md:
+# every credible lifeguard organization in the set builds trust from people doing
+# the work in frame, not from portraits and not from landscape. Costa Ballena and
+# Santa Teresa both shoot gear-testing days, tower inaugurations and training.
+# The negative case is an organization whose whole premise is real rescues using
+# illustrated stock figures, which reads thin even in a text-only fetch.
+#
+# So: operations first, faces second, coastline last. A beautiful empty beach is
+# the one photograph this organization does not need, because it is the picture
+# every hotel on this coast already publishes.
+
 # slug, w, h, section label, what the photograph needs to show
 SHOTS = [
     ("hero", 1600, 900, "Portada",
-     "Guardavidas en el agua o patrullando, hora dorada. Horizontal, con espacio "
-     "a la izquierda para el titular."),
+     "Guardavidas trabajando, no posando: entrando al agua, montando la estación "
+     "o vigilando. Hora dorada. Espacio a la izquierda para el titular."),
+    ("torre", 1200, 900, "Torre de guardia",
+     "Una de las torres reales, Cocles o Playa Grande, con guardavidas en ella. "
+     "Desde abajo, para que se lea como infraestructura y no como paisaje."),
+    ("equipo-rescate", 1200, 900, "Equipo de rescate",
+     "Los torpedos, mecates y tubos al amanecer cuando salen, o al atardecer "
+     "cuando entran. Detalle cercano. Es lo que hace concreto el turno."),
+    ("curso", 1200, 800, "Formación",
+     "Un curso en marcha: RCP sobre maniquí, o práctica de rescate. Debe verse "
+     "quién enseña y quién aprende."),
     ("mapa", 1200, 800, "Mapa de Seguridad",
      "Alguien mirando el teléfono en la playa, con el mar detrás. Vertical u "
      "horizontal, la pantalla no tiene que leerse."),

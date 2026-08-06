@@ -26,22 +26,69 @@ EMAIL = "caribbeanguard.pv@gmail.com"
 IG = "https://www.instagram.com/caribbeanguard/"
 FB = "https://www.facebook.com/people/Caribbean-Guard/100069778973007/"
 
-# Seven, down from nine. Order matters: the map is first because it is the only
-# thing on this site somebody might open twice, and the only one they might open
-# standing in the water's edge.
+# Four, down from seven, down from nine on the live site.
+#
+# The cut is not tidiness. A navigation bar is a claim about what matters, and
+# seven items claimed that a visitor deciding whether to enter the water and a
+# visitor thinking about apnea classes deserve the same weight. They do not.
+#
+# What a person actually arrives with, in order: am I safe here, what do you run,
+# how do I take part, who are you. The first is the only one anybody opens twice,
+# and the only one anybody opens standing at the water's edge, so it is first and
+# it is the only one with a card on the homepage.
+#
+# Nosotros moves to the footer. It is the question people ask last and it is the
+# one every other page answers on the way past.
 NAV = [
     ("mapa",              "Mapa de Seguridad"),
     ("playa-organizada",  "Playa Organizada"),
-    ("lifesaving-club",   "Lifesaving Club"),
-    ("swim-club",         "Swim Club"),
-    ("freediving-club",   "Freediving Club"),
-    ("nosotros",          "Nosotros"),
+    ("clubes",            "Clubes"),
     ("involucrate",       "Involúcrate"),
 ]
 
 
+# The numbers that answer "why should I trust you". Empty on purpose.
+#
+# Every well-regarded organization in docs/precedents/00-catalog.md answers that
+# question with specific figures rather than with visual polish: Costa Ballena
+# leads with 6,700 preventions and zero on-duty drownings, Santa Teresa with 216
+# rescues across 365 patrol days, COASTS with 7,695 hours patrolled and a cedula
+# juridica. It is the one pattern every precedent shares and the one thing this
+# homepage lacks.
+#
+# Caribbean Guard has these numbers. Press coverage (delfino.cr, April 2025)
+# reports nine rescue stations, about 100 community volunteers, and no deaths at
+# the patrolled beaches since the programme began. None of it is published here,
+# because a news article is a weaker source than the organization for its own
+# impact claims, and the station count contradicts our own map, which shows four.
+#
+# So the slot ships built and empty. Fill it only from something Caribbean Guard
+# states directly, and date it. `stats()` renders nothing at all while the list is
+# empty, which means no layout gap, no placeholder, and no half-claim.
+STATS = []          # e.g. ("6.700", "prevenciones", "2025")
+STATS_SOURCE = ""   # who said so, and when. Required before anything renders.
+
+
 def esc(s):
     return html.escape(s, quote=False)
+
+
+def stats():
+    """The trust row. Renders nothing until real, attributed figures exist.
+
+    Guarded rather than commented: an unattributed number cannot reach the page
+    even if someone fills STATS and forgets where it came from.
+    """
+    if not STATS or not STATS_SOURCE:
+        return ""
+    items = "\n".join(
+        f'      <li><b>{esc(n)}</b><span>{esc(label)}</span>'
+        f'<em>{esc(period)}</em></li>'
+        for n, label, period in STATS)
+    return f"""<ul class="stats">
+{items}
+    </ul>
+    <p class="stats-src">{esc(STATS_SOURCE)}</p>"""
 
 
 def paras(text, cls=""):
@@ -168,13 +215,35 @@ def map_card(up="", reviewed=None, title="Mapa de Seguridad"):
     it replaces, because the PNG never made the claim.
     """
     rev = reviewed or "Sin revisar aún. Pregunta a un guardavidas antes de entrar al mar."
+    # Not "dónde se puede nadar". That is a permission claim, and it is the same
+    # one the map itself just stopped making: no zone on this coast has been
+    # reviewed yet, so the card cannot promise the map will tell you where it is
+    # safe to swim. It describes what the map shows, and the reader decides.
     return f"""<a class="mapcard" href="{up}mapa/">
       <h2>{esc(title)}</h2>
-      <p>Dónde se puede nadar en esta costa, playa por playa.
-         Ábrelo en el teléfono antes de entrar al mar.</p>
+      <p>Corrientes de resaca, estaciones de salvamento y qué mirar antes de
+         entrar al mar, playa por playa. Ábrelo en el teléfono.</p>
       <span class="go">Abrir el mapa →</span>
       <p class="rev">Última revisión: {esc(rev)}</p>
     </a>"""
+
+
+def hazard_counts():
+    """How many rips and stations the data actually holds.
+
+    The annotated map's alt text used to hand-count "diez corrientes" while
+    hazard_summary(), generated from the same file, said nine. The drift is the
+    exact failure the text equivalent exists to prevent, so both now read the
+    number from the data. Nine is the clustered figure: the arrows are dashed and
+    curved, so closing the dashes leaves several components per arrow, and 15
+    fragments were once counted as 11.
+    """
+    p = os.path.join(ROOT, "web", "data", "cg-hazards.geojson")
+    if not os.path.exists(p):
+        return 0, 0
+    d = json.load(open(p, encoding="utf-8"))
+    ks = [f["properties"]["kind"] for f in d["features"]]
+    return ks.count("rip_current"), ks.count("rescue_station")
 
 
 def hazard_summary():
@@ -229,7 +298,14 @@ def build():
     c = COPY
 
     # ---- Inicio ----
-    mission = c["home"]["body_blocks"][2]
+    # Their full mission text runs five paragraphs. All of it is Caribbean Guard's
+    # own writing and none of it is cut from the site, but a homepage is not where
+    # somebody reads five paragraphs about an organisation whose water they are
+    # standing next to. Take the first block, which is the actual answer to "who
+    # are you", and send the rest to /nosotros/. Excerpted, never rewritten: the
+    # words on the page are still theirs, exactly.
+    mission_full = c["home"]["body_blocks"][2]
+    mission = re.split(r"\n\s*\n", mission_full.strip())[0]
     written.append(write("index.html", page("", "Salvando vidas en el Caribe Sur", f"""
 <section class="hero">
   <div class="wrap narrow">
@@ -238,61 +314,46 @@ def build():
     <p>Desde 2021 nunca murió nadie durante nuestras guardias. Somos una asociación
        comunitaria de salvamento acuático: patrullamos playas, formamos guardavidas
        y enseñamos a la comunidad a estar segura en el agua.</p>
+    {stats()}
     <div class="actions">
-      <a class="cta" href="mapa/">Ver el mapa de seguridad</a>
       <a class="cta ghost" href="involucrate/">Involúcrate</a>
+      <a class="cta ghost" href="donar/">Donar</a>
     </div>
-    {shot("hero")}
   </div>
 </section>
 
-<section>
+<section class="lead">
   <div class="wrap">
     <p class="eyebrow">Antes de entrar al mar</p>
     {map_card()}
+    <div class="rows">
+      <div class="row">
+        {shot("torre")}
+        <div>
+          <h3>Y en la playa, busca la torre</h3>
+          <p>El mapa no reemplaza a un guardavidas. Si no hay nadie en la torre,
+             nadie está mirando el agua: pregunta antes de entrar, o no entres.</p>
+          <a class="more" href="playa-organizada/">Cómo funciona el programa →</a>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
 <section class="alt">
-  <div class="wrap">
-    <h2>Nuestra misión</h2>
+  <div class="wrap narrow">
+    <h2>Quiénes somos</h2>
     {paras(mission)}
-    <p><a href="nosotros/historia/">Cómo empezó todo →</a></p>
+    {shot("hero")}
+    <p><a href="nosotros/">Sobre la asociación →</a></p>
   </div>
 </section>
 
 <section>
-  <div class="wrap">
+  <div class="wrap narrow">
     <h2>Tres clubes, abiertos a la comunidad</h2>
-    <div class="rows">
-      <div class="row">
-        {shot("lifesaving")}
-        <div>
-          <h3>Lifesaving Club</h3>
-          <p>Guardias, entrenamiento de salvamento, educación continua y una red de
-             alerta de emergencias con más de 70 miembros.</p>
-          <a class="more" href="lifesaving-club/">Conocer el club →</a>
-        </div>
-      </div>
-      <div class="row">
-        {shot("swim")}
-        <div>
-          <h3>Swim Club</h3>
-          <p>Natación en aguas abiertas y piscina, gratuita. Tres entrenamientos por
-             semana en Punta Uva y Playa Negra, más la Swim School para la infancia.</p>
-          <a class="more" href="swim-club/">Ver horarios →</a>
-        </div>
-      </div>
-      <div class="row">
-        {shot("freediving")}
-        <div>
-          <h3>Freediving Club</h3>
-          <p>La unidad más nueva. Apnea con enseñanza segura, en una comunidad marina
-             con amplia experiencia en buceo a pulmón.</p>
-          <a class="more" href="freediving-club/">Conocer el club →</a>
-        </div>
-      </div>
-    </div>
+    <p>Lifesaving, natación y apnea. Gratuitos, y se entra por el mismo formulario.</p>
+    <p><a class="more" href="clubes/">Ver los clubes →</a></p>
   </div>
 </section>
 
@@ -314,9 +375,10 @@ def build():
   <div class="wrap">
     <p class="eyebrow">Playa por playa</p>
     <h1>Mapa de Seguridad</h1>
-    <p class="lede">Dónde se puede nadar en esta costa. Está hecho para el teléfono,
-       para consultarlo parado en la playa, antes de entrar al agua.</p>
-    {map_card(title="Abrir el mapa en el teléfono")}
+    <p class="lede">Qué hay en el agua de esta costa: corrientes, estaciones y el
+       estado de cada playa. Está hecho para el teléfono, para consultarlo parado
+       en la playa, antes de entrar al agua.</p>
+    {map_card("../", title="Abrir el mapa en el teléfono")}
 
     <h2 style="margin-top:2rem">Qué muestra</h2>
     <dl class="facts legend">
@@ -342,12 +404,13 @@ def build():
        el mapa directamente en la playa donde estás parado, sin tener que buscarla.</p>
   </div>
 </section>
-""", "Mapa de seguridad costera de Caribbean Guard: dónde se puede nadar entre Puerto Viejo y Manzanillo.")))
+""", "Mapa de seguridad costera de Caribbean Guard: corrientes de resaca y estaciones de salvamento entre Puerto Viejo y Manzanillo.")))
 
     # ---- Playa Organizada ----
     ppo = "\n".join(
         f'      <div class="item"><h2>{esc(s["title"])}</h2>{paras(s["body"])}</div>'
         for s in c["programa-playa-organizada"]["sections"])
+    n_rips, n_stations = hazard_counts()
     written.append(write("playa-organizada/index.html", page("playa-organizada",
         "Programa Playa Organizada", f"""
 <section>
@@ -359,15 +422,34 @@ def build():
        el mapa de seguridad documenta.</p>
     {shot("playa-organizada", "../")}
 
-    {map_card()}
+    {map_card("../")}
+
+    <div class="rows">
+      <div class="row">
+        {shot("estacion", "../")}
+        <div>
+          <h2>Las estaciones</h2>
+          <p>Cada estación guarda tubos de rescate, mecate y salvavidas. El equipo
+             sale al amanecer y entra al atardecer, todos los días.</p>
+        </div>
+      </div>
+      <div class="row">
+        {shot("equipo-rescate", "../")}
+        <div>
+          <h2>El equipo</h2>
+          <p>Se financia con donaciones y con el aporte de los negocios de cada
+             playa, y se mantiene entre todos.</p>
+        </div>
+      </div>
+    </div>
 
     <h2 style="margin-top:2rem">El mapa anotado de la zona</h2>
     <figure>
       <div class="panx">
         <img src="../assets/img/mapa-anotado.webp" width="2500" height="1013" loading="lazy" decoding="async"
              alt="Mapa aéreo anotado de la costa entre Playa Chiquita y Punta Uva.
-                  Flechas rojas marcan diez corrientes de resaca saliendo hacia mar
-                  abierto; hexágonos naranjas marcan cuatro estaciones de salvamento;
+                  Flechas rojas marcan {n_rips} corrientes de resaca saliendo hacia mar
+                  abierto; hexágonos naranjas marcan {n_stations} estaciones de salvamento;
                   líneas azules marcan la carretera principal y los accesos peatonales
                   a la playa; estrellas amarillas marcan hoteles y negocios con el
                   tiempo de caminata hasta la playa.">
@@ -395,57 +477,63 @@ def build():
 </section>
 """, "Banderas, líneas de supervivencia, estaciones de salvamento y plan de emergencia en las playas del Caribe Sur.")))
 
-    # ---- clubs ----
-    ls = "\n".join(f'      <div class="item"><h2>{esc(s["title"])}</h2>{paras(s["body"])}</div>'
+    # ---- clubs: one page, three sections ----
+    # Three separate pages made the reader choose a club before knowing what any of
+    # them was, and put two thirds of the answer one tap away from wherever they
+    # landed. Nobody arrives certain they want apnea rather than open water. One
+    # page, three anchors, and the choice is made by reading rather than by
+    # guessing from a nav label.
+    ls = "\n".join(f'        <div class="item"><h3>{esc(s["title"])}</h3>{paras(s["body"])}</div>'
                    for s in c["lifesaving-club"]["sections"])
-    written.append(write("lifesaving-club/index.html", page("lifesaving-club",
-        "Lifesaving Club", f"""
+    written.append(write("clubes/index.html", page("clubes", "Clubes", f"""
 <section>
   <div class="wrap">
-    <p class="eyebrow">Guardavidas y guardias de playa</p>
-    <h1>Lifesaving Club</h1>
-    <p class="lede">Desde la creación de la organización nunca murió nadie en nuestras
-       guardias. Patrullamos los domingos, el día con más incidencias de ahogamiento
-       del país.</p>
-    {shot("lifesaving", "../")}
-    <div class="stack">
+    <p class="eyebrow">Abiertos a la comunidad</p>
+    <h1>Clubes</h1>
+    <p class="lede">Tres clubes, todos gratuitos y abiertos a quien viva en la zona.
+       Uno patrulla, uno nada, uno bucea a pulmón. Se entra por el mismo formulario.</p>
+    <p><a class="cta" href="../involucrate/">Quiero unirme</a></p>
+
+    <div class="rows">
+      <div class="row" id="lifesaving">
+        {shot("lifesaving", "../")}
+        <div>
+          <h2>Lifesaving Club</h2>
+          <p class="lede">Desde la creación de la organización nunca murió nadie en
+             nuestras guardias. Patrullamos los domingos, el día con más incidencias
+             de ahogamiento del país.</p>
+          <div class="stack">
 {ls}
+          </div>
+        </div>
+      </div>
+
+      <div class="row" id="swim">
+        {shot("swim", "../")}
+        <div>
+          <h2>Swim Club</h2>
+          {paras(c["swim-club"]["body_blocks"][0])}
+          <dl class="facts">
+            <dt>Punta Uva</dt><dd>Jueves, 7:15 h</dd>
+            <dt>Playa Negra</dt><dd>Martes y viernes, 16:00 h</dd>
+            <dt>Swim School</dt><dd>Clases gratuitas en piscina para niñas y niños de la comunidad</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="row" id="freediving">
+        {shot("freediving", "../")}
+        <div>
+          <h2>Freediving Club</h2>
+          {paras(c["freediving-club"]["body_blocks"][0])}
+        </div>
+      </div>
     </div>
-    <p style="margin-top:2rem"><a class="cta" href="../involucrate/">Quiero unirme</a></p>
-  </div>
-</section>
-""", "Guardias de playa, entrenamiento de salvamento y red de alerta de emergencias del Caribe Sur.")))
 
-    written.append(write("swim-club/index.html", page("swim-club", "Swim Club", f"""
-<section>
-  <div class="wrap">
-    <p class="eyebrow">Gratuito y abierto a la comunidad</p>
-    <h1>Swim Club</h1>
-    {paras(c["swim-club"]["body_blocks"][0], "lede")}
-    {shot("swim", "../")}
-    <h2 style="margin-top:2rem">Entrenamientos</h2>
-    <dl class="facts">
-      <dt>Punta Uva</dt><dd>Jueves, 7:15 h</dd>
-      <dt>Playa Negra</dt><dd>Martes y viernes, 16:00 h</dd>
-      <dt>Swim School</dt><dd>Clases gratuitas en piscina para niñas y niños de la comunidad</dd>
-    </dl>
     <p style="margin-top:2rem"><a class="cta" href="../involucrate/">Quiero unirme</a></p>
   </div>
 </section>
-""", "Natación gratuita en aguas abiertas y piscina en Punta Uva y Playa Negra.")))
-
-    written.append(write("freediving-club/index.html", page("freediving-club",
-        "Freediving Club", f"""
-<section>
-  <div class="wrap">
-    <p class="eyebrow">La unidad más nueva</p>
-    <h1>Freediving Club</h1>
-    {paras(c["freediving-club"]["body_blocks"][0], "lede")}
-    {shot("freediving", "../")}
-    <p style="margin-top:2rem"><a class="cta" href="../involucrate/">Quiero unirme</a></p>
-  </div>
-</section>
-""", "Apnea y buceo a pulmón con enseñanza segura en el Caribe Sur de Costa Rica.")))
+""", "Lifesaving, natación y apnea: tres clubes gratuitos y abiertos a la comunidad del Caribe Sur.")))
 
     # ---- Nosotros hub + children ----
     written.append(write("nosotros/index.html", page("nosotros", "Nosotros", f"""
@@ -454,6 +542,11 @@ def build():
     <h1>Nosotros</h1>
     <p class="lede">Una asociación comunitaria nacida en Semana Santa de 2021, cuando
        treinta vecinos salieron a patrullar seis playas para que nadie se muriera.</p>
+
+    <div class="narrow">
+      {paras(mission_full)}
+    </div>
+
     <div class="rows">
       <div class="row">{shot("historia", "../")}<div><h2>Historia</h2>
         <p>De una campaña de videos a una asociación con más de 70 miembros y 400
@@ -547,6 +640,7 @@ def build():
     <h1>Involúcrate</h1>
     {inv}
     {shot("involucrate", "../")}
+    {shot("curso", "../", "La formación es continua: nadie entra a una guardia sin ella.")}
   </div>
 </section>
 

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"
+     width="1200" height="900" role="img"
+     aria-label="Espacio reservado para fotografía: Torre de guardia">
+  <rect width="1200" height="900" fill="#EFEADF"/>
+  <rect x="6" y="6" width="1188" height="888" fill="none"
+        stroke="#CFC6B6" stroke-width="3" stroke-dasharray="14 10"/>
+  <path d="M68 113.0 h80.0" stroke="#0B1C2C" stroke-width="6"/>
+  <text x="68" y="178.0" font-family="Poppins, system-ui, sans-serif"
+        font-size="50" font-weight="700" fill="#0B1C2C">Torre de guardia</text>
+  <text x="68" y="238.0" font-family="ui-monospace, Menlo, Consolas, monospace"
+        font-size="32" fill="#7A8894">FOTOGRAFÍA PENDIENTE · 1200×900</text>
+  <text x="68" y="747.9"
+        font-family="system-ui, sans-serif" font-size="29" fill="#0B1C2C"
+        opacity=".78"><tspan x="68" dy="0">Una de las torres reales, Cocles o Playa Grande, con</tspan><tspan x="68" dy="42.05">guardavidas en ella. Desde abajo, para que se lea</tspan><tspan x="68" dy="42.05">como infraestructura y no como paisaje.</tspan></text>
+</svg>
