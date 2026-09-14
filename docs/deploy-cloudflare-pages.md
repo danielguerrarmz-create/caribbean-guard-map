@@ -5,6 +5,21 @@ nothing to install. **Deploying is dragging one folder into a web page.** That i
 deliberate: the person who has to do this in a year may not be a programmer, and
 a deploy nobody can perform is a map that quietly stops being updated.
 
+> **One thing first, if you cloned this repository fresh.** The satellite imagery
+> lives in `web/tiles/`, 2,152 files and about 20 MB, and it is deliberately NOT
+> in git: a public repository is the wrong place for twenty megabytes of
+> third-party imagery. Check whether `web/tiles/` exists. If it does, skip this.
+> If it does not, run once:
+>
+> ```
+> python tools/build_tiles.py
+> ```
+>
+> It takes a few minutes and needs an internet connection. **Deploying without
+> it produces a map with no imagery at all** — every zone line and label in place
+> over a blank navy field — and nothing warns you, so check that `web/tiles/`
+> is there before you drag anything.
+
 ---
 
 ## The short version

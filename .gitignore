@@ -53,3 +53,12 @@ site/mapa/app/
 # of a PUBLIC repo for the size; coastline.json IS tracked, because it is the
 # geometry the sheets and the map both depend on and it needs to be reviewable.
 web/sheets/
+
+# The satellite tile pyramid. 2,152 files and ~20 MB, rebuilt in one command by
+# tools/build_tiles.py from the z17 cache plus a fetch of the low zooms. A PUBLIC
+# repository is the wrong place to keep twenty megabytes of third-party imagery,
+# and the build is deterministic, so the bytes are not worth versioning.
+# NOTE: docs/deploy-cloudflare-pages.md opens by telling a deployer to run that
+# command first, because deploying without it yields a map with no imagery and
+# no warning. Keep those two facts in step.
+web/tiles/

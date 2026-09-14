@@ -66,22 +66,33 @@
     font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     color:var(--ink); background:var(--ink)}
   #map{position:absolute;inset:0}
-  /* The coast is a 3.5:1 strip and the phone is portrait, so there will always be
-     empty bands above and below it. Leaflet fills those with its own light grey,
-     which reads as a broken image. Make them the app's own navy so the letterbox
-     looks deliberate. */
+  /* Shows only while tiles are in flight, and at the edge of coverage. Navy
+     rather than Leaflet's grey so a tile arriving reads as the picture filling
+     in, not as a broken image repairing itself. */
   .leaflet-container{background:var(--ink)}
   /* Replaces the old white casing. A shadow lifts the strokes off the imagery
      without putting a grey band around them, and it costs no width, so a thin
      line stays thin. */
   .leaflet-overlay-pane{filter:drop-shadow(0 1px 2px rgba(0,0,0,.75))}
-  /* The coast is a 3:1 strip, so on any viewport shape there is empty space above
-     and below it once the whole thing is on screen. Flat colour there reads as a
-     broken image. This is the overview blown up, blurred and darkened, sitting
-     behind the real base: the sea appears to continue instead of stopping at an
-     edge. It is deliberately unreadable, so it cannot be mistaken for map data. */
-  .backdrop{filter:blur(26px) saturate(.55) brightness(.42);
-    transform:scale(1.04);transform-origin:center}
+  /* Hairline seams show between JPEG tiles on fractional zooms, because
+     zoomSnap is 0.25 and a tile can land on a half pixel. Scaling each tile by
+     a hair closes the seam without moving anything measurably. */
+  .basemap .leaflet-tile{transform:scale(1.002);transform-origin:center}
+
+  /* ---------- notations on the imagery ---------- */
+  /* Place names, so the whole-coast view can be read without tapping anything.
+     No box and no background: a plate over satellite imagery hides the thing the
+     label is pointing at. A shadow does the same work and costs no area. */
+  .lbl{background:none;border:0;box-shadow:none;font-weight:800;
+    letter-spacing:.02em;white-space:nowrap;pointer-events:none;
+    text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.7)}
+  .lbl.zone{color:#fff;font-size:12.5px}
+  .lbl.place{color:#cfe0ee;font-size:11px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;opacity:.9}
+  .lbl.sea{color:#9fc4e0;font-size:12px;font-weight:600;letter-spacing:.22em;
+    text-transform:uppercase;opacity:.75}
+  .leaflet-control-scale-line{background:rgba(11,28,44,.72);border-color:rgba(255,255,255,.5);
+    color:#e8f1f7;font-weight:700;font-size:10.5px;padding:2px 6px}
 
   /* ---------- top bar ---------- */
   .topbar{position:absolute;top:0;left:0;right:0;z-index:1000;
@@ -1094,41 +1105,58 @@ const map = L.map("map",{
   maxBounds:BB.pad(0.02), maxBoundsViscosity:1.0,
   maxZoom:18, zoomSnap:0.25, tap:true
 });
-/* Ship the 45 KB overview and nothing else, then fetch the 1.19 MB base only when
-   somebody actually zooms or pans past the default view.
+/* THE BASEMAP IS A TILE PYRAMID, not one image.
 
-   Measured: at the default letterboxed zoom the overlay is 372x125 CSS px, which is
-   1116x375 device px at DPR 3, and the overview is 1000 px wide. They are already at
-   the same effective resolution, so the full base buys nothing visible there. Someone
-   who scans a QR code, reads their status off the card and pockets the phone never
-   downloads it, and the whole map costs them under 90 KB. Only someone who zooms pays,
-   at the moment they ask for it.
+   It used to be a single `imageOverlay` of a 1.19 MB generative upscale, and that
+   one choice caused three separate problems that took a great deal of code to
+   manage rather than fix:
 
-   The overview stays underneath rather than being swapped out, so there is never a
-   blank frame. Both overlays resolve to the same rect in the same absolutely
-   positioned pane, so the upgrade cannot reflow anything: measured CLS is exactly 0. */
-const backdrop = L.imageOverlay("img/base-lo.webp", IMG_BOUNDS,
-  {alt:"", className:"backdrop", interactive:false, zIndex:1}).addTo(map);
-L.imageOverlay("img/base-lo.webp", IMG_BOUNDS,
-  {alt:"Costa de Talamanca", zIndex:2}).addTo(map);
+   - BLACK BANDS. One finite rectangle over a 3.5:1 coast letterboxes on every
+     viewport shape. A blurred, darkened copy of the image was stretched into the
+     gaps, and it still read as a void at full zoom-out.
+   - A ZOOM FLOOR THAT HAD TO BE COMPUTED. Zooming out past the image bought only
+     empty space, so the floor was derived, clamped and re-derived on every
+     resize, with a pan limit hung off the backdrop's bounds.
+   - 5 TO 75 M OF DISPLACEMENT. The upscale is not registered to the coordinates
+     everything else on this map uses. See docs/handoffs/2026-09-14.
 
-let baseLoaded = false;
-function loadFullBase(){
-  if(baseLoaded) return;
-  baseLoaded = true;
-  const full = L.imageOverlay("img/base.webp", IMG_BOUNDS,
-                              {opacity:0, alt:"", zIndex:3});
-  full.addTo(map);
-  const el = full.getElement();
-  if(el){ el.fetchPriority = "low"; el.setAttribute("aria-hidden","true"); }
-  full.once("load", ()=>full.setOpacity(1));
-}
-// Armed AFTER the opening view settles. fitCoast() calls fitBounds, which fires
-// zoomend, so arming here would trigger the fetch on load and defeat the point.
-function armBaseUpgrade(){
-  map.once("zoomend", loadFullBase);
-  map.once("dragend", loadFullBase);
-}
+   Tiles have none of them: they cover whatever the viewport can reach at any
+   zoom, they are the same ground truth the coastline is traced from, and the
+   floor is now a design choice rather than an artefact of image size.
+
+   Cost is paid per tile and only for what is on screen, so the critical path is
+   smaller than the old overview, not larger: about 6 tiles at 9 KB to fill a
+   phone at the opening view, against one 36 KB overview image.
+
+   `maxNativeZoom` is 17 because that is what the cache holds. Above it Leaflet
+   upscales the z17 tile, which is honest blurring rather than invented detail.
+
+   LICENSING: serving these redistributes Bing imagery, which their terms do not
+   permit. Deriving a coastline from imagery is not the same act as reselling it.
+   Before this is published, either license the imagery or point `tileUrl` at
+   Esri World Imagery, which is free with attribution and finer than this cache.
+   Self-hosting buys one thing a remote layer cannot: these tiles can be
+   precached, and offline is the whole point of the map. */
+/* TWO BOXES, and they are not the same box.
+
+   FULL is every zoom, a tight rectangle around the coast, and it is what the
+   pan limit is built from: inside it there is imagery at any zoom somebody can
+   reach. CONTEXT is wider but only exists at z12 to z14, fetched purely so that
+   a zoomed-out viewport on a wide screen has sea and forest at its edges instead
+   of black. Asking for a z17 tile out there returns nothing, which is why the
+   pan limit stays on FULL while the layer is allowed to request the wider box. */
+const TILE_FULL = L.latLngBounds([[9.61429, -82.801208], [9.687398, -82.6474]]);
+const TILE_CONTEXT = L.latLngBounds([[9.55, -82.88], [9.75, -82.57]]);
+
+const TILES = L.tileLayer("tiles/{z}/{x}/{y}.jpg", {
+  minZoom: 12, maxNativeZoom: 17, maxZoom: 18,
+  bounds: TILE_CONTEXT,
+  // No flat fill showing through at the edges of coverage, and no grey flash
+  // between a tile being requested and arriving.
+  className: "basemap", keepBuffer: 3, updateWhenIdle: false,
+  attribution: "Imágenes satelitales"
+}).addTo(map);
+const TILE_BOUNDS = TILE_FULL;
 map.attributionControl.setPrefix("").addAttribution("Caribbean Guard");
 
 /* Contain, do not cover. This was cover-fit, and on a 390px portrait phone that
@@ -1251,13 +1279,13 @@ function fitCoast(opts){
   // No slack below the fit. Zooming out past the whole coast only ever buys more
   // empty space, so the floor IS the fit.
   map.setMinZoom(z);
-  sizeBackdrop(z);
-  // Pan limit is the BACKDROP, not the image. Clamping to the image looks right
-  // and breaks flyClear: offsetting the centre so a zone clears the bottom sheet
-  // pushes the viewport past the image edge, maxBounds drags it back, and the
-  // zone the user just asked about ends up behind the sheet. The backdrop is
-  // large enough to absorb that offset and there is no flat fill inside it.
-  map.setMaxBounds(backdrop.getBounds());
+  // Pan limit is the TILE COVERAGE, not the coast. Clamping to the coast looks
+  // right and breaks flyClear: offsetting the centre so a zone clears the bottom
+  // sheet pushes the viewport past the coast edge, maxBounds drags it back, and
+  // the zone the user just asked about ends up behind the sheet. Tile coverage
+  // runs well past the coast on every side and is real imagery throughout, so
+  // there is nothing to hide by staying inside it.
+  map.setMaxBounds(TILE_BOUNDS.pad(0.08));
 
   if(keepView && !wasAtFloor){
     // Limits rebuilt for the new viewport, camera left where the user put it.
@@ -1270,19 +1298,20 @@ function fitCoast(opts){
 
     /* Safety net, and it is the whole point of this function.
 
-       maxBounds is the BACKDROP rather than the image, deliberately, so that
-       flyClear can offset the centre off the image to clear the bottom sheet.
-       The backdrop is sized for the viewport at the ZOOM FLOOR, so it is enormous
-       in geographic terms, and a centre that is a harmless few pixels off the
-       image at the floor is thousands of pixels off it when zoomed in. Rotating
-       from that state left the coast 2,900 px above the viewport: measured, box
-       [-235, -2925, 742, -2257] in an 845x502 window.
+       maxBounds is the TILE COVERAGE rather than the coast, deliberately, so
+       that flyClear can offset the centre off the coast to clear the bottom
+       sheet. Coverage extends well past the coast on every side, so a centre
+       that is a harmless few pixels off the coast at the floor is thousands of
+       pixels off it when zoomed in. Rotating from that state left the coast
+       2,900 px above the viewport: measured, box [-235, -2925, 742, -2257] in an
+       845x502 window.
 
        So preserving the view is conditional on the view still containing some
-       coast. If keeping it would show nothing but blurred backdrop, it is not a
-       view worth keeping, and the whole coast is strictly better than a blank
-       rectangle. This makes "the map is gone" structurally unreachable from any
-       viewport change, rather than fixed one cause at a time. */
+       coast. Tiles mean it is now open sea rather than a blurred rectangle, but
+       open sea is no more use to somebody looking for their beach. The whole
+       coast is strictly better. This makes "the map is gone" structurally
+       unreachable from any viewport change, rather than fixed one cause at a
+       time. */
     if(map.getBounds().intersects(BB)) return;
   }
   // animate:false because this is a layout correction, not a journey. An
@@ -1292,26 +1321,74 @@ function fitCoast(opts){
   map.fitBounds(BB, {paddingTopLeft:[c.x, c.top], paddingBottomRight:[c.x, c.bot],
                      animate:false});
 }
-/* Stretch the backdrop to cover whatever the viewport can reach at the zoom
-   floor, computed rather than guessed: a portrait phone leaves bands several
-   times the height of the strip, a landscape desktop leaves far less, and a
-   fixed padding would be wrong on both. */
-function sizeBackdrop(floor){
-  const size = map.getSize();
-  const c = BB.getCenter();
-  const nw = map.unproject(map.project(c, floor).subtract(size.divideBy(1.7)), floor);
-  const se = map.unproject(map.project(c, floor).add(size.divideBy(1.7)), floor);
-  const need = L.latLngBounds(nw, se);
-  backdrop.setBounds(L.latLngBounds(
-    [Math.min(need.getSouth(), BB.getSouth()), Math.min(need.getWest(), BB.getWest())],
-    [Math.max(need.getNorth(), BB.getNorth()), Math.max(need.getEast(), BB.getEast())]));
-}
+/* sizeBackdrop() lived here. It stretched a blurred copy of the base image to
+   cover whatever the viewport could reach at the zoom floor, because one finite
+   image cannot fill a viewport it does not span. Tiles can, so the whole
+   function and the layer it managed are gone. */
 
 map.setView(BB.getCenter(), 14);
 fitCoast();
-// after the opening fit has finished animating, not immediately: fitBounds emits
-// zoomend asynchronously, so arming synchronously still catches its own event
-map.whenReady(()=>setTimeout(armBaseUpgrade, 400));
+
+/* ---------- notations ----------
+
+   The whole-coast view used to be readable only by tapping: five coloured lines
+   on imagery, and nothing on the picture said which beach was which or which way
+   Puerto Viejo lay. Someone who scans a QR code on the sand has to place
+   themselves before any status means anything, and "the orange one" is not a
+   place.
+
+   Deliberately few. This is a safety map, and every label is ink spent on top of
+   the thing the reader actually needs to see. Beach names, the two towns that
+   anchor the coast, the sea, and a scale bar so distances are judgeable rather
+   than guessed. No roads, no businesses, no points of interest: Caribbean Guard's
+   own sheet carries those and it is a different document for a different moment.
+
+   Labels are not interactive. A label that swallows a tap is a label that stops
+   somebody opening the zone underneath it. */
+const labels = L.layerGroup().addTo(map);
+
+function label(ll, text, cls){
+  const w = Math.max(40, text.length * 7.6);
+  return L.marker(ll, {
+    interactive: false, keyboard: false, zIndexOffset: -200,
+    icon: L.divIcon({className: "lbl " + cls, html: text,
+                     iconSize: [w, 16], iconAnchor: [w / 2, 8]})
+  }).addTo(labels);
+}
+
+const PLACES = [
+  {ll: [9.65670, -82.75450], t: "Puerto Viejo"},
+  {ll: [9.64050, -82.65900], t: "Manzanillo"}
+];
+const SEA = {ll: [9.67400, -82.72000], t: "Mar Caribe"};
+
+// Zone names sit on the zone's own midpoint, which is on the waterline, so the
+// label lands over water rather than over the beach it is naming.
+const zoneLabels = ZONES.map(z => {
+  const m = z.line[Math.floor(z.line.length / 2)];
+  return label(m, z.name.es, "zone");
+});
+const placeLabels = PLACES.map(p => label(p.ll, p.t, "place"));
+const seaLabel = label(SEA.ll, SEA.t, "sea");
+
+/* What shows depends on zoom, because the same label set is clutter at one scale
+   and too sparse at another. The sea label only earns its place while enough sea
+   is visible to need naming; the beach names drop out once you are inside a
+   single beach and the card already says where you are. */
+function restyleLabels(){
+  const z = map.getZoom();
+  const el = m => m.getElement();
+  zoneLabels.forEach(m => { const e = el(m); if(e) e.style.display = z >= 12.5 && z < 16.5 ? "" : "none"; });
+  placeLabels.forEach(m => { const e = el(m); if(e) e.style.display = z >= 12.5 ? "" : "none"; });
+  const se = el(seaLabel); if(se) se.style.display = z <= 14.5 ? "" : "none";
+}
+map.on("zoomend", restyleLabels);
+map.whenReady(restyleLabels);
+
+/* Distances on a 16.6 km strip are not guessable from imagery alone, and "swim
+   parallel to the beach" is advice that needs a sense of how far that is. */
+L.control.scale({metric: true, imperial: false, position: "bottomleft",
+                 maxWidth: 120}).addTo(map);
 
 /* Refit on anything that changes the viewport, debounced.
 
@@ -1420,19 +1497,41 @@ const STROKE = {
    Both scale, and the RATIO between the three weights is preserved at every
    zoom, because that ranking is the thing doing the work: the loudest mark is
    always the most dangerous one. */
+/* Metres per pixel at this latitude, which is what makes the scaling below
+   physical rather than a curve someone liked the look of. */
+const MPP = z => 156543.03392 * Math.cos(9.645 * Math.PI / 180) / Math.pow(2, z);
+
+/* The stroke is sized to a WIDTH ON THE GROUND, not to a zoom ramp.
+
+   The ramp this replaces ran k = 0.42 + t * 1.08 over zoom 11.5 to 17, which put
+   the `high` stroke at 7.9 px at the whole-coast view. At z13 a pixel is 18.9 m,
+   so that line was 149 m wide describing a beach about 40 m wide, and the halo
+   under it added `weight * 2.4 + 6` on top: the mark was roughly a kilometre
+   across and swallowed the thing it was annotating. Zoomed out, the map read as
+   a far more dangerous and far less precise place than it is.
+
+   So: pick the width the line should occupy on the ground and solve for pixels.
+   TARGET_M is 30, a little under a beach width, so the stroke never claims more
+   coast than the zone actually holds. Clamps at both ends, because physics alone
+   would make it invisible at z13 and absurd at z18. */
+const TARGET_M = 30;
 function zoneStroke(tier){
   const base = STROKE[tier];
-  const t = Math.max(0, Math.min(1, (map.getZoom() - 11.5) / 5.5));
-  // 0.42x at the whole-coast view, 1.5x on a single beach. The low end matters
-  // more than it looks: on a portrait phone the strip is only about 130 px tall,
-  // so a stroke sized for desktop covers the beach it is describing.
-  const k = 0.42 + t * 1.08;
-  const out = {weight: Math.max(2.5, base.weight * k)};
+  // Solved against the heaviest tier so the RATIO between the three is preserved
+  // at every zoom, which is the thing doing the work: the loudest mark is always
+  // the most dangerous one.
+  const k = Math.max(0.22, Math.min(1.3, TARGET_M / (MPP(map.getZoom()) * STROKE.high.weight)));
+  const out = {weight: Math.max(1.6, base.weight * k)};
   if(base.dash){
     // scale the pattern with the line, or a thin line gets a coarse dash and a
     // thick one gets a dotted texture that reads as a different status
     out.dashArray = base.dash.split(" ").map(n => Math.max(2, +n * k)).join(" ");
   }
+  // The halo scales WITH the stroke. It used to be `weight * 2.4 + 6`, and that
+  // constant 6 px is 113 m at z13: a today-bulletin halo was wider zoomed out
+  // than the beach it sat under, which is how the map came to look like a
+  // continuous wall of hazard from the opening view.
+  out.halo = out.weight * 2.0 + 4 * k;
   return out;
 }
 
@@ -1447,7 +1546,7 @@ function restyleZones(){
     const st = zoneStroke(tierOf(z));
     l.line.setStyle({weight: st.weight * (l.current ? 1.25 : 1),
                      dashArray: st.dashArray || null});
-    if(l.halo) l.halo.setStyle({weight: st.weight * 2.4 + 6});
+    if(l.halo) l.halo.setStyle({weight: st.halo});
   });
 }
 
@@ -1466,7 +1565,7 @@ ZONES.forEach(z=>{
   const halo = todayHalo(z);
   let haloLayer = null;
   if(halo){
-    haloLayer = L.polyline(z.line,{color:halo, weight:st0.weight * 2.4 + 6,
+    haloLayer = L.polyline(z.line,{color:halo, weight:st0.halo,
                                    opacity:.5, lineCap:"round"}).addTo(g);
   }
 
