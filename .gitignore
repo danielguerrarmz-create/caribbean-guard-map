@@ -47,3 +47,9 @@ tools/copy_preview.txt
 # The map is copied into the site tree at build time so the whole thing is
 # navigable locally; in production it deploys separately.
 site/mapa/app/
+
+# Rendered annotated sheets. Four PNGs, 9.9 MB, and regenerated in one command
+# by tools/render_annotated.py from coastline.json plus the tile cache. Kept out
+# of a PUBLIC repo for the size; coastline.json IS tracked, because it is the
+# geometry the sheets and the map both depend on and it needs to be reviewable.
+web/sheets/
