@@ -50,7 +50,13 @@ ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / "tools"
 HAZARDS = json.loads((ROOT / "web" / "data" / "cg-hazards.geojson").read_text())
 COAST = json.loads((HERE / "coastline.json").read_text())["zones"]
-OUT = ROOT / "web" / "sheets"
+# OUTSIDE web/. The sheets are a deliverable for Caribbean Guard, not an asset of
+# the map, and web/ is the folder a deployer drags into Cloudflare Pages whole.
+# Left in there, four unsigned draft sheets carrying a SIN FIRMAR band would be
+# published to the open internet by the deploy step, silently, as a side effect
+# of shipping the map. A safety document nobody has reviewed must not reach the
+# public by accident.
+OUT = ROOT / "out" / "sheets"
 Z, TS = 17, 256
 
 # WHICH ZONES SHARE A SHEET. Salsa Brava is 560 m of coast; on its own it made a

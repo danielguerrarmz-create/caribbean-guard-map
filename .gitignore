@@ -48,11 +48,13 @@ tools/copy_preview.txt
 # navigable locally; in production it deploys separately.
 site/mapa/app/
 
-# Rendered annotated sheets. Four PNGs, 9.9 MB, and regenerated in one command
-# by tools/render_annotated.py from coastline.json plus the tile cache. Kept out
-# of a PUBLIC repo for the size; coastline.json IS tracked, because it is the
+# Rendered annotated sheets. Four PNGs, 9.9 MB, regenerated in one command by
+# tools/render_annotated.py from coastline.json plus the tile cache. Kept out of
+# a PUBLIC repo for the size; coastline.json IS tracked, because it is the
 # geometry the sheets and the map both depend on and it needs to be reviewable.
-web/sheets/
+# They live in out/ and NOT in web/, because web/ is dragged into Cloudflare
+# Pages whole and these are unsigned drafts.
+out/
 
 # The satellite tile pyramid. 2,152 files and ~20 MB, rebuilt in one command by
 # tools/build_tiles.py from the z17 cache plus a fetch of the low zooms. A PUBLIC

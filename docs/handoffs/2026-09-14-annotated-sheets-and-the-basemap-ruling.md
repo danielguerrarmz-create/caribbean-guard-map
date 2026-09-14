@@ -14,10 +14,10 @@ Committed on `feat/annotated-sheets` in two commits: the sheets and the coastlin
 
 | Sheet | Size | Zones | CG marks |
 |---|---|---|---|
-| `web/sheets/cocles.png` | 3159 x 1289 | Salsa Brava + Cocles | none |
-| `web/sheets/chiquita.png` | 2385 x 973 | Chiquita | 9 rips, 4 stations |
-| `web/sheets/punta-uva.png` | 2054 x 838 | Punta Uva | none |
-| `web/sheets/playa-negra.png` | 1557 x 635 | Playa Negra | none |
+| `out/sheets/cocles.png` | 3159 x 1289 | Salsa Brava + Cocles | none |
+| `out/sheets/chiquita.png` | 2385 x 973 | Chiquita | 9 rips, 4 stations |
+| `out/sheets/punta-uva.png` | 2054 x 838 | Punta Uva | none |
+| `out/sheets/playa-negra.png` | 1557 x 635 | Playa Negra | none |
 
 **A new coastline tracer**, `tools/trace_coastline.py`, writing `tools/coastline.json`.
 
@@ -224,7 +224,7 @@ Keep those two facts in step.
 
 ```
 python tools/trace_coastline.py      # rewrites tools/coastline.json
-python tools/render_annotated.py     # rewrites web/sheets/*.png
+python tools/render_annotated.py     # rewrites out/sheets/*.png
 python tools/build_tiles.py          # fills web/tiles/ (REBUILD=1 to start over)
 ```
 
@@ -266,7 +266,10 @@ still the biggest: our Cocles copy asserts a flag system and nobody has confirme
 - `tools/render_annotated.py` — the sheet renderer (new)
 - `tools/trace_coastline.py` — the coastline tracer (new)
 - `tools/coastline.json` — one dense polyline per zone (new, generated)
-- `web/sheets/*.png` — four sheets (new, generated, gitignored)
+- `out/sheets/*.png` — four sheets (new, generated, gitignored). **Outside `web/`
+  on purpose:** `web/` is dragged into Cloudflare Pages whole, so sheets left in
+  there would publish four unsigned drafts to the open internet as a silent side
+  effect of deploying the map.
 - `tools/build_tiles.py` — the tile pyramid builder (new)
 - `web/tiles/` — 2,152 tiles, 19.8 MB (new, generated, gitignored)
 - `web/index.html` — tile basemap, ground-based strokes, notations
