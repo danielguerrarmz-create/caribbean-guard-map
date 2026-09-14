@@ -251,7 +251,12 @@ again and the opening radius needs raising.
 2. **`shoreline.json` and the nine-point `line:` fields in `web/index.html` are still
    the broken geometry.** The sheets no longer use them; the slippy map still does.
    Either retire the map or re-run its geometry through the new tracer.
-3. `tools/` still holds a large pile of debug images from earlier sessions.
+3. `tools/` still holds a pile of debug images from earlier sessions. All are
+   gitignored, and `.gitignore` notes that `annot_check.jpg` and `georef_check*.jpg`
+   are the evidence behind the georeference, so they are kept rather than swept.
+   `georef.py` through `georef6.py` are six superseded attempts, kept as the record
+   of what failed; only `georef2.py` is referenced anywhere and it is now referenced
+   by nothing that runs.
 4. **Nothing is deployed.** Host is Vercel (Daniel, 2026-09-14); `docs/deploy.md`
    carries the CLI steps, `web/vercel.json` the caching rules, and `web/_headers` the
    same rules for Cloudflare as a fallback. A Git-connected Vercel deploy would ship a
@@ -259,6 +264,34 @@ again and the opening radius needs raising.
    is on disk and is the documented path.
 5. Four of five zones carry no Caribbean Guard data at all. That is not a gap to fill
    with desk work, it is the sheet series naming which beaches need a guard.
+
+## Cleanup at session close, 2026-09-14
+
+**`redraw_zones.py` now refuses to run** and exits 1. Its last act was to write
+straight into `web/index.html`, and everything it writes is now known wrong, so
+running it would silently replace the corrected coastline with the broken one and
+report success. It cannot be deleted: `trace_coastline.py` reads the five zone
+longitude spans out of its ZONES list.
+
+**The clean-clone path was broken in two places and is now proved, not assumed.**
+Both `build_tiles.py` and `render_annotated.py` died with
+`no tile cache; run tools/georef2.py first` on a fresh checkout, and that
+instruction is a dead end: `georef2.py` reads an absolute path into a Downloads
+folder, at a file that is not in the repository. So the single command
+`docs/deploy.md` tells a deployer to run was false for anyone but this machine.
+
+- `build_tiles.py` now fetches z17 like every other level; `tools/tilecache/` is a
+  seed that saves 1,395 fetches, not a prerequisite.
+- `render_annotated.py` reads `web/tiles/` instead of the cache, which is also the
+  right source: it is what the map serves, so the sheets and the map show the same
+  pixels.
+- Verified by cloning the repo to a scratch directory and running both from
+  nothing: 2,195 tiles and 21.1 MB fetched, then all four sheets rendered at
+  identical dimensions. A recovery instruction nobody has run from a clean state
+  is a guess.
+
+**`extract_annotations.py` still reads the superseded `shoreline.json`**, and now
+says so at the function, with what it costs and why it is survivable today.
 
 ## Open with Caribbean Guard
 

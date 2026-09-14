@@ -34,10 +34,8 @@ the data and not of the surface that draws it:
 Usage:  python tools/render_annotated.py            # every sheet
         python tools/render_annotated.py chiquita   # one
 """
-import glob
 import json
 import math
-import os
 import re
 import sys
 from pathlib import Path
@@ -79,12 +77,30 @@ def deg2tile(lat, lon, z=Z):
             (1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * n)
 
 
+TILES = ROOT / "web" / "tiles" / str(Z)
+
+
 def tile_bounds():
-    files = glob.glob(str(HERE / "tilecache" / f"{Z}_*.jpg"))
-    if not files:
-        raise SystemExit("no tile cache; run tools/georef2.py first")
-    xs = sorted({int(os.path.basename(f).split("_")[1]) for f in files})
-    ys = sorted({int(os.path.basename(f).split("_")[2].split(".")[0]) for f in files})
+    """Extent of the z17 imagery, read from web/tiles/ rather than tools/tilecache.
+
+    It used to read the cache and die with "run tools/georef2.py first" when that
+    was absent, which is every clean clone, and the script it named reads an
+    absolute path into a Downloads folder at a file not in the repository. So the
+    sheets were unbuildable by anyone but the machine they were written on, and
+    the error pointed at a dead end.
+
+    web/tiles/ is the right source anyway: it is what `build_tiles.py` produces,
+    what the map serves, and therefore the same pixels a reader sees. One
+    command, `python tools/build_tiles.py`, now makes both the map and the sheets
+    possible from a fresh checkout.
+    """
+    if not TILES.is_dir():
+        raise SystemExit("no imagery; run: python tools/build_tiles.py")
+    xs = sorted(int(d.name) for d in TILES.iterdir() if d.is_dir())
+    ys = sorted(int(f.stem) for d in TILES.iterdir() if d.is_dir()
+                for f in d.glob("*.jpg"))
+    if not xs or not ys:
+        raise SystemExit("no imagery; run: python tools/build_tiles.py")
     return xs[0], ys[0], xs[-1], ys[-1]
 
 
@@ -105,7 +121,7 @@ def mosaic(x0, y0, x1, y1):
     img = Image.new("RGB", ((tx_b - tx_a + 1) * TS, (ty_b - ty_a + 1) * TS), (8, 14, 20))
     for tx in range(tx_a, tx_b + 1):
         for ty in range(ty_a, ty_b + 1):
-            p = HERE / "tilecache" / f"{Z}_{tx}_{ty}.jpg"
+            p = TILES / str(tx) / f"{ty}.jpg"
             if p.exists():
                 try:
                     img.paste(Image.open(p).convert("RGB"),
@@ -326,7 +342,9 @@ def render(sheet_id, members, zones):
     if len(members) > 1:
         name_lines(d, sheet, members, zones, coast_px, boxes)
 
-    OUT.mkdir(exist_ok=True)
+    # parents=True: out/ does not exist on a clean clone, and mkdir without it
+    # fails with a bare WinError 3 that reads like a broken path.
+    OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / f"{sheet_id}.png"
     sheet.convert("RGB").save(path)
     return path, sheet.size, rips, stations

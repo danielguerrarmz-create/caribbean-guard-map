@@ -40,6 +40,10 @@ nonprofit safety map. Recorded here so nobody has to rediscover the question. Th
 alternative, if it is ever revisited, is Esri World Imagery: free with
 attribution and finer than this cache, at the cost of offline precaching.
 
+SELF SUFFICIENT. It needs no local tile cache and no other script: every level
+including z17 is fetched if it is not already on disk. `tools/tilecache/` is a
+seed that saves re-fetching 1,395 tiles, nothing more.
+
 Usage:  python tools/build_tiles.py            # fills gaps, keeps what exists
         REBUILD=1 python tools/build_tiles.py  # from scratch
 """
@@ -67,7 +71,7 @@ QUALITY = 78        # measured: 82 costs 31% more bytes for no visible gain here
 COAST_BOX = (9.6143, -82.8012, 9.6874, -82.6474)      # the cache's own extent
 CONTEXT_BOX = (9.5500, -82.8800, 9.7500, -82.5700)    # ~22 x 34 km of surrounds
 BOX_FOR = {12: CONTEXT_BOX, 13: CONTEXT_BOX, 14: CONTEXT_BOX,
-           15: COAST_BOX, 16: COAST_BOX}
+           15: COAST_BOX, 16: COAST_BOX, 17: COAST_BOX}
 
 # Install BLOCKS on CRITICAL, so it holds the least that is still a working
 # offline map: z12 and z13, the whole coast at 18.9 m/px with every zone line
@@ -138,10 +142,25 @@ def fetch_level(z):
 
 
 def copy_native():
-    """z17 from the cache already on disk, re-encoded once at our own quality."""
+    """Seed z17 from tools/tilecache/ if it is there. Missing tiles get fetched.
+
+    THIS USED TO BE MANDATORY AND IT BROKE A CLEAN CLONE. It raised
+    "no tile cache; run tools/georef2.py first", and that instruction does not
+    work on any machine but the one it was written on: georef2.py reads an
+    absolute path into a Downloads folder, at a file that is not in the
+    repository. So the single command docs/deploy.md tells a deployer to run was
+    false on a fresh checkout, and the failure pointed at a script that would
+    also fail. A recovery instruction nobody has run from a clean state is a
+    guess.
+
+    The cache is now an optimisation, not a prerequisite: z17 sits in BOX_FOR
+    like every other level and fetch_level fills whatever is missing. Keeping the
+    cache still saves re-fetching 1,395 tiles.
+    """
     files = glob.glob(os.path.join(CACHE, f"{Z_NATIVE}_*.jpg"))
     if not files:
-        raise SystemExit("no tile cache; run tools/georef2.py first")
+        print(f"z{Z_NATIVE}: no local cache, fetching the level instead")
+        return
     n = 0
     for f in files:
         _, x, y = os.path.basename(f)[:-4].split("_")
