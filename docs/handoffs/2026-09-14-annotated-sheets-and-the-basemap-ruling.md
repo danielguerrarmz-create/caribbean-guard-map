@@ -215,7 +215,7 @@ Map Data at all.
 ### web/tiles/ is gitignored
 
 2,152 files and 20 MB is the wrong thing to put in a public repository when the build is
-deterministic. `docs/deploy-cloudflare-pages.md` now opens by telling a deployer to run
+deterministic. `docs/deploy.md` now opens by telling a deployer to run
 `python tools/build_tiles.py` first, because **deploying without it produces a map with
 every zone line and label in place over a blank navy field, and nothing warns you.**
 Keep those two facts in step.
@@ -240,20 +240,24 @@ again and the opening radius needs raising.
 
 ## Left
 
-1. **Salsa Brava still has no on-image label** on the merged sheet. A leader line from
-   its panel out to its own shore was added and then made conditional on the target
-   being visible, because measurement showed the target is not: Salsa Brava's shore
-   sits at x 136 to 164 on a sheet whose text panel occupies x 28 to 588, so **the whole
-   of it is behind its own panel**. At 1.18 m/px a 560 m beach is 474 px and the panel
-   is 560 px, so no framing at native resolution can clear it. The fix is either a wider
-   west margin on merged sheets, pushing that shore right of the panel, or putting that
-   one panel on the opposite side. Unresolved on purpose; the leader mechanism is built
-   and will fire as soon as it has something to point at.
+1. ~~Salsa Brava has no on-image label.~~ **Fixed.** Both zones on the merged sheet are
+   now named on the water. The panel column moved to the right edge, which is chosen
+   for the SHEET rather than per zone: moving only Salsa Brava's panel was tried first
+   and failed, because Cocles' panel on the left still covered Salsa Brava's shore. The
+   column hides that zone regardless of whose text is in it, so what matters is which
+   edge the column occupies. The unsigned band follows the column and the legend takes
+   the opposite corner. The leader-line mechanism stays in as a fallback for a zone
+   that has no clear shore on either side, guarded so it never points off the picture.
 2. **`shoreline.json` and the nine-point `line:` fields in `web/index.html` are still
    the broken geometry.** The sheets no longer use them; the slippy map still does.
    Either retire the map or re-run its geometry through the new tracer.
 3. `tools/` still holds a large pile of debug images from earlier sessions.
-4. Four of five zones carry no Caribbean Guard data at all. That is not a gap to fill
+4. **Nothing is deployed.** Host is Vercel (Daniel, 2026-09-14); `docs/deploy.md`
+   carries the CLI steps, `web/vercel.json` the caching rules, and `web/_headers` the
+   same rules for Cloudflare as a fallback. A Git-connected Vercel deploy would ship a
+   map with no imagery, because `web/tiles/` is gitignored; the CLI deploy sends what
+   is on disk and is the documented path.
+5. Four of five zones carry no Caribbean Guard data at all. That is not a gap to fill
    with desk work, it is the sheet series naming which beaches need a guard.
 
 ## Open with Caribbean Guard
@@ -274,5 +278,6 @@ still the biggest: our Cocles copy asserts a flag system and nobody has confirme
 - `web/tiles/` — 2,152 tiles, 19.8 MB (new, generated, gitignored)
 - `web/index.html` — tile basemap, ground-based strokes, notations
 - `web/sw.js` — generated tile precache lists, cache bumped to v2
-- `docs/deploy-cloudflare-pages.md` — build the tiles before deploying
+- `docs/deploy.md` — renamed from `deploy-cloudflare-pages.md`; Vercel is the host
+- `web/vercel.json` — caching rules for Vercel (new)
 - `web/img/base.webp`, `web/img/base-lo.webp` — **deleted**, nothing referenced them

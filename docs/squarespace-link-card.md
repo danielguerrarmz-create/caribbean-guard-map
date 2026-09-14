@@ -96,4 +96,4 @@ placeholder is there.
   available at all. Neither option is blocked on the answer, but the answer picks
   which one to use.
 - **Confirm the final map URL** before this is pasted, so the printed QR codes
-  and this card agree. See `docs/deploy-cloudflare-pages.md`.
+  and this card agree. See `docs/deploy.md`.

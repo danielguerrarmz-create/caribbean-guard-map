@@ -319,9 +319,12 @@ def render(sheet_id, members, zones):
             stations += 1
             hexagon(d, cx, cyy, 16, STATION, (30, 20, 10), 3)
 
-    boxes = draw_panels(d, sheet, [zones[z] for z in members], rips, stations)
+    coast_px = {z: [P(la, lo) for la, lo in COAST[z]] for z in members}
+    sides = panel_sides(members, coast_px, sheet.width, sheet.height,
+                        560, 28, len(members))
+    boxes = draw_panels(d, sheet, [zones[z] for z in members], rips, stations, sides)
     if len(members) > 1:
-        name_lines(d, sheet, members, zones, P, boxes)
+        name_lines(d, sheet, members, zones, coast_px, boxes)
 
     OUT.mkdir(exist_ok=True)
     path = OUT / f"{sheet_id}.png"
@@ -329,7 +332,7 @@ def render(sheet_id, members, zones):
     return path, sheet.size, rips, stations
 
 
-def name_lines(d, sheet, members, zones, P, boxes):
+def name_lines(d, sheet, members, zones, coast_px, boxes):
     """Say which line is which, on a sheet that carries more than one zone.
 
     Not decoration. Salsa Brava is `no-swim` and Cocles is `high-risk`, two
@@ -347,13 +350,22 @@ def name_lines(d, sheet, members, zones, P, boxes):
     lands on the water.
     """
     fl = font("arialbd.ttf", 26)
+    # A point is nameable if it is on the picture and under none of the panels.
+    # Testing "right of my own panel" was wrong the moment a panel could sit on
+    # the right edge: it pushed every candidate off the sheet.
+    def blocked(p):
+        for b in boxes.values():
+            if b[0] - 30 < p[0] < b[2] + 30 and b[1] - 30 < p[1] < b[3] + 30:
+                return True
+        return False
+
     for z in members:
         colour = TIER[zones[z]["klass"]][0]
-        pts = [P(la, lo) for la, lo in COAST[z]]
+        pts = coast_px[z]
         box = boxes.get(z)
-        # Clear of the text column, and clear of the legend and the deferral band.
-        gutter = (box[2] + 40) if box else 620
-        clear = [p for p in pts if p[0] > gutter and 70 < p[1] < sheet.height - 130]
+        clear = [p for p in pts
+                 if 40 < p[0] < sheet.width - 40 and 100 < p[1] < sheet.height - 130
+                 and not blocked(p)]
 
         if clear:
             mid = clear[len(clear) // 2]
@@ -376,22 +388,58 @@ def name_lines(d, sheet, members, zones, P, boxes):
         # the sheet edge. Better to name nothing than to point at nothing.
         if not box or not pts:
             continue
-        ax, ay = box[2], (box[1] + box[3]) / 2
+        # Leave from whichever edge of the panel faces the shore.
+        cx = sum(p[0] for p in pts) / len(pts)
+        ax = box[2] if cx > box[2] else box[0]
+        ay = (box[1] + box[3]) / 2
         visible = [p for p in pts
-                   if box[2] + 20 < p[0] < sheet.width - 30
-                   and 100 < p[1] < sheet.height - 130]
+                   if 40 < p[0] < sheet.width - 30
+                   and 100 < p[1] < sheet.height - 130 and not blocked(p)]
         if not visible:
             continue
         tx, ty = min(visible, key=lambda p: (p[0] - ax) ** 2 + (p[1] - ay) ** 2)
-        d.line([ax, ay, ax + 26, ay], fill=(0, 0, 0, 170), width=6)
-        d.line([ax, ay, ax + 26, ay], fill=colour, width=3)
-        d.line([ax + 26, ay, tx, ty], fill=(0, 0, 0, 170), width=6)
-        d.line([ax + 26, ay, tx, ty], fill=colour, width=3)
+        stub = 26 if ax == box[2] else -26
+        d.line([ax, ay, ax + stub, ay], fill=(0, 0, 0, 170), width=6)
+        d.line([ax, ay, ax + stub, ay], fill=colour, width=3)
+        d.line([ax + stub, ay, tx, ty], fill=(0, 0, 0, 170), width=6)
+        d.line([ax + stub, ay, tx, ty], fill=colour, width=3)
         d.ellipse((tx - 9, ty - 9, tx + 9, ty + 9), fill=(8, 16, 22, 230),
                   outline=colour, width=3)
 
 
-def draw_panels(d, sheet, members, rips, stations):
+def panel_sides(members, coast_px, sheet_w, sheet_h, pw, margin, n_panels):
+    """Which edge ALL the text blocks sit on. One side for the sheet, not per zone.
+
+    Left by default. It flips when a zone would otherwise have no visible shore
+    at all, which on a merged sheet is a real case: Salsa Brava is 560 m at the
+    west end, its shore runs x 136 to 164, and the panel column occupies x 28 to
+    588. At 1.18 m/px a 560 m beach is 474 px against a 560 px panel, so no
+    framing at native resolution clears it and the zone simply could not be named.
+
+    Per-zone sides were tried first and do not work. Moving only Salsa Brava's
+    panel right leaves Cocles' panel on the left, still covering Salsa Brava's
+    shore: the column hides that zone regardless of whose text is in it. What
+    matters is which EDGE the column occupies, so the choice has to be made once
+    for the sheet.
+    """
+    left_col = (margin - 30, margin + pw + 30)
+    right_col = (sheet_w - margin - pw - 30, sheet_w - margin + 30)
+
+    def hidden(col):
+        n = 0
+        for pts in coast_px.values():
+            vis = [p for p in pts
+                   if 0 < p[0] < sheet_w and 100 < p[1] < sheet_h - 130
+                   and not (col[0] < p[0] < col[1])]
+            if not vis:
+                n += 1
+        return n
+
+    side = "left" if hidden(left_col) <= hidden(right_col) else "right"
+    return {z: side for z in members}
+
+
+def draw_panels(d, sheet, members, rips, stations, sides=None):
     Wd, Ht = sheet.size
     f_name = font("arialbd.ttf", 34)
     f_sub = font("arial.ttf", 23)
@@ -401,8 +449,17 @@ def draw_panels(d, sheet, members, rips, stations):
     f_smb = font("arialbd.ttf", 18)
     f_band = font("arialbd.ttf", 20)
 
-    pw, px = 560, 28
-    y = 28
+    pw, margin = 560, 28
+    sides = sides or {}
+    # One cursor per edge. Panels stack down their own side, so a zone moved to
+    # the right does not leave a gap in the left column.
+    ycur = {"left": 28, "right": 28}
+    # The band belongs with the text, so it sits at the head of the panel column
+    # wherever that column ended up. Leaving it pinned left while the panels moved
+    # right stranded it under the legend.
+    side0 = sides.get(members[0]["local"], "left") if members else "left"
+    px = margin if side0 == "left" else sheet.size[0] - margin - pw
+    y = ycur[side0]
 
     # -- unsigned band, above everything -----------------------------------
     # Daniel's call: an unsigned sheet must LOOK unsigned. It is also the ask to
@@ -416,10 +473,13 @@ def draw_panels(d, sheet, members, rips, stations):
                             fill=(60, 12, 12, 240), outline=UNSIGNED, width=3)
         d.text((px + 18, y + 10), UNSIGNED_ES, font=fb, fill=UNSIGNED)
         d.text((px + 18, y + 36), UNSIGNED_EN, font=fbe, fill=(255, 176, 176))
-        y += bh + 14
+        ycur[side0] = y + bh + 14
 
     boxes = {}
     for m in members:
+        side = sides.get(m["local"], "left")
+        px = margin if side == "left" else sheet.size[0] - margin - pw
+        y = ycur[side]
         colour, es_word, en_word = TIER[m["klass"]]
         f_word = fit(d, es_word, "arialbd.ttf", 52, pw - 56)
         f_en = fit(d, en_word, "arial.ttf", 27, pw - 56)
@@ -487,7 +547,7 @@ def draw_panels(d, sheet, members, rips, stations):
         d.text((px + 118, yy), m["reviewed"] or "nadie todavía", font=f_small,
                fill=(196, 210, 220) if m["reviewed"] else UNSIGNED)
         boxes[m["local"]] = (px, y, px + pw, y + ph)
-        y += ph + 16
+        ycur[side] = y + ph + 16
 
     # -- the deferral, across the foot of the sheet -------------------------
     # Rendered under every character, not only the lowest one. Phrased
@@ -509,7 +569,11 @@ def draw_panels(d, sheet, members, rips, stations):
     lw = int(max([d.textlength(t, font=f_small) + 100 for _, t in rows]
                  + [d.textlength(note, font=f_small) + 40]))
     lh = 18 + 32 * len(rows) + 28
-    lx, ly = Wd - lw - 28, 28
+    # The legend lives top right, unless the panel column does. Drawing both
+    # there put the legend straight over the Salsa Brava heading.
+    on_right = any(b[0] > Wd / 2 for b in boxes.values()) if boxes else False
+    lx = 28 if on_right else Wd - lw - 28
+    ly = 28
     d.rounded_rectangle((lx, ly, lx + lw, ly + lh), radius=12, fill=PANEL + (226,))
     yy = ly + 18
     for kind, text in rows:

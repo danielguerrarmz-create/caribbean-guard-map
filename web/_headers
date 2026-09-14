@@ -1,7 +1,10 @@
 # Cloudflare Pages reads this file from the root of the deployed folder.
-# It must stay in web/ so that "drag the web folder into Cloudflare" is the
-# whole deploy. Nothing here needs editing to move between mapa.caribbeanguard.org
-# and a *.pages.dev address: every rule is path based, not host based.
+#
+# THE PRIMARY TARGET IS VERCEL (Daniel's call, 2026-09-14) and Vercel ignores
+# this file entirely: its rules live in web/vercel.json. This is kept so that
+# Cloudflare Pages remains a one-drag fallback, and the two MUST be changed
+# together. A caching rule that exists on one host and not the other is a bug
+# that only appears after a migration, which is the worst time to find it.
 
 # ---------------------------------------------------------------------------
 # The document carries the safety verdicts, so it is never cached.
@@ -27,19 +30,21 @@
 # ---------------------------------------------------------------------------
 # Imagery and Leaflet: a year, immutable.
 #
-# READ THIS BEFORE RE-EXPORTING THE IMAGERY. `immutable` is only safe on files
-# whose NAME changes when their contents change, and ours do not: base.webp and
-# base-lo.webp keep their names across a re-export. A browser that has cached
-# them will not ask again for a year.
+# READ THIS BEFORE REBUILDING THE TILES. `immutable` is only safe on files whose
+# NAME changes when their contents change, and a tile's name is its coordinate:
+# tiles/15/8850/15500.jpg keeps that name forever, whatever imagery is inside it.
+# A browser that has cached one will not ask again for a year.
 #
-# If the imagery is ever re-exported, rename the file (base-lo-2.webp) and update
-# the reference in index.html and the CRITICAL list in sw.js. Deploying alone is
-# not enough. Cloudflare purges its own edge cache on every deploy, so this only
-# affects browsers that already hold a copy, and the service worker re-fetches
-# with `cache: "reload"` which bypasses it, so the exposure is a returning visitor
-# whose worker has been evicted. Visual staleness only: no safety verdict lives
-# in an image.
-/img/*
+# So rebuilding web/tiles/ over the same coordinates is invisible to a returning
+# visitor. If the imagery is ever re-fetched from a different source or a
+# different date, serve it from a new prefix (tiles2/) and change the URL
+# template in index.html plus the generated lists in sw.js. Deploying alone is
+# not enough.
+#
+# The service worker re-fetches with `cache: "reload"`, which bypasses this, so
+# the exposure is a returning visitor whose worker has been evicted. Visual
+# staleness only: no safety verdict lives in a tile.
+/tiles/*
   Cache-Control: public, max-age=31536000, immutable
 /icons/*
   Cache-Control: public, max-age=31536000, immutable
