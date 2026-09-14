@@ -283,28 +283,7 @@ def render(sheet_id, members, zones):
         dashed_path(d, line, (0, 0, 0, 150), 11)
         dashed_path(d, line, colour, 6)
 
-    # Name each line ON the water. On a merged sheet this is not decoration:
-    # Salsa Brava is `no-swim` and Cocles is `high-risk`, two classes that share
-    # the `high` tier and therefore the same red on purpose, so without a label
-    # nothing on the picture says where one zone ends and the next begins.
-    if len(members) > 1:
-        fl = font("arialbd.ttf", 26)
-        for z in members:
-            colour = TIER[zones[z]["klass"]][0]
-            # Only consider points clear of the text column on the left, or the
-            # label lands under the panel and is invisible: Salsa Brava's line
-            # sits entirely behind it on the merged sheet.
-            pts = [P(la, lo) for la, lo in COAST[z]]
-            clear = [p for p in pts if p[0] > 620 and 70 < p[1] < sheet.height - 130]
-            if not clear:
-                continue
-            mid = clear[len(clear) // 2]
-            label = zones[z]["name"]
-            tw = d.textlength(label, font=fl)
-            bx, by = mid[0] - tw / 2 - 14, mid[1] - 58
-            d.rounded_rectangle((bx, by, bx + tw + 28, by + 38), radius=8,
-                                fill=(8, 16, 22, 216), outline=colour, width=2)
-            d.text((bx + 14, by + 7), label, font=fl, fill=INK)
+    # -- hazards and panels are drawn below; naming happens last -----------
 
     # -- Caribbean Guard's own marks, only where they exist -----------------
     rips = stations = 0
@@ -334,12 +313,76 @@ def render(sheet_id, members, zones):
             stations += 1
             hexagon(d, cx, cyy, 16, STATION, (30, 20, 10), 3)
 
-    draw_panels(d, sheet, [zones[z] for z in members], rips, stations)
+    boxes = draw_panels(d, sheet, [zones[z] for z in members], rips, stations)
+    if len(members) > 1:
+        name_lines(d, sheet, members, zones, P, boxes)
 
     OUT.mkdir(exist_ok=True)
     path = OUT / f"{sheet_id}.png"
     sheet.convert("RGB").save(path)
     return path, sheet.size, rips, stations
+
+
+def name_lines(d, sheet, members, zones, P, boxes):
+    """Say which line is which, on a sheet that carries more than one zone.
+
+    Not decoration. Salsa Brava is `no-swim` and Cocles is `high-risk`, two
+    classes that share the `high` tier and therefore the same red on purpose, so
+    without naming there is nothing on the picture that says where one zone ends
+    and the next begins.
+
+    TWO WAYS TO NAME A LINE, and which one applies is a property of the geometry
+    rather than a preference. A zone with shore clear of the text column gets a
+    plate on the water. Salsa Brava has none: it is 560 m at the west end of the
+    sheet and its entire line runs behind its own panel, so an earlier version
+    silently drew nothing and left two identical red lines with one name between
+    them. That zone gets a leader instead, a thin rule from its panel out to the
+    nearest point of its own shore, so the panel does the naming and no new ink
+    lands on the water.
+    """
+    fl = font("arialbd.ttf", 26)
+    for z in members:
+        colour = TIER[zones[z]["klass"]][0]
+        pts = [P(la, lo) for la, lo in COAST[z]]
+        box = boxes.get(z)
+        # Clear of the text column, and clear of the legend and the deferral band.
+        gutter = (box[2] + 40) if box else 620
+        clear = [p for p in pts if p[0] > gutter and 70 < p[1] < sheet.height - 130]
+
+        if clear:
+            mid = clear[len(clear) // 2]
+            name = zones[z]["name"]
+            tw = d.textlength(name, font=fl)
+            bx, by = mid[0] - tw / 2 - 14, mid[1] - 58
+            d.rounded_rectangle((bx, by, bx + tw + 28, by + 38), radius=8,
+                                fill=(8, 16, 22, 216), outline=colour, width=2)
+            d.text((bx + 14, by + 7), name, font=fl, fill=INK)
+            continue
+
+        # Leader: from the middle of the panel's right edge to the closest point
+        # on this zone's shore. A dot lands on the shore rather than an arrowhead,
+        # because an arrow on this sheet already means a rip current.
+        #
+        # THE TARGET HAS TO BE ON THE PICTURE. Pointing at a coordinate that is
+        # off the top of the frame, or behind the panel the leader starts from,
+        # draws a confident rule to nothing; the first version of this did
+        # exactly that and ran a red line across the unsigned band to a dot on
+        # the sheet edge. Better to name nothing than to point at nothing.
+        if not box or not pts:
+            continue
+        ax, ay = box[2], (box[1] + box[3]) / 2
+        visible = [p for p in pts
+                   if box[2] + 20 < p[0] < sheet.width - 30
+                   and 100 < p[1] < sheet.height - 130]
+        if not visible:
+            continue
+        tx, ty = min(visible, key=lambda p: (p[0] - ax) ** 2 + (p[1] - ay) ** 2)
+        d.line([ax, ay, ax + 26, ay], fill=(0, 0, 0, 170), width=6)
+        d.line([ax, ay, ax + 26, ay], fill=colour, width=3)
+        d.line([ax + 26, ay, tx, ty], fill=(0, 0, 0, 170), width=6)
+        d.line([ax + 26, ay, tx, ty], fill=colour, width=3)
+        d.ellipse((tx - 9, ty - 9, tx + 9, ty + 9), fill=(8, 16, 22, 230),
+                  outline=colour, width=3)
 
 
 def draw_panels(d, sheet, members, rips, stations):
@@ -369,6 +412,7 @@ def draw_panels(d, sheet, members, rips, stations):
         d.text((px + 18, y + 36), UNSIGNED_EN, font=fbe, fill=(255, 176, 176))
         y += bh + 14
 
+    boxes = {}
     for m in members:
         colour, es_word, en_word = TIER[m["klass"]]
         f_word = fit(d, es_word, "arialbd.ttf", 52, pw - 56)
@@ -436,6 +480,7 @@ def draw_panels(d, sheet, members, rips, stations):
         d.text((px + 28, yy), "Revisado", font=f_smb, fill=(138, 158, 172))
         d.text((px + 118, yy), m["reviewed"] or "nadie todavía", font=f_small,
                fill=(196, 210, 220) if m["reviewed"] else UNSIGNED)
+        boxes[m["local"]] = (px, y, px + pw, y + ph)
         y += ph + 16
 
     # -- the deferral, across the foot of the sheet -------------------------
@@ -472,6 +517,7 @@ def draw_panels(d, sheet, members, rips, stations):
         d.text((lx + 82, yy), text, font=f_small, fill=INK)
         yy += 32
     d.text((lx + 20, yy - 2), note, font=f_small, fill=(150, 168, 182))
+    return boxes
 
 
 def main():

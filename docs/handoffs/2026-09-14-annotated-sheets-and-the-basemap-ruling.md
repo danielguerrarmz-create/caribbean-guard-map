@@ -5,7 +5,8 @@ write annotations onto the base image, treated as an annotated picture rather th
 slippy map, because that is what Caribbean Guard already makes by hand and the shorter
 path to something they will sign.
 
-Nothing in this session is committed.
+Committed on `feat/annotated-sheets` in two commits: the sheets and the coastline
+(`4c73fa7`), then the map (`635fc3e`).
 
 ## What
 
@@ -125,12 +126,112 @@ The zone records are parsed out of `web/index.html` rather than copied, so the s
 the map cannot drift apart. The zone spans in `trace_coastline.py` are read from
 `redraw_zones.py` for the same reason.
 
+## The map, second half of the same day
+
+The sheets moved to Bing; the slippy map at `web/index.html` had not. Daniel asked for
+four things: fill the black at full zoom-out, make the linework read correctly zoomed
+out, add notations, and put the same Bing imagery on the main view.
+
+### The basemap is a tile pyramid now
+
+`tools/build_tiles.py` builds `web/tiles/` — 2,152 tiles, 19.8 MB. The single
+`imageOverlay` is gone, and with it `sizeBackdrop()` and the blurred-copy layer.
+
+One image caused three problems that were being *managed* rather than fixed: black
+bands on every viewport shape, a zoom floor that had to be computed and clamped on
+every resize, and the 5 to 75 m displacement. Tiles have none of them.
+
+| Level | Source | Extent |
+|---|---|---|
+| z12-14 | fetched native | context box, 22 x 34 km |
+| z15-16 | fetched native | coast box |
+| z17 | the existing z17 cache | coast box |
+
+### The black was the pyramid, not coverage
+
+**This is the finding worth keeping.** The first build derived z12-16 the ordinary way,
+averaging each tile's four children. That assumes the source is a square. Ours is a
+**strip**: one z13 tile spans 16 x 16 z17 tiles, and the cache is a 56 x 27 rectangle
+hugging the coast, so nearly every low-zoom tile was a handful of real children and
+fifteen-sixteenths background fill. The fill was the app's own navy, indistinguishable
+from the bands the change set out to remove. **The map looked like it had no imagery at
+exactly the zoom where it had the most.** Every derived level carried the same ring of
+part-filled tiles at its edge.
+
+The rule: never derive a tile the source does not fully cover. Fetching each level
+natively is cheaper to reason about than tracking coverage per tile.
+
+**And the fix stayed invisible for three rebuilds.** Everything but the HTML is served
+cache-first, so the old navy tiles kept coming from `cg-map-v1` no matter what was
+rebuilt. `CACHE` is now `cg-map-v2`, with a note in `sw.js` that any `web/tiles/` change
+requires the bump. When a change should be visible and is not, suspect the cache before
+the code.
+
+### Strokes are sized to the ground, not to a zoom ramp
+
+The old ramp, `k = 0.42 + t * 1.08` over zoom 11.5 to 17, put the `high` stroke at
+7.9 px at the whole-coast view. A pixel is 18.9 m at z13, so that was a **149 m line
+describing a 40 m beach**, with a `weight * 2.4 + 6` halo adding **472 m** on top.
+Zoomed out, the map read as a continuous wall of hazard and as far less precise than it
+is. `zoneStroke()` now solves for a target width on the ground and clamps at both ends.
+
+| | z13 line | z13 halo | z17 line |
+|---|---|---|---|
+| Before | 149 m | 472 m | 19 m |
+| After | 46 m | 107 m | 17 m |
+
+The change lands almost entirely where the problem was, which is the sign it is the
+right variable. The halo scales with the stroke instead of adding a constant.
+
+### Notations
+
+Beach names, Puerto Viejo, Manzanillo, Mar Caribe, and a scale bar. Deliberately few:
+every label is ink on top of the thing the reader needs to see, and Caribbean Guard's
+own sheet already carries roads and businesses. All non-interactive, so a label cannot
+swallow a tap meant for the zone under it. Shown by zoom, because the same set is
+clutter at one scale and too sparse at another.
+
+### Offline, retiered
+
+| Tier | Levels | Tiles | Bytes |
+|---|---|---|---|
+| CRITICAL (install blocks) | z12-13 | 52 | 456 KB |
+| OPTIONAL (background) | z14-15 | 270 | 2.6 MB |
+| On visit only | z16-17 | 1,773 | ~20 MB |
+
+The lists are generated into `sw.js` by `build_tiles.py`, so they cannot drift from what
+is deployed.
+
+### Bing licensing
+
+Serving these tiles redistributes Bing imagery, which their terms do not permit.
+**Daniel's call, 2026-09-14: proceed, on the basis that this is a nonprofit safety map.**
+Recorded in `build_tiles.py` so nobody rediscovers the question. If it is ever revisited
+the alternative is Esri World Imagery, free with attribution and finer than this cache,
+at the cost of offline precaching. Apple Maps was probed the same day and rejected: the
+imagery is no better here, and MapKit JS Schedule 6 section 2.5 bars caching or storing
+Map Data at all.
+
+### web/tiles/ is gitignored
+
+2,152 files and 20 MB is the wrong thing to put in a public repository when the build is
+deterministic. `docs/deploy-cloudflare-pages.md` now opens by telling a deployer to run
+`python tools/build_tiles.py` first, because **deploying without it produces a map with
+every zone line and label in place over a blank navy field, and nothing warns you.**
+Keep those two facts in step.
+
 ## Verify
 
 ```
 python tools/trace_coastline.py      # rewrites tools/coastline.json
 python tools/render_annotated.py     # rewrites web/sheets/*.png
+python tools/build_tiles.py          # fills web/tiles/ (REBUILD=1 to start over)
 ```
+
+For the map, serve `web/` and open it. The check that matters is the **whole-coast
+view**: imagery corner to corner with no navy showing, and zone lines thin enough that
+the beach under them is still visible. If tiles look stale after a rebuild, the cache
+version in `sw.js` was not bumped.
 
 The tracer prints traced coast over span per zone. **Sinuosity is the check**: a real
 coast runs about 1.1 to 1.5. Playa Negra is 1.07, Punta Uva 1.48, Cocles 1.67,
@@ -139,14 +240,19 @@ again and the opening radius needs raising.
 
 ## Left
 
-1. **Salsa Brava has no on-image label** on the merged sheet: its line falls under the
-   text panel, and the placement rule skips a label it cannot put somewhere visible.
-   Cosmetic, but it means two same-coloured lines share a sheet with only one named.
+1. **Salsa Brava still has no on-image label** on the merged sheet. A leader line from
+   its panel out to its own shore was added and then made conditional on the target
+   being visible, because measurement showed the target is not: Salsa Brava's shore
+   sits at x 136 to 164 on a sheet whose text panel occupies x 28 to 588, so **the whole
+   of it is behind its own panel**. At 1.18 m/px a 560 m beach is 474 px and the panel
+   is 560 px, so no framing at native resolution can clear it. The fix is either a wider
+   west margin on merged sheets, pushing that shore right of the panel, or putting that
+   one panel on the opposite side. Unresolved on purpose; the leader mechanism is built
+   and will fire as soon as it has something to point at.
 2. **`shoreline.json` and the nine-point `line:` fields in `web/index.html` are still
    the broken geometry.** The sheets no longer use them; the slippy map still does.
    Either retire the map or re-run its geometry through the new tracer.
-3. **Nothing is committed**, and `tools/` still holds a large pile of debug images from
-   earlier sessions.
+3. `tools/` still holds a large pile of debug images from earlier sessions.
 4. Four of five zones carry no Caribbean Guard data at all. That is not a gap to fill
    with desk work, it is the sheet series naming which beaches need a guard.
 
@@ -160,4 +266,10 @@ still the biggest: our Cocles copy asserts a flag system and nobody has confirme
 - `tools/render_annotated.py` — the sheet renderer (new)
 - `tools/trace_coastline.py` — the coastline tracer (new)
 - `tools/coastline.json` — one dense polyline per zone (new, generated)
-- `web/sheets/*.png` — four sheets (new, generated)
+- `web/sheets/*.png` — four sheets (new, generated, gitignored)
+- `tools/build_tiles.py` — the tile pyramid builder (new)
+- `web/tiles/` — 2,152 tiles, 19.8 MB (new, generated, gitignored)
+- `web/index.html` — tile basemap, ground-based strokes, notations
+- `web/sw.js` — generated tile precache lists, cache bumped to v2
+- `docs/deploy-cloudflare-pages.md` — build the tiles before deploying
+- `web/img/base.webp`, `web/img/base-lo.webp` — **deleted**, nothing referenced them
