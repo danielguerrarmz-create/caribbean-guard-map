@@ -69,7 +69,28 @@ def tile2deg(x, y, z):
 
 
 def load_shore():
-    """Shoreline as sheet-pixel points, from the polylines traced off Bing."""
+    """Shoreline as sheet-pixel points, from the polylines traced off Bing.
+
+    STILL READS THE SUPERSEDED shoreline.json, deliberately and with a caveat.
+
+    That file was produced by a per-column scan and is a FUNCTION OF LONGITUDE,
+    so it cannot represent a headland; `trace_coastline.py` replaced it on
+    2026-09-14 with `coastline.json`, which can. The reason this has not been
+    switched over is that the two are shaped differently: shoreline.json is one
+    flat list covering the whole coast, coastline.json is a dict of five
+    per-zone runs, and this function measures distance from ANY shore without
+    caring which beach it belongs to.
+
+    WHAT IT COSTS. This shoreline is used to point rip arrows along the local
+    seaward normal, and a shoreline that has had its headlands flattened gives a
+    wrong normal near a headland. It is not as bad as it sounds: Caribbean
+    Guard's nine rips all sit on Playa Chiquita, none of them on a point, and
+    the output already refuses to claim a bearing at all (see the `direction`
+    field in cg-hazards.geojson, and rule 3 in render_annotated.py).
+
+    Switch it to a flattened coastline.json before trusting any arrow direction,
+    and before extracting annotations from a sheet that covers a headland.
+    """
     # the DENSE waterline (one point per ~12 m), not zone_lines.json, which is
     # nine points per beach and far too coarse to measure distance against
     q = os.path.join(HERE, "shoreline.json")

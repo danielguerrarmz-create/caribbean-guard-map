@@ -181,5 +181,35 @@ def main():
           f"{10 * mpp:.0f} m -> tools/shoreline.json")
 
 
+def _refuse():
+    """SUPERSEDED 2026-09-14, and it will not run.
+
+    This script is kept because `trace_coastline.py` reads the five zone
+    longitude spans out of the ZONES list above, which is still the single place
+    this coast is divided. Everything else it does is now known to be wrong, and
+    the last thing it does is WRITE STRAIGHT INTO web/index.html. Running it
+    would silently replace the corrected coastline with the broken one and look
+    like a success while doing it, which is exactly the failure mode nobody
+    catches: the map would still draw, still show five zones, and be wrong at
+    every headland.
+
+    Two faults, both measured. See the docstring of `trace_coastline.py`:
+
+    1. The per-column scan on line 104 keeps one y per x, forcing the coastline
+       to be a FUNCTION OF LONGITUDE. `shoreline.json` is provably one: 1,434
+       points, strictly monotonic in longitude at a uniform 11.7 m step. A coast
+       is not a function, and 298 longitude reversals had to be deleted to make
+       it one.
+    2. `water_mask` ends `| (v < 60)`, classifying every dark pixel as water.
+       Shadowed rainforest is dark; the Chiquita window came out 88.7% sea.
+
+    Use instead:
+        python tools/trace_coastline.py      # the geometry
+        python tools/refit_zone_lines.py     # writes it into web/index.html
+    """
+    import sys
+    sys.exit(__doc__ and _refuse.__doc__.strip())
+
+
 if __name__ == "__main__":
-    main()
+    _refuse()
