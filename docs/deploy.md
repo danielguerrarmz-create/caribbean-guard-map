@@ -32,10 +32,22 @@ From a terminal in this repository:
 
 ```
 npm i -g vercel        # once
+vercel login           # once, opens a browser
 cd web
 vercel                 # first time: answers below
 vercel --prod          # publish it
 ```
+
+**`vercel login` is not optional and is easy to miss.** Without it every other
+command fails with `Error: No existing credentials found`, which reads like a
+broken install rather than a missing step. It opens a browser, you pick how to
+sign in, and the credentials are stored for good. Log in with **the account that
+should own this site** — see the open question about account ownership at the
+bottom of this file, because switching later means re-adding the domain.
+
+If you want to see it working before deciding who owns it,
+`vercel deploy --temporary` produces a live URL with no account at all, which you
+can claim into an account afterwards.
 
 `vercel` asks a few questions the first time. The answers:
 
