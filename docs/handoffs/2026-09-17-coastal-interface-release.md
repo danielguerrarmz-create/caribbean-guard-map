@@ -36,7 +36,22 @@ https://caribbean-guard-q409yajva-danielguerrarmz-create11.vercel.app
 Existing production alias:
 https://web-five-beta-p7wt9cgwmf.vercel.app
 
-Deployment is performed from `web/` with local generated imagery. The result and live checks are appended after the host confirms readiness.
+Deployed from `web/` with local generated imagery. Vercel confirmed **READY**, target **production**, on 17 September 2026.
+
+- Application commit: `34c0486` - Redesign coastal map interface and reconcile annotated source.
+- Pushed branch: `origin/codex/coastal-interface`.
+- Deployment ID: `dpl_DyUsfQR1wXJ4Nc5Doxj8oiab1vDt`.
+- Immutable deployment URL: https://caribbean-guard-pr0ne1v4s-danielguerrarmz-create11.vercel.app
+- Production alias: https://web-five-beta-p7wt9cgwmf.vercel.app
+- Annotated view: https://web-five-beta-p7wt9cgwmf.vercel.app/source-map.html
+
+### Live verification
+
+Twelve release assets returned HTTP 200 with appropriate content types and SHA-256 byte equality against local files: both HTML documents, coastal.css, symbols.js, source-map.js, sw.js, cg-hazards.geojson, full-map-source.json, full-map-background.jpg, the original logo, Leaflet JavaScript and a representative z11 tile.
+
+Production browser checks confirmed the desktop interface and 390 x 844 mobile proposed-station view. Station 3.3 displayed the proposal statement with zero Directions links. The source view loaded and its roads/access and location toggles worked. The permanent legend and scale were visible, and the browser displayed a saved-copy timestamp. This confirms online rendering and cache-install feedback, not airplane-mode behavior. The Cocles deep link was also checked. Viewport emulation was reset afterwards.
+
+This documentation follow-up records the completed deployment; it does not change deployed application bytes.
 
 ## Working-tree boundary
 
