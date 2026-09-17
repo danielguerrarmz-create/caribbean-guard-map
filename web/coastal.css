@@ -1,0 +1,191 @@
+/* Caribbean Guard coastal identity. Safety colors and map geometry are unchanged.
+   Layout: one panel on desktop; a scrollable list / detail sheet on mobile. */
+:root{--ink:#132f3c;--paper:#fffefa;--muted:#536974;--ocean:#126780;--line:#dce3e3;--sand:#f4f3ec;--panel:380px;--header:80px;--sheet-r:18px}
+body{background:var(--ink)}
+button,a,summary{touch-action:manipulation}
+.topbar{height:var(--header);padding:8px 24px;background:var(--paper);gap:16px;z-index:1300;border-color:var(--line)}
+.brand{flex-direction:row;align-items:center;gap:12px;font-size:18px;letter-spacing:-.04em;overflow:visible;max-width:none;white-space:nowrap}
+.brand img{object-fit:contain;width:56px;height:56px;flex:none}
+.brand-text{display:block}
+.brand small{font-size:12px;text-transform:none;letter-spacing:0;margin-top:5px;font-weight:400}
+.region-label{font-size:12px;color:var(--muted);border-left:1px solid var(--line);padding-left:20px;margin-left:8px}
+.sos{border-radius:6px;box-shadow:none;background:transparent;color:#a72222;border:1px solid #e3bbbb;padding:0 12px;gap:6px;cursor:pointer}
+.sos .word{text-transform:none;letter-spacing:0}
+.lang{border-radius:6px;border-color:var(--line)}
+.lang button{padding:0 12px;color:var(--ink)}
+.lang button[aria-pressed=true]{background:var(--ink)}
+.dock{background:var(--paper);display:flex;flex-direction:column;overflow:hidden;box-shadow:none}
+.railhead{display:block;padding:24px 24px 18px;border:0;flex:none}
+.coast-kicker{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--ocean);margin:0 0 12px}
+.railhead h1{font-size:32px;line-height:1.06;letter-spacing:-.055em;font-weight:600;margin:0 0 12px}
+.railhead .what{font-size:14px;line-height:1.5;color:var(--muted);margin:0}
+.review-note{font-size:12px;line-height:1.5;color:var(--muted);margin:12px 0 0;padding-left:10px;border-left:2px solid #93a7ad}
+.list-heading{display:flex;align-items:center;justify-content:space-between;padding:0 24px 8px;flex:none}
+.rail-eyebrow{display:block;margin:0;font-size:12px;color:var(--muted);letter-spacing:.1em}
+#list-toggle{font:inherit;font-size:12px;font-weight:600;background:transparent;color:var(--ocean);border:0;min-height:44px;padding:0 4px;cursor:pointer}
+.strip{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:0 16px;overflow-y:auto;overflow-x:hidden;scroll-snap-type:none;mask-image:none;-webkit-mask-image:none;scrollbar-width:thin;scrollbar-color:#b6c6ca transparent}
+.strip::-webkit-scrollbar{display:block;width:4px}
+.strip::-webkit-scrollbar-thumb{background:#b6c6ca;border-radius:4px}
+.card{position:relative;flex:none;max-width:none;width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none;padding:17px 30px 17px 8px;scroll-snap-align:none}
+.card:after{content:'';position:absolute;right:12px;top:27px;width:7px;height:7px;border-right:1.5px solid var(--muted);border-top:1.5px solid var(--muted);transform:rotate(45deg)}
+.card:hover,.card[aria-current=true]{background:#edf3f3;border-radius:6px}
+.card .nm{font-size:16px;line-height:1.3;font-weight:600;letter-spacing:-.02em}
+.card .pill{font-size:14px;line-height:1.4;font-weight:600;letter-spacing:0;gap:10px;margin-top:6px}
+.card .pill .sw{width:26px}
+.card .hours{font-size:12px;margin:5px 0 0 36px;color:var(--muted)}
+.card.void{background:transparent;border:0;border-bottom:1px dashed #becace;box-shadow:none}
+.card.void .nm{font-size:14px;color:var(--muted)}
+.card.void .vd{font-size:12px;margin-top:5px;color:var(--muted);font-weight:400}
+.dockrow{order:5;flex:none;margin:0;padding:8px 16px;background:var(--sand);backdrop-filter:none;color:var(--ink);border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;gap:8px;min-height:60px}
+.dockrow .btn-chip{display:inline-flex;background:transparent;color:var(--ink);border:1px solid #b8c8cd;border-radius:6px;font-size:12px;min-height:44px;padding:0 10px}
+.dockrow .txt{color:var(--muted);text-decoration-color:#94a6ad;font-size:12px;text-align:left;min-height:44px}
+.dockrow .rf{background:transparent;color:var(--ink);height:44px;width:44px}
+.counter,.legend-perm,.locate-first{display:none!important}
+.forecast{order:4;flex:none;border-top:1px solid var(--line);padding:0 24px;background:var(--paper);max-height:32vh;overflow:auto}
+.forecast summary{min-height:48px;padding:15px 0;font-size:13px;color:var(--muted);font-weight:600;cursor:pointer}
+.forecast-empty{font-size:13px;color:var(--muted);margin:0 0 16px}
+.forecast:has(.sea:not([hidden])) .forecast-empty{display:none}
+.forecast .sea{margin:0 0 16px;padding:14px;background:#eef3f3;color:var(--ink);border:0;border-radius:8px}
+.forecast .sea .head,.forecast .sea .stamp,.forecast .sea .eyebrow,.forecast .sea .lbl,.forecast .sea .foot,.forecast .sea .foot a,.forecast .sea .val{color:var(--muted)}
+.forecast .sea .val{color:var(--ink)}
+.forecast .sea .lbl{text-shadow:none;white-space:normal}
+.forecast .sea .tile{background:#dce8e9;color:var(--ocean)}
+.leaflet-marker-icon.lbl.sea{background:transparent;padding:0;margin:0;border-radius:0}
+.fab,.compass{box-shadow:0 2px 8px #0002;border-radius:8px;width:44px;height:44px}
+.fab:focus-visible,.compass:focus-visible,.dockrow :focus-visible{outline-color:var(--ocean)}
+.sheet{background:var(--paper);box-shadow:0 -4px 24px #0002}
+.sheet-body{padding:16px 24px 28px}
+.sheet h2{font-size:30px;font-weight:600;letter-spacing:-.045em;line-height:1.1}
+.sheet .sub{font-weight:400;line-height:1.5;margin:8px 0 20px}
+.sheet .close{box-shadow:none;top:10px;right:12px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink)}
+.statuscard{background:var(--ink);border-radius:10px;padding:18px;border-left-width:4px}
+.statuscard .tile{display:none}
+.statuscard .instr{font-size:23px;line-height:1.2;margin-top:8px}
+.statuscard .why{font-size:15px}
+.sos911{background:transparent;border:0;border-top:1px solid #ffffff35;border-radius:0;padding:14px 0 0;margin-top:16px}
+.sos911 .lead{text-transform:none;letter-spacing:0;font-weight:400;font-size:13px}
+.sos911 .dial{background:transparent;border:1px solid #ffffff80;border-radius:6px;min-height:44px;font-size:17px}
+.sheet .trust{font-size:13px;line-height:1.6}
+.sheet .actions{gap:8px}
+.sheet .btn{border-radius:6px;min-height:44px}
+.sheet-expand{align-self:flex-start;margin:0 24px;padding:0;border:0;background:transparent;color:var(--ocean);font:inherit;font-size:12px;font-weight:600;min-height:44px;cursor:pointer}
+.sheet .eyebrow{letter-spacing:.07em}
+.legend .oth{display:none}
+.legend .row .txt{display:block}
+.legend .cur{font-size:14px;line-height:1.4}
+.selection-open .dock{visibility:hidden;pointer-events:none}
+@media(min-width:820px){
+ .dock{top:var(--header);bottom:0;left:0;width:var(--panel);border-right:1px solid var(--line);backdrop-filter:none}
+ #list-toggle{display:none}
+ .list-heading{padding-top:12px;padding-bottom:8px}
+ .sheet,.sheet[data-stop]{top:var(--header);bottom:0;left:0;right:auto;width:var(--panel);height:auto;border-radius:0;border-right:1px solid var(--line);box-shadow:none;transform:translateX(-102%)}
+ .sheet.open{transform:translateX(0)}
+ .sheet-body{padding-top:22px}
+ .sheet-expand{display:none}
+ .leaflet-bottom.leaflet-left{left:var(--panel)}
+ .fab{bottom:28px;right:24px}.compass{bottom:80px;right:24px}
+}
+@media(max-width:819px){
+ :root{--header:72px}
+ .topbar{padding:8px 12px;gap:8px}
+ .brand{font-size:14px;gap:7px;line-height:1.15;max-width:none;white-space:normal}
+ .brand img{width:44px;height:44px}
+ .brand-text{max-width:90px}
+ .brand small,.region-label{display:none}
+ .sos{padding:0 8px;min-width:44px;justify-content:center}.sos .word{display:none}
+ .lang button{padding:0;min-width:44px}
+ .dock{bottom:0;height:46dvh;min-height:260px;max-height:calc(100dvh - var(--header) - 80px);border-radius:18px 18px 0 0;padding-bottom:var(--safe-pad);box-shadow:0 -4px 24px #0002}
+ .railhead{padding:18px 20px 4px}
+ .coast-kicker{font-size:12px;margin-bottom:6px}
+ .railhead h1{font-size:25px;margin:0 0 4px}
+ .railhead .what{display:none}
+ .review-note{margin:8px 0 0;font-size:12px;line-height:1.35}
+ .list-heading{padding:0 20px;min-height:44px}
+ .strip{padding:0 12px}
+ .card{padding:12px 28px 12px 8px}
+ .card .pill{font-size:13px;margin-top:4px}
+ .card .nm{font-size:15px}
+ .dockrow{padding:4px 12px;min-height:52px}
+ .forecast{display:none}
+ .list-expanded .dock{height:calc(100dvh - var(--header) - 48px);max-height:none}
+ .list-expanded .forecast{display:block}
+ .sheet,.sheet[data-stop=peek]{height:56dvh;max-height:calc(100dvh - var(--header));border-radius:18px 18px 0 0}
+ .sheet[data-stop=half]{height:72dvh}
+ .sheet[data-stop=full]{height:calc(100dvh - var(--header))}
+ .sheet-body{padding:4px 20px 24px}
+ .sheet h2{font-size:27px}
+ .sheet .sub{margin-bottom:16px}
+ .sheet-expand{margin-left:20px}
+ .sheet .close{top:15px}
+ .selection-open .fab,.selection-open .compass{visibility:hidden}
+ .selection-open .leaflet-bottom.leaflet-left{display:none}
+}
+@media(max-height:500px) and (max-width:819px){
+ .dock{min-height:0;height:48dvh;max-height:calc(100dvh - var(--header))}
+ .railhead{display:none}.dockrow{min-height:44px;padding:0 12px}
+ .list-expanded .dock{height:calc(100dvh - var(--header))}
+}
+@media(prefers-reduced-motion:reduce){.sheet,.compass #needle{transition:none}*{scroll-behavior:auto!important}}
+
+/* Symbol system revision: pictograms identify the meaning; strokes stay on the map. */
+.railhead{padding:20px 24px 14px}
+.railhead h1{font-size:22px;letter-spacing:-.03em;margin:0 0 7px}
+.railhead .what{font-size:13px}
+.list-heading{padding-top:0}
+.symbol{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border-radius:9px;background:#edf1f2;color:#47616c}
+.symbol svg{width:23px;height:23px;display:block}
+.symbol.no-swim{background:#bf2935;color:white}
+.symbol.high-risk{background:#a8313b;color:white}
+.symbol.conditional{background:#fff0c8;color:#845200;border:1px solid #c69734}
+.symbol.lower-risk{background:#e2f1e6;color:#237349;border:1px solid #9fbfac}
+.symbol.rescue_station{background:#f7a727;color:#172f3a}
+.symbol.proposed_rescue_station{background:#fff8e9;color:#875700;border:1.5px dashed #b5802f}
+.symbol.proposed_cg_station{background:#fff;color:#52646b;border:1.5px dashed #71838b}
+.symbol.rip_current,.symbol.strong_current_area{background:#fff0ef;color:#bb2333}
+.card{display:flex;align-items:center;gap:14px;padding:15px 24px 15px 8px}
+.card .beach-symbol{width:52px;height:56px;border-radius:12px}
+.card .beach-symbol svg{width:34px;height:34px}
+.beach-copy{display:block;min-width:0}
+.beach-status{display:block;font-size:13px;font-weight:600;line-height:1.45;margin-top:4px;color:var(--ink)}
+.patrol{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:12px;line-height:1.35;color:var(--muted)}
+.patrol svg{width:13px;height:13px;flex:none}
+.card:after{right:8px;top:50%}
+.card.void .beach-symbol{height:42px;width:52px;background:transparent}
+.statuscard>.tile{display:grid;background:transparent;width:48px;height:48px;margin-bottom:12px}
+.statuscard>.tile .symbol{width:48px;height:48px}
+.statuscard>.tile svg{width:30px;height:30px}
+.dockrow #legend-open{display:none}
+.map-key{position:absolute;z-index:1000;top:calc(var(--header) + 16px);right:16px;width:260px;background:var(--paper);padding:14px;border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 12px #102d3b18}
+.map-key h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin:0 0 12px;font-weight:600}
+.key-grid{display:grid;grid-template-columns:1fr;gap:9px}
+.key-grid>div{display:flex;align-items:center;gap:9px;font-size:12px;line-height:1.3}
+.key-grid .symbol{width:29px;height:29px;border-radius:7px}
+.key-grid .symbol svg{width:21px;height:21px}
+.coast-key{border-top:1px solid var(--line);padding-top:10px;margin-top:12px;display:flex;gap:9px;align-items:center;font-size:12px;line-height:1.35;color:var(--muted)}
+.coast-samples{display:flex;gap:3px;flex:none}
+.coast-samples i{display:block;width:9px;height:20px;border-radius:3px;background:#c62828}
+.coast-samples i:nth-child(2){background:#f5b942}.coast-samples i:nth-child(3){background:#1f9d55}
+.map-key .source-link{display:block;color:var(--ocean);font-size:12px;font-weight:600;margin-top:12px;min-height:28px;padding-top:6px}
+.station-marker{position:relative;display:grid;place-items:center;width:40px;height:40px;background:var(--paper);border:2px solid white;border-radius:12px;box-shadow:0 1px 6px #0006}
+.station-marker .symbol{width:36px;height:36px}
+.station-marker .number{position:absolute;top:-7px;right:-9px;min-width:22px;padding:2px 4px;border-radius:5px;background:var(--ink);color:white;font-size:11px;line-height:16px;text-align:center;font-weight:600}
+.station-marker.planned{border:1px dashed #9b742c}
+.leaflet-control-scale{padding:5px 8px 2px!important;background:#fffefaee;border-radius:4px;margin-left:14px!important;margin-bottom:16px!important;box-shadow:0 1px 4px #0003}
+.leaflet-control-scale-line{position:relative;box-sizing:border-box;height:26px;padding:0 0 10px!important;background:transparent!important;border:0!important;color:#132f3c!important;text-shadow:none!important;font-size:12px!important;text-align:right;min-width:40px}
+.leaflet-control-scale-line:after{content:'';position:absolute;bottom:0;left:0;right:0;height:7px;border:1px solid #132f3c;background:linear-gradient(90deg,#132f3c 0 25%,#fff 25% 50%,#132f3c 50% 75%,#fff 75%)}
+.selection-open .leaflet-bottom.leaflet-left{display:block}
+@media(min-width:820px){.sheet{z-index:1200}.map-key{max-height:calc(100dvh - var(--header) - 150px);overflow:auto}}
+@media(max-width:819px){
+ .railhead{padding:15px 20px 3px}.railhead h1{font-size:20px;margin:0 0 5px}.railhead .what{display:block;font-size:12px}
+ .card{padding:12px 22px 12px 6px;gap:11px}.card .beach-symbol{width:44px;height:52px}.card .beach-symbol svg{width:30px;height:30px}
+ .beach-status{font-size:12px}.patrol{font-size:12px;margin-top:5px}
+ .map-key{top:calc(var(--header) + 8px);left:10px;right:10px;width:auto;padding:9px 10px;border-radius:9px}
+ .map-key h2{margin-bottom:7px;font-size:12px}
+ .key-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .key-grid>div{gap:5px;font-size:12px;align-items:flex-start}
+ .key-grid .symbol{width:24px;height:24px}.key-grid .symbol svg{width:19px;height:19px}
+ .coast-key{margin-top:7px;padding-top:7px;font-size:12px}.coast-samples i{height:12px;width:6px}
+ .map-key .source-link{margin-top:5px;min-height:24px;padding:0}
+ .selection-open .leaflet-bottom.leaflet-left{bottom:calc(56dvh + 4px)}
+ .leaflet-control-scale{margin-bottom:4px!important}
+}

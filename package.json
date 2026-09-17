@@ -6,6 +6,9 @@
   "description": "Mobile-first coastal safety map for Caribbean Guard, Puerto Viejo to Manzanillo",
   "scripts": {
     "dev": "vite",
+    "dev:map": "vite web --host 127.0.0.1 --port 5174",
+    "build:map": "node tools/build_map.js",
+    "check:map": "node tools/check_copy.js",
     "build": "vite build",
     "preview": "vite preview --host"
   },

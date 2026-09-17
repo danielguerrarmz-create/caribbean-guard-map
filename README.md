@@ -1,109 +1,74 @@
 # Caribbean Guard coastal safety map
 
-A mobile-first interactive safety map for the Puerto Viejo to Manzanillo coast,
-Limón, Costa Rica. QR codes go on posts along the sand; someone scans one and sees
-whether they can swim where they are standing.
-
-Built for **Caribbean Guard**, a Costa Rican nonprofit, via AJ (James A. Smith).
-
-> **Not publishable yet.** Two things block it, and one of them is not code. See
-> "Before this can be published" below.
+A bilingual, mobile-first beach guide for Puerto Viejo to Manzanillo, Costa Rica. The interface presents beach guidance, lifeguard information, rescue-equipment annotations and a regional forecast. It does not report observed live swimming conditions.
 
 ## Start here
 
-| | |
+- [Current release and verification](docs/handoffs/2026-09-17-coastal-interface-release.md)
+- [Deployment and rollback](docs/deploy.md)
+- [Interface audit and brand system](docs/design/coastal-interface-audit.md)
+- [Icon vocabulary and full-map source review](docs/design/icon-system-and-source-review.md)
+
+## Run and validate the map
+
+```powershell
+npm ci
+npm run dev:map
+```
+
+Open `http://127.0.0.1:5174/`. The map runs from `web/`. For phone testing on the same network, run `npm run dev:map -- --host 0.0.0.0` and use the printed network URL.
+
+```powershell
+npm run check:map
+npm run build:map
+```
+
+Packaging writes `dist-map/` and requires locally generated imagery. `web/tiles/` is excluded from Git. On a fresh checkout, run `python tools/build_tiles.py` before packaging or deploying; this requires its Python dependencies and network access. The default `npm run dev` and `npm run build` target the separate `site/` website, not the map.
+
+Useful entry points:
+
+- `/?z=cocles`: selected beach, including QR entry.
+- `/?p=est2`: proposed station 3.3; stable ID preserved from the earlier map.
+- `/source-map.html`: full annotated document in page coordinates, not GPS.
+
+## Structure
+
+| Path | Purpose |
 |---|---|
-| Current state, decisions, gotchas | [`docs/handoffs/2026-07-30-georeference-solved-and-site-revamp.md`](docs/handoffs/2026-07-30-georeference-solved-and-site-revamp.md) |
-| Website revamp | [`docs/site-revamp/00-SYNTHESIS.md`](docs/site-revamp/00-SYNTHESIS.md) |
+| `web/index.html` | Leaflet map, beach records, interactions and bilingual copy |
+| `web/coastal.css` | Responsive layout and visual tokens |
+| `web/symbols.js` | Shared SVG status, hazard and facility pictograms |
+| `web/source-map.html`, `web/source-map.js` | Full annotated document viewer |
+| `web/data/cg-hazards.geojson` | Existing geographic hazards with supported source corrections |
+| `web/data/full-map-source.json` | Extracted PDF features, labels, source fingerprint and page coordinates |
+| `web/data/full-map-background.jpg` | Reduced source background for the annotated viewer |
+| `web/geometry.js`, `web/data/zones-geometry.json` | Beach geometry and shoreline stroke rules |
+| `web/sw.js` | Offline cache and update handling |
+| `web/vendor/`, `web/fonts/` | Self-hosted Leaflet and Inter |
+| `web/tiles/` | Generated satellite imagery; not versioned |
+| `tools/` | Extraction, geographic processing, checks and packaging |
 
-## Run it
+## Data provenance and limits
 
-    npm install
-    npm run dev
+The geographic map retains the earlier annotation coordinates. The complete user-supplied `08102026_FULL MAP DRAFT.pdf` supports renumbering four stations to 3.2, 3.3, 3.5 and 3.6; station 3.3 is proposed. It also identifies the shaded bay as an area of strong currents. Equipment symbols do not establish staffing or current availability.
 
-Vite serves `web/` and prints a LAN address so you can open it on a phone on the
-same wifi, which is the only way to judge it honestly.
+The full document viewer contains 320 extracted vectors/symbols, including 59 rip-current paths, 11 existing and 18 proposed rescue-equipment symbols. These counts are document features, not field-verified services. Two station symbols share number 4.1, and four facility symbols remain undefined.
 
-Deep links, which is what the QR codes use:
+Additional source features have **not** been assigned guessed GPS coordinates. Independent image-registration checks failed. The historical base-image alignment measured 5-75 m error on confirmed western points; eastern positions remain unconfirmed. See the source review before changing geographic data. `needs_confirmation: true` must remain until an accountable review supports changing it.
 
-- `?z=cocles` opens a beach
-- `?p=po4` opens an observation post
+## Regenerate the full-map extraction
 
-## Layout
+Use Python with PyMuPDF and Pillow. Keep the original PDF outside the public deploy folder.
 
-    web/index.html              the map, self-contained apart from Leaflet
-    web/img/base-lo.webp        45 KB overview, the only image fetched on load
-    web/img/base.webp           1.19 MB base, fetched on first zoom or pan
-    web/data/cg-hazards.geojson hazards extracted from Caribbean Guard's own sheet
-    tools/                      georeferencing pipeline
-    reference/cg-existing-maps/ Caribbean Guard's published maps, the source data
-    docs/                       handoffs and the site revamp
+```powershell
+python tools/extract_full_map.py 'C:/path/to/08102026_FULL MAP DRAFT.pdf'
+python tools/reconcile_full_map.py
+```
 
-## The georeference
+The first command regenerates page-space JSON and the reduced background. The second applies the documented four-station crosswalk and strong-current classification without changing geometry. Review generated diffs before committing. `tools/inspect_full_map.py` additionally needs OpenCV and NumPy; it records an experimental registration report under ignored `out/pdf-review/` and never publishes geometry.
 
-The base is generatively upscaled Google Earth imagery, which cannot be aligned by
-ordinary feature matching because the upscaler invents texture. `tools/refine.py`
-solves it by local patch matching against Bing using a hand-read prior, and
-`tools/rectify.py` resamples the result north-up into Web Mercator so Leaflet's
-`imageOverlay` bounds are exact.
+## Publishing and maintenance
 
-**Accuracy, measured by `tools/residual.py` against independent points:**
+Deploy the existing Vercel project from `web/` using the team scope in [the deployment guide](docs/deploy.md). Git push alone does not upload the ignored imagery. The original logo is unchanged.
 
-| | |
-|---|---|
-| Puerto Viejo to Punta Uva | 5 to 75 m, 8 of 14 points confirmed |
-| East of Punta Uva | **not confirmable**, estimate 150 m |
-
-The east cannot be verified because the upscale replaced the water and reef with
-invented texture. That is a content problem as well: reef-protected versus open
-water is the whole safety story at Manzanillo.
-
-> `tools/georef.json` reports a 4.0 m residual. **That is not the accuracy.** It is
-> RANSAC's residual on its own inliers, which is circular. Use `residual.py`.
-
-Regenerate:
-
-    cd tools
-    python refine.py && python rectify.py                     # base
-    python residual.py                                        # accuracy
-    python georef_annot.py && python extract_annotations.py   # hazards
-
-`tools/georef2.py` will re-download the Bing tile cache, which is gitignored.
-`georef3.py` through `georef6.py`, `fit_profile.py` and `profile_match.py` are
-failed approaches kept deliberately so they are not retried; the handoff has a
-table of why each one failed.
-
-## Hazard data
-
-`web/data/cg-hazards.geojson` is machine-read off Caribbean Guard's own published
-`Annotated Base Map V5.png` (georeferenced at 294 inliers, 1.2 m): 11 rip currents,
-4 rescue stations, and 1 shaded polygon **deliberately left unlabelled** because it
-is not in the sheet's legend and could be either a hazard zone or a designated safe
-swimming zone. Guessing wrong inverts a safety message. Covers 1.82 km, about 11%
-of the coast.
-
-Every feature carries `needs_confirmation: true`. That must survive to production.
-
-## The rule
-
-**The interface may never claim more currency or more authority than its data has.**
-
-No "real time", no "live conditions", no attribution to Caribbean Guard's guards
-until they have signed off. Every verdict renders who reviewed it and when, reviews
-expire after `REVIEW_VALID_DAYS`, and stale defaults to unknown rather than to safe.
-An organization that admits what it has not checked is more trustworthy than one
-that implies it has checked everything.
-
-## Before this can be published
-
-1. **Self-host Leaflet.** It currently loads from unpkg with no fallback, so a
-   failed request on beach signal renders a dark blue void. The page also tells the
-   user to save it for offline use with no service worker behind that promise. Both
-   halves are the same fix.
-2. **Every hazard needs an owner.** The zone descriptions are placeholder prose, and
-   the extracted rip currents need Caribbean Guard to confirm and date them. A map
-   that says DO NOT SWIM must be able to say who decided that and when.
-
-Deployment target is Cloudflare Pages, not GitHub Pages, because Direct Upload lets
-a non-technical person update it. Note that `caribbeanguard.org` DNS is at
-WordPress.com, not Squarespace.
+Keep guidance, review status and proposal status explicit. Never convert lower-risk guidance into a claim that today's water is safe. Browser viewport checks do not replace field review, real-device offline testing, accessibility testing or imagery-rights review.
