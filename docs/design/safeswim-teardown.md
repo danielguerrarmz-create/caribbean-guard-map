@@ -197,3 +197,62 @@ basemap would be the single largest legibility gain available, and it would cost
 the 2,389 precached satellite tiles (22.2 MB), the georeferencing work behind
 them, and the thing that makes our map recognisable as YOUR beach rather than a
 diagram. Not a styling decision.
+
+---
+
+## 8. What the first pass missed, corrected 2026-09-17
+
+Daniel: *"How come nothing from the safeswim website brand language has been
+adopted?"* He was right. The first pass took the skeleton and left the skin.
+
+What was missing, found by opening a beach that actually has a status
+(`/locations/piha-beach` rather than the quiet one I measured first):
+
+**The verdict is not text on a white panel. It is a SOLID COLOURED CARD.**
+
+```
++------------------------------------------+
+|  [glyph tile]                            |   34 px rounded square, 4 px radius
+|  CURRENT WATER QUALITY                   |   eyebrow, white, uppercase
+|  Good water quality                      |   verdict, white, 20/700
+|  Safeswim modelling predicts that the    |   detail, white, 14/400
+|  water quality at this location is       |
+|  suitable for swimming.                  |
+|  ( Find out more  >               )      |   outlined pill, white, full width
++------------------------------------------+
+```
+
+Two grounds, and only two: **green** where the colour and the words agree
+("Good water quality"), **navy** where the colour carries no verdict
+("Lifeguards not on duty until next Summer"). The emergency block is not a peer
+of the card, it is NESTED INSIDE the navy one, darker, with a red bar down its
+left edge.
+
+### Adopted
+
+| | |
+|---|---|
+| solid status card, white text, glyph tile, eyebrow / verdict / detail | `.statuscard` |
+| nested emergency sub-block, darker, red left bar | `.sos911` |
+| outlined pill CTA inside the card | `.statuscard .cta` |
+| white top bar, one hairline, no shadow | `.topbar` |
+
+Their header measures `#fff`, 80 px, a 0.67 px bottom border and
+`box-shadow:none`. Ours was a navy gradient fading into the imagery, so the bar
+had no edge at all and the wordmark needed a text-shadow to survive whatever was
+under it. A solid bar needs no shadow on anything, and the focus ring left the
+white-outline list on the same day, because a white ring on a white bar is no
+ring.
+
+### The one thing we take differently, and why
+
+**The ground is always navy here. It is never the tier colour.**
+
+Safeswim can fill a card green because their lowest state is genuinely good.
+Ours is IGUAL, TEN CUIDADO, which is not permission. A green card under those
+words would say GO louder than the words say CARE, and on a safety map green
+wins that argument every time; the 08-06 ruling that deleted SE PUEDE NADAR is
+the same ruling. So the tier colour lives in the glyph tile and the left accent
+bar at full strength, and the ground stays a constant that means nothing.
+
+This is adopting one of Safeswim's two treatments rather than softening either.

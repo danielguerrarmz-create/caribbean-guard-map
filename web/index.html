@@ -152,7 +152,11 @@
      file, so on a switch or a keyboard nothing showed what was selected. Ink on
      light ground, white over the map and the dark chrome, 2 px either way. */
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
-  .topbar :focus-visible,.fab:focus-visible,.compass:focus-visible,
+  /* The top bar left this list on 2026-09-17: it is white now, and a white
+     focus ring on a white bar is no focus ring. The fab, the compass and the
+     dock still sit on imagery, so they keep theirs. A ring that is invisible on
+     the surface it is drawn on is the exact fault hat 4 raised. */
+  .fab:focus-visible,.compass:focus-visible,
   .dockrow :focus-visible,.leaflet-container :focus-visible{outline-color:#fff}
 
   /* Shows only while tiles are in flight, and at the edge of coverage. Navy
@@ -221,10 +225,17 @@
     color:#e8f1f7;font-weight:600;font-size:var(--t-min);padding:3px 7px}
 
   /* ---------- top bar ---------- */
+  /* WHITE, WITH ONE HAIRLINE AND NO SHADOW. Safeswim's header measures 80 px,
+     #fff, a 0.67 px bottom border and box-shadow:none, and it is most of why
+     their product reads as an instrument rather than an app: the chrome states
+     its edge with a line instead of asserting itself with a gradient.
+     Ours was a navy gradient fading into the imagery, which meant the bar had
+     no edge at all and the wordmark needed a text-shadow to survive whatever
+     happened to be under it. A solid bar needs no shadow on anything. */
   .topbar{position:absolute;top:0;left:0;right:0;z-index:1000;
     padding:calc(env(safe-area-inset-top,0px) + 8px) var(--gut) 8px;
-    display:flex;align-items:center;gap:8px;
-    background:linear-gradient(180deg,rgba(11,28,44,.92),rgba(11,28,44,0));
+    display:flex;align-items:center;gap:8px;min-height:64px;
+    background:#fff;border-bottom:1px solid #E6E8EA;
     pointer-events:none}
   /* The wordmark is a LINK HOME. Hat 5, finding 4: the association's
      highest-traffic tourist touchpoint had no route back to the organisation
@@ -237,12 +248,12 @@
      controls on the right are the ones a reader needs in a hurry, and the
      tagline is the only thing on this bar that nothing depends on. */
   .brand{pointer-events:auto;text-decoration:none;
-    font-weight:600;letter-spacing:.02em;color:#fff;font-size:var(--t-body);
-    line-height:1.15;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;
+    font-weight:800;letter-spacing:.01em;color:var(--ink);font-size:var(--t-body);
+    line-height:1.15;white-space:nowrap;
     min-width:0;overflow:hidden;
     padding:4px 0;min-height:44px;display:flex;flex-direction:column;justify-content:center}
-  .brand small{display:block;font-weight:400;font-size:var(--t-min);opacity:.85;
-    letter-spacing:.04em;text-transform:uppercase}
+  .brand small{display:block;font-weight:600;font-size:var(--t-min);
+    color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
   @media (max-width:429px){
     /* Two lines, not one. At 13 px on one line the wordmark still needs about
        125 px and only 107 are left once the 911 pill and a 44 px language
@@ -256,13 +267,12 @@
   /* 44 px, both of them. Hat 4, finding 11: the language buttons were 36 px and
      adjacent, 911 was 40, the sheet close 38. All legal, none comfortable with
      one wet thumb. 44 is the floor in the top bar now. */
-  .lang{pointer-events:auto;display:flex;background:rgba(255,255,255,.16);
-    border:1px solid rgba(255,255,255,.28);border-radius:999px;overflow:hidden;
-    backdrop-filter:blur(8px)}
-  .lang button{appearance:none;border:0;background:transparent;color:#fff;font:inherit;
+  .lang{pointer-events:auto;display:flex;background:#fff;
+    border:1px solid rgba(11,28,44,.2);border-radius:999px;overflow:hidden}
+  .lang button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;
     font-size:var(--t-2nd);font-weight:600;padding:0 14px;min-height:44px;min-width:44px;
     cursor:pointer}
-  .lang button[aria-pressed="true"]{background:#fff;color:var(--ink)}
+  .lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
 
   /* ---------- emergency ---------- */
   /* The digits carry a word now. Hat 1 does not know Costa Rica uses 911 rather
@@ -540,6 +550,47 @@
     letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
     line-height:1.3}
 
+  /* ---------- THE STATUS CARD ----------
+     This is the Safeswim component I missed on the first pass, and Daniel was
+     right to say so: I took their skeleton and left their skin. Their verdict is
+     not text on a white panel. It is a SOLID COLOURED CARD -- glyph tile at the
+     top-left, white eyebrow, white verdict, white detail, and an outlined pill
+     at the bottom. The card IS the component; the eyebrow alone was half of it.
+
+     WHY THE GROUND IS ALWAYS NAVY HERE, AND NEVER THE TIER COLOUR.
+     Safeswim has two card grounds: green for "Good water quality", where the
+     colour and the words agree, and navy for "Lifeguards not on duty", where it
+     carries no verdict. We can only ever use the second, and the reason is in
+     the .pill note above: our lowest tier is IGUAL, TEN CUIDADO, which is not
+     permission. A green card under those words would say GO louder than the
+     words say CARE, and green wins that argument every time on a safety map.
+     So the tier colour lives in the glyph tile and the accent bar, at full
+     strength, and the ground stays a constant that means nothing.
+     This is adopting one of their two treatments, not softening either. */
+  .statuscard{margin:0 0 16px;border-radius:6px;background:#21263D;color:#fff;
+    padding:14px;border-left:4px solid var(--tier)}
+  .statuscard.low{--tier:var(--low)}
+  .statuscard.moderate{--tier:var(--moderate)}
+  .statuscard.high{--tier:var(--high)}
+  .statuscard .tile{display:grid;place-items:center;width:34px;height:34px;
+    border-radius:4px;background:var(--tier);margin:0 0 10px}
+  .statuscard .eyebrow{color:rgba(255,255,255,.72);margin-bottom:4px}
+  .statuscard .instr{display:block;margin:0 0 8px;font-size:var(--t-instr);
+    font-weight:800;line-height:1.15;letter-spacing:-.01em;text-transform:uppercase;
+    color:#fff}
+  .statuscard .why{margin:0;color:rgba(255,255,255,.88);font-size:var(--t-body);
+    line-height:1.5}
+  .statuscard .hours{display:block;margin:0 0 8px;color:#fff;font-weight:600;
+    font-size:var(--t-2nd)}
+  /* Their outlined pill, at the foot of the card it belongs to. White outline,
+     transparent fill, full width, chevron. It is a card-scoped action and it
+     reads as one because it is inside the card rather than under it. */
+  .statuscard .cta{display:flex;align-items:center;justify-content:center;gap:8px;
+    margin:13px 0 0;min-height:44px;border-radius:999px;
+    border:1.5px solid rgba(255,255,255,.55);background:none;color:#fff;
+    font:inherit;font-size:var(--t-2nd);font-weight:600;text-decoration:none;
+    cursor:pointer}
+
   /* ---------- THE EMERGENCY BLOCK ----------
      Safeswim's, almost verbatim in structure:
 
@@ -555,13 +606,17 @@
      is not a tier teaches the reader that red sometimes means something else.
      Safeswim's own chrome navy (#21263D) is outside our hazard palette by
      construction, the same argument that keeps TODAY violet. */
-  .sos911{margin:0 0 16px;border-radius:4px;background:#21263D;color:#fff;
-    padding:13px 14px}
+  /* NESTED, and darker than the card it sits in, with a red bar down its left
+     edge. That is Safeswim's composition exactly: the emergency block is not a
+     peer of the status card, it is a thing inside it, because the trigger it
+     names is a thing that happens at THIS beach. */
+  .sos911{margin:13px 0 0;border-radius:4px;background:#171B2C;color:#fff;
+    padding:12px 13px;border-left:4px solid var(--high)}
   .sos911 .lead{display:block;font-size:var(--t-2nd);font-weight:700;
     letter-spacing:.04em;text-transform:uppercase;line-height:1.35;
     margin:0 0 9px;color:#fff}
   .sos911 .dial{display:flex;align-items:center;justify-content:center;
-    min-height:52px;border-radius:4px;background:var(--high);color:#fff;
+    min-height:48px;border-radius:4px;background:var(--high);color:#fff;
     font-size:var(--t-instr);font-weight:800;letter-spacing:.01em;
     text-decoration:none}
 
@@ -2804,17 +2859,20 @@ function openZone(z){
     return `
     <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
     <p class="sub">${z.sub[lang]}</p>
-    <span class="eyebrow">${t.ebWhatToDo}</span>
-    ${statusPill(tierOf(z), t[c.class])}
-    ${hoursLine(z)}
-    <p class="why">${c.why[lang]}</p>
+    <div class="statuscard ${tierOf(z)}">
+      <span class="tile" aria-hidden="true">${swatch(tierOf(z), true)}</span>
+      <span class="eyebrow">${t.ebWhatToDo}</span>
+      <span class="instr">${t[c.class]}</span>
+      ${hoursLine(z)}
+      <p class="why">${c.why[lang]}</p>
+      <div class="sos911">
+        <span class="lead">${t.sosLead}</span>
+        <a class="dial" href="tel:911">${t.call}</a>
+      </div>
+    </div>
     ${rider}${caveats}
     <span class="eyebrow">${t.ebRip}</span>
     <p class="escape"><span class="ic" aria-hidden="true">»</span>${t.escapeRip}</p>
-    <div class="sos911">
-      <span class="lead">${t.sosLead}</span>
-      <a class="dial" href="tel:911">${t.call}</a>
-    </div>
     <span class="eyebrow">${t.ebWhoSays}</span>
     ${trustLine(z)}
     <div class="actions">
@@ -3170,7 +3228,7 @@ document.getElementById("legend-open").onclick = openLegend;
    whose dash pattern matters most to a deuteranope simply vanished at the exact
    place the pattern is being taught. The plate shows the stroke on the ground
    it actually occupies, which is both legible and literally true. */
-function swatch(tier){
+function swatch(tier, onTier){
   /* CGGeom.TIERS is the same table the map draws from, and the swatch derives
      its pattern the same way zoneStroke does: gap = gapK * weight, dash =
      ratio * gap, ratio null means solid. One table, two readers, so the card
@@ -3200,7 +3258,12 @@ function swatch(tier){
      token cannot be changed in one place and not the other. */
   const s = CGGeom.TIERS[tier];
   const css = getComputedStyle(document.documentElement);
-  const col = (css.getPropertyValue("--" + tier + "-text") || "").trim() || COLOR[tier];
+  /* onTier: the swatch is being drawn INSIDE the glyph tile of a status card,
+     whose ground is already this tier's colour. Drawing the stroke in the tier
+     colour there would draw it in its own background. White, and the dash and
+     weight still carry the tier exactly as they do on the rail. */
+  const col = onTier ? "#fff"
+            : (css.getPropertyValue("--" + tier + "-text") || "").trim() || COLOR[tier];
   const w = Math.max(3, s.weight * 0.85);
   const gap = s.gapK * w, dash = s.ratio == null ? null : s.ratio * gap;
   return `<svg class="sw" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false">
