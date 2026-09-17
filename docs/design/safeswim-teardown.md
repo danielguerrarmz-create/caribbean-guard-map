@@ -8,7 +8,7 @@ Daniel's instruction, 2026-09-17: *"adopt most of the visual language coming fro
 safeswim.org. Their entire dashboard and organization is ideal and what we should
 strive for in content, legends, organization, component."*
 
-This file is the reference. `docs/precedents.md` says WHY Safeswim is the
+This file is the reference. `docs/precedents/05-beach-safety-maps.md` says WHY Safeswim is the
 precedent; this says WHAT it is made of.
 
 ---

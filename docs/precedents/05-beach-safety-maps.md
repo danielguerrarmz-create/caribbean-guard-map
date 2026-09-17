@@ -1,9 +1,25 @@
-# Precedents: who else maps beach safety, and what we take from them
+# 05 - Beach safety maps: who else does OUR job, and what we take from them
 
-Surveyed 2026-09-17. Every URL below was loaded on that date; where a claim comes
-from a press report rather than from the thing itself, it says so. Re-check before
-citing any of this in front of the board, because a dead link in a precedent list
-is worse than no precedent list.
+Surveyed 2026-09-17, a second wave on top of the 2026-08-06 sweep in this folder.
+
+**What this file adds that 00 to 04 do not.** The August catalog asked who
+Caribbean Guard's PEERS are: small Latin American nonprofits protecting people and
+marine life, scored for organisational fit. Its headline finding was that the two
+closest peers are siblings inside CG's own federation, and its second finding was
+that almost none of them has a map at all.
+
+This file asks the other question: who else builds THIS ARTEFACT, a per-beach
+hazard map, anywhere in the world, regardless of who runs it. So the fit score
+here is not organisational closeness, it is closeness to a per-beach INSTRUCTION
+map. A well-run Costa Rican lifeguard nonprofit with no map scores high in
+`00-catalog.md` and does not appear here; a national weather agency in another
+hemisphere scores nothing in the catalog and leads this file.
+
+**Same verification rule as the rest of this folder.** Every URL below was loaded
+on 2026-09-17. Where a claim comes from a press report rather than from the thing
+itself, it says so. Anything that could not be loaded is listed as a failure
+rather than dropped. Re-check before citing any of this in front of the board,
+because a dead link in a precedent list is worse than no precedent list.
 
 ## The finding that matters most
 
