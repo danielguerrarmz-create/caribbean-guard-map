@@ -104,4 +104,5 @@ stations clustered as one badge, tap it to expand.
 - `web/geometry.js`, `web/data/zones-geometry.json`, `web/fonts/` — new
 - `web/sw.js` — cg-map-v3, regenerated lists; `web/manifest.json`
 - `tools/export_zones.py`, `tools/check_copy.js` — new; `tools/build_tiles.py`
-- Session scratchpad: `SPEC.md`, `hats/`, `INTEGRATION.md`, `tile_demand.py`
+- `docs/user-study/2026-09-17/` — the five hat reviews, their brief, the signed-off
+  `SPEC.md` and Edward's `INTEGRATION.md`; `tools/tile_demand.py` — the fly-to tile sweep
