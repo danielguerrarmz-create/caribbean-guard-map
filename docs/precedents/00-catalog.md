@@ -14,6 +14,15 @@ organizations that blocked automated fetch are recorded in the failures table ra
 than described from search snippets. The one exception, FECOGU, was opened in a real
 browser instead and is documented in `04-sector-scan.md` section 1b.
 
+**A second wave was added on 2026-09-17: `05-beach-safety-maps.md`.** It asks a
+different question from files 00 to 04. This catalog scores organisational fit,
+peers of Caribbean Guard; 05 scores artefact fit, anybody in the world who builds
+a per-beach hazard map. The two barely overlap on purpose, and 05 carries the
+finding this catalog implies but never states outright: **nobody in Costa Rica has
+a live public per-beach hazard map**, so there is no incumbent whose authority
+Caribbean Guard can borrow. 05 also records where our four tier labels come from,
+which is NOAA's rip current risk vocabulary, word for word on the top tier.
+
 ---
 
 ## The headline finding

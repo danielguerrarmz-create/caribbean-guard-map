@@ -11,7 +11,7 @@ three things a tile layer simply does not have:
 - **5 to 75 m of displacement.** `base.webp` is a generative upscale of Google
   Earth captures; tiles are the ground truth the annotations are traced from.
 
-EVERY LEVEL IS FETCHED NATIVE. z17 comes from the existing cache; z12 to z16 are
+EVERY LEVEL IS FETCHED NATIVE. z17 comes from the existing cache; z10 to z16 are
 fetched from Bing at their own zoom.
 
 The first version of this script derived the lower levels by averaging the four
@@ -28,11 +28,12 @@ So the rule is: never derive a tile the source does not fully cover. Fetching is
 cheaper to reason about than tracking coverage per tile, and native low-zoom
 imagery is real imagery rather than a downsample of a strip.
 
-BOXES DIFFER BY ZOOM, because the reason for each level differs. z12 to z14 cover
-a wide context box so a zoomed-out viewport has sea and forest at its edges
-instead of a void. z15 and z16 cover only the coast, because nobody reaches that
-zoom except by going to a beach; fetching them across the context box would be
-about 2,000 tiles of imagery no one will ever pan to.
+BOXES DIFFER BY ZOOM, because the reason for each level differs, and they are
+sized rather than guessed: see BOX_FOR below. z10 to z14 cover progressively wider
+context boxes so a zoomed-out viewport has sea and forest at its edges instead of
+a void. z15 and z16 cover only the coast, because nobody reaches that zoom except
+by going to a beach; fetching them across the context box would be about 2,000
+tiles of imagery no one will ever pan to.
 
 LICENSING: serving these redistributes Bing imagery, which their terms do not
 permit. Daniel's call on 2026-09-14 was to proceed on the basis that this is a
@@ -68,18 +69,81 @@ Z_NATIVE = 17       # the level the existing cache holds
 QUALITY = 78        # measured: 82 costs 31% more bytes for no visible gain here
 
 # S, W, N, E
+#
+# EVERY LEVEL GETS THE BOX ITS OWN VIEWPORT NEEDS, and the boxes grow downward
+# faster than the zoom does. The reason is that a tile level serves a RANGE of
+# map zooms -- Leaflet requests level round(zoom), so level 12 is on screen from
+# zoom 11.5 to 12.5 -- and the widest viewport in that range is what has to be
+# covered, not the nominal one.
+#
+# THIS IS WHERE THE NAVY AT THE LANDING VIEW COMES FROM, and it was not a missing
+# zoom level. `fitCoast()` sets minZoom to whatever fits the 16.66 km coast in the
+# viewport, so a 390 x 844 phone lands at about zoom 11.8 and Leaflet asks for
+# LEVEL 12. At that zoom a pixel is 43 m, so 844 px of phone is 36 km of ground --
+# and the z12 box was 22 km tall. The map ran out of imagery 7 km above and below
+# the coast on the opening view of every portrait phone. Adding a z11 level does
+# not touch that: z11 is only requested below map zoom 11.5, which is below the
+# floor the phone just set, so it would never have been fetched at all.
+#
+# So z12 is the fix and z11 and z10 are insurance, for a viewport narrower than
+# about 313 px, for the transient zoom during a pinch, and for the day somebody
+# sets a fixed floor instead of a derived one.
+#
+# Sized against: the pannable centre range (the coast box padded 8%, which is the
+# map's maxBounds) plus one viewport at the widest zoom the level serves.
+# THE BOXES BELOW ARE MEASURED, NOT ESTIMATED, and the tool that measured them is
+# the reason z13 had a hole in it after the first pass.
+#
+# Sizing a level by "the viewport at that zoom, plus room to pan" is the obvious
+# method and it is wrong here, because the tile layer is `updateWhenIdle: false`
+# and so GridLayer updates on every `move` and `zoom` FRAME, not at the end of a
+# gesture. `flyClear()` uses flyTo, which is van Wijk's smooth path: it ZOOMS OUT
+# IN THE MIDDLE of a long flight. Flying from the whole-coast view to Chiquita
+# therefore passes through a low zoom with the centre off the coast and requests
+# tiles there, at a level and a place neither endpoint visits. Opening one deep
+# link 404'd three z13 tiles in row 3878, south of anything the endpoints touch.
+#
+# So the demand is computed by porting Leaflet's project, getBoundsZoom,
+# _getBoundsCenterZoom, the flyTo path and GridLayer._update, and running the
+# app's own scenarios through them: five viewports, four dock heights, the three
+# sheet stops, the landing fit, and every zone-to-zone and post-to-post flight.
+# The script is tile_demand.py in the workstream A scratchpad. Re-run it after any
+# change to fitCoast(), flyClear(), the dock or the sheet; those are its inputs.
+#
+# Each box below is the union of what was already on disk and what that run
+# demands, plus ONE ROW of margin north and south on the context levels. The
+# margin is north-south only because every failure found, in the browser and in
+# the simulation, was a row rather than a column, and because the vertical
+# padding is the part workstream B is still moving.
+#
+# S, W, N, E
 COAST_BOX = (9.6143, -82.8012, 9.6874, -82.6474)      # the cache's own extent
-CONTEXT_BOX = (9.5500, -82.8800, 9.7500, -82.5700)    # ~22 x 34 km of surrounds
-BOX_FOR = {12: CONTEXT_BOX, 13: CONTEXT_BOX, 14: CONTEXT_BOX,
-           15: COAST_BOX, 16: COAST_BOX, 17: COAST_BOX}
+Z15_BOX = (9.5953, -82.7985, 9.7036, -82.6447)        # 18 x 13 km
+Z14_BOX = (9.5249, -82.8699, 9.7632, -82.5623)        # 36 x 29 km
+Z13_BOX = (9.4274, -82.8589, 9.8173, -82.5513)        # 39 x 48 km
+Z12_BOX = (9.2322, -82.9248, 9.9256, -82.5732)        # 48 x 87 km
+Z11_BOX = (9.2010, -83.0250, 10.1008, -82.4236)       # 97 x 116 km
+Z10_BOX = (9.0570, -83.1617, 10.2448, -82.2869)       # 116 x 193 km
+BOX_FOR = {10: Z10_BOX, 11: Z11_BOX, 12: Z12_BOX,
+           13: Z13_BOX, 14: Z14_BOX,
+           15: Z15_BOX, 16: COAST_BOX, 17: COAST_BOX}
 
 # Install BLOCKS on CRITICAL, so it holds the least that is still a working
-# offline map: z12 and z13, the whole coast at 18.9 m/px with every zone line
-# readable. Putting z14 in as well took the blocking set past 1.6 MB, and on the
-# weak signal this map is built for that is the difference between saving and
-# giving up. Detail is OPTIONAL and arrives in the background.
-PRECACHE_CRITICAL = (12, 13)
-PRECACHE_OPTIONAL = (14, 15)
+# offline map: z11 to z13, every whole-coast view a real viewport can reach, with
+# every zone line readable. Putting z14 in as well takes the blocking set past
+# 1.6 MB, and on the weak signal this map is built for that is the difference
+# between saving and giving up. Detail is OPTIONAL and arrives in the background.
+#
+# z10 IS OPTIONAL RATHER THAN CRITICAL, and deliberately. The zoom floor is
+# derived from the viewport, and on every real device it lands above 11.5, so
+# nothing can reach level 10 without a code change. Precaching it is cheap
+# insurance against that change; blocking install on it would be paying for a
+# view nobody has.
+#
+# Explicit levels, not a range: the tiers are no longer contiguous and a range
+# would have quietly swept z10 into the blocking set.
+PRECACHE_CRITICAL = (11, 12, 13)
+PRECACHE_OPTIONAL = (10, 14, 15)
 
 
 def deg2tile(lat, lon, z):
@@ -175,9 +239,9 @@ def copy_native():
     print(f"z{Z_NATIVE}: {n} tiles from the cache")
 
 
-def tile_urls(z_from, z_to):
+def tile_urls(levels):
     out = []
-    for z in range(z_from, z_to + 1):
+    for z in sorted(levels):
         d = os.path.join(OUT, str(z))
         if not os.path.isdir(d):
             continue
@@ -197,7 +261,7 @@ def write_sw_lists():
     """
     path = os.path.join(ROOT, "web", "sw.js")
     src = open(path, encoding="utf-8").read()
-    crit, opt = tile_urls(*PRECACHE_CRITICAL), tile_urls(*PRECACHE_OPTIONAL)
+    crit, opt = tile_urls(PRECACHE_CRITICAL), tile_urls(PRECACHE_OPTIONAL)
     fmt = lambda name, urls: (f"const {name} = [\n  " +
                               ",\n  ".join(f'"{u}"' for u in urls) + "\n];")
     block = ("/* TILES:BEGIN generated by tools/build_tiles.py -- do not edit by hand */\n"
@@ -213,6 +277,59 @@ def write_sw_lists():
           f"{len(opt)} optional ({kb(opt):.0f} KB)")
 
 
+def audit_precache():
+    """Every precache entry must exist on disk, and every icon must be listed.
+
+    The tile lists between the markers are generated and cannot drift. The rest of
+    CRITICAL and OPTIONAL is hand written -- the document, Leaflet, the geometry,
+    the fonts, the icons -- and that half is exactly where drift lands:
+    manifest.json named icons/icon-maskable-512.png and the worker did not
+    precache it, so an installed app would have fetched its own launcher icon at
+    the moment the device went offline and shown a default glyph instead, with
+    nothing anywhere reporting it.
+
+    Neither direction is visible to whoever deployed it, so both are checked here,
+    where somebody is already running a script and reading its output.
+    """
+    web = os.path.join(ROOT, "web")
+    src = open(os.path.join(web, "sw.js"), encoding="utf-8").read()
+    problems = []
+    listed = set()
+    for name in ("CRITICAL", "OPTIONAL"):
+        m = re.search(r"^const %s = \[(.*?)^\]\.concat" % name, src,
+                      flags=re.S | re.M)
+        if not m:
+            problems.append(f"sw.js has no hand written {name} array")
+            continue
+        for url in re.findall(r'"([^"]+)"', m.group(1)):
+            listed.add(url)
+            if url == "./":
+                continue
+            if not os.path.exists(os.path.join(web, url.replace("/", os.sep))):
+                problems.append(f"{name} lists {url}, which is not on disk")
+
+    icons = os.path.join(web, "icons")
+    if os.path.isdir(icons):
+        for f in sorted(os.listdir(icons)):
+            if f"icons/{f}" not in listed:
+                problems.append(f"web/icons/{f} is on disk and precached by neither tier")
+    try:
+        mf = json.load(open(os.path.join(web, "manifest.json"), encoding="utf-8"))
+        for i in mf.get("icons", []):
+            if i["src"] not in listed:
+                problems.append(f"manifest.json names {i['src']}, which is precached by neither tier")
+    except Exception as exc:
+        problems.append(f"could not read manifest.json: {exc}")
+
+    if problems:
+        print("\nPRECACHE AUDIT FAILED")
+        for p in problems:
+            print("  " + p)
+        raise SystemExit(1)
+    print(f"precache audit: {len(listed)} hand written entries, all present; "
+          f"icons and manifest.json agree")
+
+
 def main():
     if os.environ.get("REBUILD") == "1" and os.path.isdir(OUT):
         shutil.rmtree(OUT)
@@ -221,13 +338,17 @@ def main():
     for z in sorted(BOX_FOR):
         fetch_level(z)
     write_sw_lists()
+    audit_precache()
 
     total = sum(len(f) for _, _, f in os.walk(OUT))
     size = sum(os.path.getsize(os.path.join(r, f))
                for r, _, fs in os.walk(OUT) for f in fs)
     manifest = {"minZoom": min(BOX_FOR), "maxNativeZoom": Z_NATIVE,
-                "contextBounds": [[CONTEXT_BOX[0], CONTEXT_BOX[1]],
-                                  [CONTEXT_BOX[2], CONTEXT_BOX[3]]],
+                # The WIDEST box, because this is what index.html's TILE_CONTEXT
+                # has to be: that value is the tile layer's `bounds`, and Leaflet
+                # will not request a tile outside it however many are on disk.
+                "contextBounds": [[Z10_BOX[0], Z10_BOX[1]],
+                                  [Z10_BOX[2], Z10_BOX[3]]],
                 "coastBounds": [[COAST_BOX[0], COAST_BOX[1]],
                                 [COAST_BOX[2], COAST_BOX[3]]],
                 "tiles": total, "bytes": size}
