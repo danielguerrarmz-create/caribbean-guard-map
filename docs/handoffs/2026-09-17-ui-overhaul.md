@@ -1,8 +1,13 @@
 # Caribbean Guard map, 2026-09-17: the UI overhaul
 
-Branch `feat/ui-overhaul`. One session, orchestrated: a five-hat user study, a
-signed-off spec, two builders on disjoint files, one QA gate. Nothing here is
-deployed to production; a Vercel preview is the only thing that leaves the machine.
+Branch `feat/ui-overhaul`, commit `6be0f66`, **PR #1** on the public repo. One session,
+orchestrated: a five-hat user study, a signed-off spec, two builders on disjoint files,
+one QA gate pinned to a frozen file hash. Nothing is in production.
+
+**Preview:** https://caribbean-guard-qnvlqchx9-danielguerrarmz-create11.vercel.app
+**Deploy gotcha:** from `web/`, a bare `vercel` returns "Not authorized" even though
+`vercel whoami` is fine. Every deploy needs the team scope:
+`vercel deploy --yes --scope team_XOr1KdFeEvqhDcHZMsmeoLA6` (add `--prod` to publish).
 
 ## What
 
@@ -62,7 +67,8 @@ deployed to production; a Vercel preview is the only thing that leaves the machi
 - `SOLO CON GUARDAVIDAS` has no verb. QA flagged it; it stays. The 08-06 ruling
   accepted it as fail-safe: with no guard present it reads as "do not go in".
 - `nadie todavía` renders amber (`--gap`, #7a4a00), not red, byte-identical to
-  HEAD. The file argues absence is not a hazard colour. Daniel's call, open.
+  HEAD. **Daniel ruled 2026-09-17: amber stays**, absence is not a hazard colour.
+  The printed sheets (`tools/render_annotated.py`) still use red and should follow.
 
 ## Verify
 
