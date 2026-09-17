@@ -14,6 +14,9 @@
      does not ship and which 404s on every single load. -->
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<!-- Both spellings. Chrome deprecated the apple- prefixed one and logs a warning
+     on every load; iOS Safari still only understands that one. -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Caribbean Guard">
@@ -27,24 +30,47 @@
      A fallback would put the CDN back in the threat model to buy nothing: if the
      local copy is shipped anyway, ship only the local copy. -->
 <link rel="stylesheet" href="vendor/leaflet.css">
+<!-- Atkinson Hyperlegible, self hosted, Regular and Bold only.
+     Designed by the Braille Institute for low vision readers: the letterforms
+     that collapse into each other in ordinary grotesques (I l 1, O 0, b d p q)
+     are drawn differently on purpose. Hat 4 is mildly presbyopic on a budget
+     Android in midday sun, which is the same failure mode as low vision.
+     Self hosted for the same reason Leaflet is: this map must work with no
+     signal, and a Google Fonts request cannot be precached by our worker.
+     Preloaded because font-display:swap would otherwise repaint every
+     instruction on the page a second after it is first read.
+     LATIN SUBSET ONLY, 17 KB each. It covers U+0000-00FF, which is every
+     character Spanish and English need, and it is the difference between 34 KB
+     and 180 KB on the 2-bar Slow 3G link hat 4 is on. -->
+<link rel="preload" href="fonts/AtkinsonHyperlegible-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/AtkinsonHyperlegible-Bold.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  @font-face{
+    font-family:"Atkinson Hyperlegible"; font-style:normal; font-weight:400;
+    font-display:swap; src:url(fonts/AtkinsonHyperlegible-Regular.woff2) format("woff2");
+  }
+  @font-face{
+    font-family:"Atkinson Hyperlegible"; font-style:normal; font-weight:700;
+    font-display:swap; src:url(fonts/AtkinsonHyperlegible-Bold.woff2) format("woff2");
+  }
   :root{
     /* Two tiers on purpose.
        The plain tokens are for GRAPHICS on the map, where the bar is 3:1 and
        vividness helps them survive a sun-washed screen.
-       The -text tokens are for SOLID FILLS CARRYING WHITE TEXT, where the bar is
-       4.5:1. White on the old #1f9d55 measured 3.49:1 and on #c77700 measured
-       3.46:1, so both status pills were failing outright. 13px bold does not
-       qualify for the large-text exception, which needs about 18.66px bold.
-       Old --moderate #c77700 also had almost exactly the same luminance as --low
-       (0.254 vs 0.251), so in direct sun, which kills hue first, the two middle
-       tiers were the same colour.
+       The -text tokens are for TEXT AND UI BARS ON A LIGHT GROUND, where the
+       bar is 4.5:1 for text and 3:1 for a meaningful graphic. White on the old
+       #1f9d55 measured 3.49:1 and on #c77700 measured 3.46:1, so both status
+       pills were failing outright. 13px bold does not qualify for the
+       large-text exception, which needs about 18.66px bold.
+       Old --moderate #c77700 also had almost exactly the same luminance as
+       --low (0.254 vs 0.251), so in direct sun, which kills hue first, the two
+       middle tiers were the same colour.
 
-       These are named for the three HAZARD TIERS, low / moderate / high. They were
-       named safe / caution / danger, and --safe in particular was the wrong name:
-       nothing on this map is entitled to say safe. See the CHARACTER block. */
+       These are named for the three HAZARD TIERS, low / moderate / high. They
+       were named safe / caution / danger, and --safe in particular was the
+       wrong name: nothing on this map is entitled to say safe. See CHARACTER. */
     --low:#1f9d55;         --low-text:#178049;
-    --moderate:#9c5c00;    --moderate-text:#9c5c00;
+    --moderate:#f5b942;    --moderate-text:#9c5c00;
     --high:#c62828;        --high-text:#c62828;
     --ink:#0b1c2c; --paper:#ffffff; --muted:#5b6b7a;
     /* Absence has its own colour and it is not a hazard colour. Amber says "you
@@ -57,19 +83,45 @@
        for what this beach is. Violet also survives red-green colour blindness
        against all three tiers. */
     --today:#7b1fa2;
+    /* Caribbean Guard's own V5 sheet draws rescue stations as ORANGE hexagons.
+       They were blue circles here, which is the association's map losing its own
+       visual vocabulary (hat 5, finding 9). Orange is also the only station
+       colour a reader who has seen the printed sheet on the sign already knows. */
+    --station:#f39c12;
     --sheet-r:20px;
     --safe-pad: env(safe-area-inset-bottom, 0px);
     --dock-h: 96px;    /* set from JS; the fab and compass stack above the dock */
+    /* 8 px grid and a 16 px gutter, used everywhere below rather than eyeballed
+       values, so a card, a chip and a sheet all sit on the same rhythm. */
+    --gut:16px;
+    /* THE TYPE SCALE. Five sizes, no sixth.
+       22 sheet heading / 18 instruction / 15 names and body / 13 secondary /
+       12 chips, and 12 is the FLOOR. Hat 4's first blocker was that the
+       instruction rendered at 11.5 px while the optional prose rendered at
+       14.5: what you must obey was smaller than what you may skip. Nothing on
+       this page may be smaller than --t-min. */
+    --t-h2:22px; --t-instr:18px; --t-body:15px; --t-2nd:13px; --t-min:12px;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;
-    font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-family:"Atkinson Hyperlegible","Helvetica Neue",-apple-system,
+                BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:var(--t-body); line-height:1.3;
     color:var(--ink); background:var(--ink)}
   #map{position:absolute;inset:0}
+
+  /* ONE focus ring for the whole page, and it is the only one.
+     Hat 4, finding 10: no :focus or :focus-visible rule existed anywhere in the
+     file, so on a switch or a keyboard nothing showed what was selected. Ink on
+     light ground, white over the map and the dark chrome, 2 px either way. */
+  :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
+  .topbar :focus-visible,.fab:focus-visible,.compass:focus-visible,
+  .dockrow :focus-visible,.leaflet-container :focus-visible{outline-color:#fff}
+
   /* Shows only while tiles are in flight, and at the edge of coverage. Navy
      rather than Leaflet's grey so a tile arriving reads as the picture filling
      in, not as a broken image repairing itself. */
-  .leaflet-container{background:var(--ink)}
+  .leaflet-container{background:var(--ink);font-family:inherit}
   /* Replaces the old white casing. A shadow lifts the strokes off the imagery
      without putting a grey band around them, and it costs no width, so a thin
      line stays thin. */
@@ -83,94 +135,224 @@
   /* Place names, so the whole-coast view can be read without tapping anything.
      No box and no background: a plate over satellite imagery hides the thing the
      label is pointing at. A shadow does the same work and costs no area. */
-  .lbl{background:none;border:0;box-shadow:none;font-weight:800;
+  .lbl{background:none;border:0;box-shadow:none;font-weight:700;
     letter-spacing:.02em;white-space:nowrap;pointer-events:none;
     text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.7)}
   .lbl.zone{color:#fff;font-size:12.5px}
-  .lbl.place{color:#cfe0ee;font-size:11px;font-weight:700;letter-spacing:.06em;
+  .lbl.place{color:#cfe0ee;font-size:var(--t-min);font-weight:700;letter-spacing:.06em;
     text-transform:uppercase;opacity:.9}
-  .lbl.sea{color:#9fc4e0;font-size:12px;font-weight:600;letter-spacing:.22em;
+  .lbl.sea{color:#9fc4e0;font-size:var(--t-min);font-weight:400;letter-spacing:.22em;
     text-transform:uppercase;opacity:.75}
   .leaflet-control-scale-line{background:rgba(11,28,44,.72);border-color:rgba(255,255,255,.5);
-    color:#e8f1f7;font-weight:700;font-size:10.5px;padding:2px 6px}
+    color:#e8f1f7;font-weight:700;font-size:var(--t-min);padding:3px 7px}
 
   /* ---------- top bar ---------- */
   .topbar{position:absolute;top:0;left:0;right:0;z-index:1000;
-    padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;
-    display:flex;align-items:center;gap:10px;
+    padding:calc(env(safe-area-inset-top,0px) + 8px) var(--gut) 8px;
+    display:flex;align-items:center;gap:8px;
     background:linear-gradient(180deg,rgba(11,28,44,.92),rgba(11,28,44,0));
     pointer-events:none}
-  .brand{font-weight:800;letter-spacing:.02em;color:#fff;font-size:15px;line-height:1.15;
-    text-shadow:0 1px 3px rgba(0,0,0,.6)}
-  .brand small{display:block;font-weight:500;font-size:11px;opacity:.85;letter-spacing:.04em;
-    text-transform:uppercase}
+  /* The wordmark is a LINK HOME. Hat 5, finding 4: the association's
+     highest-traffic tourist touchpoint had no route back to the organisation
+     that made it, and the only outbound links in 2,291 lines were two Google
+     Maps calls. */
+  /* nowrap and shrinkable. At 15 px the wordmark, the 911 pill and a 44 px
+     language toggle do not fit across 390 px, and the brand wrapped to three
+     lines, grew the top bar to 86 px and pushed EN off the right edge. The
+     wordmark drops a step and the tagline steps out below 430 px: the two
+     controls on the right are the ones a reader needs in a hurry, and the
+     tagline is the only thing on this bar that nothing depends on. */
+  .brand{pointer-events:auto;text-decoration:none;
+    font-weight:700;letter-spacing:.02em;color:#fff;font-size:var(--t-body);
+    line-height:1.15;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;
+    min-width:0;overflow:hidden;
+    padding:4px 0;min-height:44px;display:flex;flex-direction:column;justify-content:center}
+  .brand small{display:block;font-weight:400;font-size:var(--t-min);opacity:.85;
+    letter-spacing:.04em;text-transform:uppercase}
+  @media (max-width:429px){
+    /* Two lines, not one. At 13 px on one line the wordmark still needs about
+       125 px and only 107 are left once the 911 pill and a 44 px language
+       toggle have taken theirs, so it clipped to "CARIBBEAN GUAI". Wrapping it
+       costs nothing: the bar is 44 px tall for the targets anyway. */
+    .brand{font-size:var(--t-2nd);letter-spacing:0;white-space:normal;
+      max-width:104px;line-height:1.05}
+    .brand small{display:none}
+  }
   .spacer{flex:1}
+  /* 44 px, both of them. Hat 4, finding 11: the language buttons were 36 px and
+     adjacent, 911 was 40, the sheet close 38. All legal, none comfortable with
+     one wet thumb. 44 is the floor in the top bar now. */
   .lang{pointer-events:auto;display:flex;background:rgba(255,255,255,.16);
     border:1px solid rgba(255,255,255,.28);border-radius:999px;overflow:hidden;
     backdrop-filter:blur(8px)}
   .lang button{appearance:none;border:0;background:transparent;color:#fff;font:inherit;
-    font-size:12px;font-weight:700;padding:7px 12px;min-height:36px;cursor:pointer}
+    font-size:var(--t-2nd);font-weight:700;padding:0 14px;min-height:44px;min-width:44px;
+    cursor:pointer}
   .lang button[aria-pressed="true"]{background:#fff;color:var(--ink)}
 
   /* ---------- emergency ---------- */
-  .sos{pointer-events:auto;display:flex;align-items:center;gap:6px;
-    background:var(--high);color:#fff;text-decoration:none;font-weight:800;font-size:13px;
-    padding:9px 14px;min-height:40px;border-radius:999px;
+  /* The digits carry a word now. Hat 1 does not know Costa Rica uses 911 rather
+     than 112, and a bare red badge beside a language toggle reads as decoration. */
+  .sos{pointer-events:auto;display:inline-flex;align-items:center;gap:7px;
+    background:var(--high);color:#fff;text-decoration:none;font-weight:700;
+    font-size:var(--t-2nd);letter-spacing:.02em;
+    padding:0 14px;min-height:44px;border-radius:999px;
     box-shadow:0 3px 12px rgba(0,0,0,.4)}
-
-  /* ---------- bottom dock: offline bar + beach picker ---------- */
-  /* One positioned container rather than two, so chrome() has a single thing to
-     measure and the fab stack has a single height to clear. */
-  .dock{position:absolute;left:0;right:0;z-index:1000;
-    bottom:calc(var(--safe-pad) + 10px)}
-  .picker{display:flex;gap:9px;padding:6px 12px;overflow-x:auto;scrollbar-width:none;
-    -webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
-  .picker::-webkit-scrollbar{display:none}
-  .card{flex:0 0 auto;scroll-snap-align:center;min-width:146px;
-    background:rgba(255,255,255,.97);border-radius:14px;padding:10px 13px 11px;
-    border:2px solid transparent;box-shadow:0 3px 14px rgba(0,0,0,.34);cursor:pointer;
-    text-align:left;font:inherit;color:var(--ink)}
-  .card[aria-current="true"]{border-color:var(--ink)}
-  .card .nm{display:block;font-size:14.5px;font-weight:800;line-height:1.2;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
-  .card .st{display:flex;align-items:center;gap:6px;margin-top:5px;
-    font-size:11.5px;font-weight:800;letter-spacing:.03em}
-  /* coloured text on white, so also the -text tier */
-  .card .st.low{color:var(--low-text)} .card .st.moderate{color:var(--moderate-text)}
-  .card .st.high{color:var(--high-text)}
-  /* was an 11px square identical for all three statuses, so it carried no
-     information beyond its fill. Now it is a sample of the actual map stroke. */
-  .sw{flex:0 0 auto;display:block}
-
-  /* Absence, rendered on the card so it is visible before anything is tapped.
-     Three different absences get three different marks, never one banner: see the
-     ABSENCE block in the script. Deliberately typographic, not coloured like a
-     status, so a missing verdict can never be read as a verdict. */
-  .gaps{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-  .gap{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;
-    letter-spacing:.01em;padding:2px 5px;border-radius:5px;border:1px solid;
+  .sos b{font-size:var(--t-body);font-weight:700;letter-spacing:.04em}
+  .sos .word{text-transform:uppercase;font-size:var(--t-min);letter-spacing:.06em;
     white-space:nowrap}
-  .gap.never,.gap.expired{color:var(--gap);background:var(--gap-bg);border-color:var(--gap-line)}
-  .gap.unsurveyed{color:var(--void);background:var(--void-bg);border-color:var(--void-line)}
-  .gap .mk{font-size:11px;line-height:1}
+  .lang,.sos{flex:0 0 auto}
 
-  /* The card for the coast this map does not describe. It sits in the picker
-     alongside the beaches on purpose: an absence listed as a peer of the presences
-     is the only version of it somebody will actually see. Hatched, so it does not
-     read as one more beach. */
-  .card.void{background:
-      repeating-linear-gradient(135deg,#eef1f4 0 7px,#e3e8ed 7px 14px);
-    border-color:var(--void-line)}
+  /* ---------- bottom dock ---------- */
+  /* One positioned container rather than three, so chrome() has a single thing
+     to measure and the fab stack has a single height to clear. On desktop this
+     same element becomes the left rail: one set of cards in the DOM, never two,
+     because two would be two things to keep in step. */
+  .dock{position:absolute;left:0;right:0;z-index:1000;
+    bottom:calc(var(--safe-pad) + 8px)}
+
+  /* The dock's own one line. It carries three things that each need to be
+     permanently visible and none of which deserves a row of its own on a 390 px
+     phone: the way into the legend, how old the saved copy is, and where you
+     are in the strip. Everything on it is at the 12 px floor. */
+  .dockrow{display:flex;align-items:center;gap:8px;margin:0 var(--gut) 8px;
+    background:rgba(11,28,44,.88);backdrop-filter:blur(8px);color:#fff;
+    border-radius:10px;padding:0 6px 0 6px;min-height:40px;
+    box-shadow:0 3px 12px rgba(0,0,0,.3)}
+  .dockrow .btn-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
+    color:#fff;font:inherit;font-size:var(--t-min);font-weight:700;
+    letter-spacing:.02em;border-radius:999px;padding:0 12px;min-height:32px;cursor:pointer}
+  .dockrow .txt{flex:1;min-width:0;font-size:var(--t-min);line-height:1.3;font-weight:400;
+    background:none;border:0;color:inherit;font-family:inherit;text-align:left;
+    padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:2px;
+    text-decoration-color:rgba(255,255,255,.4);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* "2 de 6". Hat 1 and hat 2 both stopped at card two because a scroller with
+     both scrollbars hidden does not announce its own length. */
+  .counter{flex:0 0 auto;font-size:var(--t-min);font-weight:700;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;opacity:.9;padding:0 2px}
+  .dockrow .rf{flex:0 0 auto;width:34px;height:32px;border:0;border-radius:8px;
+    background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font:inherit;
+    display:grid;place-items:center}
+  .dockrow .rf svg{width:16px;height:16px}
+  .dockrow .rf[disabled]{opacity:.45}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .dockrow .rf.busy svg{animation:spin .9s linear infinite}
+  @media (prefers-reduced-motion:reduce){.dockrow .rf.busy svg{animation:none}}
+
+  /* First run only. Hat 1's single question is "which beach am I on", and the
+     control that answers it was an unlabelled crosshair under a compass that
+     reads as a map widget. Once it has been used once it collapses back to the
+     icon, because by then the icon has a meaning. */
+  .locate-first{display:none;width:calc(100% - var(--gut) * 2);margin:0 var(--gut) 8px;
+    min-height:48px;border-radius:12px;border:0;background:#fff;color:var(--ink);
+    font:inherit;font-size:var(--t-body);font-weight:700;cursor:pointer;
+    box-shadow:0 3px 14px rgba(0,0,0,.34);align-items:center;justify-content:center;gap:9px}
+  .locate-first.show{display:flex}
+  .locate-first svg{width:20px;height:20px}
+
+  /* The card strip. The MASK is the edge fade: it fades the cards themselves at
+     both ends rather than painting a gradient over them, which is the only way
+     to fade something sitting on satellite imagery whose colour is unknown. */
+  .strip{display:flex;gap:10px;padding:4px var(--gut) 6px;overflow-x:auto;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,
+                                        #000 calc(100% - 18px),transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0,#000 18px,
+                                #000 calc(100% - 18px),transparent 100%)}
+  .strip::-webkit-scrollbar{display:none}
+
+  /* ---------- the card ----------
+     Anatomy, top to bottom: name, instruction, provenance chips, hours.
+     One card is 84vw so the instruction has room to be the largest thing on it
+     and the next card still peeks in at the edge, which is what tells a thumb
+     there is a next card. */
+  .card{flex:0 0 84vw;max-width:340px;scroll-snap-align:center;
+    background:rgba(255,255,255,.97);border-radius:14px;padding:14px var(--gut) 16px;
+    border:2px solid transparent;box-shadow:0 3px 14px rgba(0,0,0,.34);cursor:pointer;
+    text-align:left;font:inherit;color:var(--ink);display:block}
+  .card[aria-current="true"]{border-color:var(--ink)}
+  .card .nm{display:block;font-size:var(--t-body);font-weight:700;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- pill kind 1 of 2: the status pill ----------
+     THE INSTRUCTION IS THE LARGEST TEXT ON THE CARD. That is hat 4's first
+     blocker and it is the whole point of the card.
+     The tier colour is the LEFT BAR, never the fill, and the text is always
+     ink. Hat 1: green fill on the lowest tier cancels its own words, because on
+     a safety map green means go and "TAKE CARE ANYWAY" then arrives second and
+     loses. Green survives on the stroke and on the swatch, where it is a map
+     key rather than a verdict.
+     The bar takes the -text token, which clears 3:1 on this ground; the SWATCH
+     next to it draws the real map stroke in the real map colour, which is its
+     documented job. They differ in hue only for moderate, and that is the
+     honest version: one is chrome, the other is a sample. */
+  .pill{display:flex;align-items:center;gap:10px;margin-top:8px;
+    border-left:6px solid var(--tier);background:#f2f5f8;
+    border-radius:3px 12px 12px 3px;padding:10px 12px 10px 10px;
+    font-size:var(--t-instr);font-weight:700;line-height:1.2;
+    letter-spacing:.02em;text-transform:uppercase;color:var(--ink)}
+  /* Three, and only three. There were three more, for the void card, a station
+     and a neutral title, which is how a component that means "do this" came to
+     carry nouns. Those are titleChip() now. */
+  .pill.low{--tier:var(--low-text)}
+  .pill.moderate{--tier:var(--moderate-text)}
+  .pill.high{--tier:var(--high-text)}
+  .pill .sw{flex:0 0 auto;display:block}
+
+  /* The post's hours, next to the instruction it qualifies. Hat 2's first
+     blocker: at 17:30 the Cocles card still said SOLO CON GUARDAVIDAS while its
+     own facts said the post closes at 17:00, so the only instruction on screen
+     could not be obeyed. Ink, never red: a closed post is not a hazard tier. */
+  .hours{display:block;margin-top:6px;font-size:var(--t-2nd);line-height:1.35;color:var(--ink)}
+  .hours b{font-weight:700}
+
+  /* ---------- pill kind 2 of 2: the provenance chip ----------
+     12 px, which is the floor. Hat 4, finding 2: these shipped at 9.5 px, so the
+     "unreviewed must look unreviewed" doctrine sat at a size he could not
+     resolve and every beach read as reviewed. Outline and neutral, never a
+     hazard colour, so a missing verdict can never be read as a verdict. */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:var(--t-min);
+    font-weight:700;letter-spacing:.01em;padding:3px 9px;border-radius:999px;
+    border:1px solid;white-space:nowrap;line-height:1.35}
+  .chip.never,.chip.expired{color:var(--gap);background:var(--gap-bg);border-color:var(--gap-line)}
+  .chip.unsurveyed{color:var(--void);background:var(--void-bg);border-color:var(--void-line)}
+  .chip.today{color:#fff;background:var(--today);border-color:var(--today)}
+  .chip .mk{font-size:var(--t-2nd);line-height:1}
+  /* THE TITLE CHIP IS THE SAME COMPONENT, ONE SIZE UP, AND THAT IS THE POINT.
+     The doctrine allows exactly two pill kinds: the status pill, which is an
+     INSTRUCTION, and the outline chip, which is neutral metadata. A rescue
+     station's name, a hazard's noun and "zona marcada, sin definir" are none of
+     them instructions, and they were rendering in the status pill, which is the
+     component that means "do this". A reader who has learnt that the barred pill
+     is the thing to obey would have read a noun as an order.
+     So they take the outline chip at 13 px with the map's own mark beside it,
+     which also makes the sheet a key for the thing that was tapped. No new
+     vocabulary, no third pill. */
+  .chip.title{font-size:var(--t-2nd);padding:6px 14px 6px 10px;gap:8px;
+    margin:0 0 14px;border-color:rgba(11,28,44,.22);color:var(--ink)}
+  .chip.title svg{display:block;flex:0 0 auto}
+
+  /* The card for the coast this map does not describe. A DIFFERENT SPECIES:
+     dashed border, hatched ground, and no status pill at all, because hat 1
+     skimmed past the most honest thing on the page when it had the same size,
+     shape and row as a beach. It stays IN the strip and it stays last. */
+  .card.void{background:repeating-linear-gradient(135deg,#eef1f4 0 7px,#e3e8ed 7px 14px);
+    border:2px dashed var(--void-line);box-shadow:0 3px 14px rgba(0,0,0,.2)}
   .card.void .nm{color:var(--void)}
-  .card.void .st{color:var(--void)}
+  .card.void .vd{display:block;margin-top:8px;font-size:var(--t-body);font-weight:700;
+    line-height:1.3;color:var(--void)}
 
   /* ---------- locate button ---------- */
-  .fab{position:absolute;right:12px;z-index:1000;
+  .fab{position:absolute;right:var(--gut);z-index:1000;
     bottom:calc(var(--safe-pad) + var(--dock-h) + 16px);
     width:52px;height:52px;border-radius:50%;border:0;background:#fff;
     box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;cursor:pointer}
   .fab svg{width:24px;height:24px}
-  .compass{position:absolute;right:12px;z-index:1000;
+  .fab.hidden{display:none}
+  .compass{position:absolute;right:var(--gut);z-index:1000;
     bottom:calc(var(--safe-pad) + var(--dock-h) + 76px);
     width:44px;height:44px;border-radius:50%;border:0;background:#fff;
     box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;
@@ -181,161 +363,302 @@
   @media (prefers-reduced-motion:reduce){.compass #needle{transition:none}}
   .fab.on svg{color:#1565c0}
 
-  /* ---------- bottom sheet ---------- */
+  /* ---------- bottom sheet, three stops ----------
+     PEEK is the opening state and it is sized so the name, the instruction and
+     who has reviewed it are all above the fold with nothing to scroll. Hat 1
+     closed the old sheet because the top 40% of it was an apology. HALF is for
+     reading the why and the facts. FULL is for the deferral and the actions.
+     33vh rather than the specified 32: measured on a 390x844 phone, 32vh cuts
+     the provenance line in half and the point of PEEK is that it does not. */
   .sheet{position:absolute;left:0;right:0;bottom:0;z-index:1200;
     background:var(--paper);border-radius:var(--sheet-r) var(--sheet-r) 0 0;
     box-shadow:0 -6px 28px rgba(0,0,0,.35);
-    transform:translateY(102%);transition:transform .28s cubic-bezier(.32,.72,0,1);
-    max-height:74vh;display:flex;flex-direction:column;
-    padding-bottom:var(--safe-pad)}
+    height:33vh;
+    transform:translateY(102%);
+    transition:transform .28s cubic-bezier(.32,.72,0,1),height .28s cubic-bezier(.32,.72,0,1);
+    display:flex;flex-direction:column;padding-bottom:var(--safe-pad)}
+  .sheet[data-stop="half"]{height:70vh}
+  .sheet[data-stop="full"]{height:calc(100vh - env(safe-area-inset-top,0px))}
   .sheet.open{transform:translateY(0)}
-  .grab{width:40px;height:4px;border-radius:2px;background:#d5dbe1;margin:9px auto 4px;flex:0 0 auto}
-  .sheet-body{overflow-y:auto;padding:6px 18px 20px;-webkit-overflow-scrolling:touch}
-  .status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;
-    padding:7px 14px;font-size:13px;font-weight:800;color:#fff;letter-spacing:.02em}
-  /* white text on a solid fill, so these take the -text tier */
-  .status.low{background:var(--low-text)} .status.moderate{background:var(--moderate-text)}
-  .status.high{background:var(--high-text)}
-  .status.station{background:#1565c0}
-  .sheet h2{margin:12px 0 2px;font-size:22px;line-height:1.2}
-  .sheet .sub{margin:0 0 14px;color:var(--muted);font-size:13px}
+  /* Dragging must not animate: the sheet has to sit under the thumb. */
+  .sheet.dragging{transition:none}
+  /* Closed means GONE, from the screen reader as well as from the screen.
+     Hat 4, finding 7: closing only translated it off-screen, so TalkBack swiped
+     into "Cerrar, botón" and a panel that was not visible. */
+  .sheet[hidden]{display:none}
+  .grab{width:44px;height:5px;border-radius:3px;background:#d5dbe1;margin:10px auto 2px;
+    flex:0 0 auto}
+  /* The whole top strip is the drag handle, not the 44x5 bar, because a 5 px
+     target is not a target. */
+  .draghead{flex:0 0 auto;padding-bottom:4px;cursor:grab;touch-action:none}
+  .sheet-body{overflow-y:auto;padding:4px var(--gut) 24px;-webkit-overflow-scrolling:touch}
+  .sheet h2{margin:4px 0 2px;font-size:var(--t-h2);line-height:1.2;font-weight:700;
+    padding-right:56px}
+  /* THE HEADING TAKES FOCUS AND DRAWS NO RING, and those are two decisions.
+     Moving focus here is what makes the sheet announce itself: hat 4 tapped a
+     card, the panel opened and TalkBack said nothing at all. That is the part
+     that must stay.
+     The ring is the part that must go. Chrome matches :focus-visible on a
+     programmatic focus of a tabindex="-1" element, so every sighted person who
+     TAPPED a card got a 2 px rectangle drawn around the beach name, which reads
+     as an editable field rather than as a heading. A focus ring is a keyboard
+     affordance and this focus was never a keyboard action.
+     Scoped to the heading only. Every real control on the page keeps the one
+     global :focus-visible outline, which is the thing hat 4 asked for. */
+  .sheet h2[tabindex="-1"]:focus,
+  .sheet h2[tabindex="-1"]:focus-visible{outline:none}
+  .sheet .sub{margin:0 0 4px;color:var(--muted);font-size:var(--t-2nd);line-height:1.35}
   .why{background:#f4f6f8;border-left:4px solid var(--ink);border-radius:0 10px 10px 0;
-    padding:12px 14px;font-size:14.5px;line-height:1.5;margin:0 0 14px}
+    padding:12px 14px;font-size:var(--t-body);line-height:1.45;margin:0 0 16px}
 
   /* ---------- the two axes, rendered so they cannot be confused ----------
      beaches.ie displays a standing classification and a current reading side by
      side and labels both, and encodes them differently on purpose. Same here.
-     CHARACTER is a coloured pill in the hazard palette and it carries the map
-     stroke. TODAY is a dark bordered block with a name and a timestamp on it, and
-     it never borrows a hazard colour, so nothing about it can be mistaken for the
-     standing character above it. */
-  .axis{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-    color:var(--muted);margin:0 0 6px}
-  .today{border:1.5px solid var(--ink);border-radius:12px;padding:10px 13px;margin:0 0 14px}
-  .today .verdict{font-size:14px;font-weight:800;line-height:1.25;margin:0}
-  .today .stamp{margin:5px 0 0;font-size:12px;line-height:1.45;color:var(--muted)}
-  .today .rider{margin:7px 0 0;font-size:12.5px;line-height:1.45}
-  /* nobody has signed a bulletin today. This is the ordinary state on a 16 km
-     coast with one association, so it is stated plainly and greyly. Amber every
-     single day would teach people that amber means nothing. */
-  .today.none{border-color:var(--void-line);border-style:dashed}
-  .today.none .verdict{color:var(--void);font-weight:700}
+     CHARACTER is the instruction pill and it carries the map stroke. TODAY is a
+     violet-tagged line or block with a name and a timestamp on it, and it never
+     borrows a hazard colour.
+
+     THE EMPTY TODAY IS NOW ONE LINE. Hat 1 and hat 5 both stopped at it: the
+     most prominent block on every beach led with "nobody has signed a bulletin
+     today", which is the permanent state, and a grey box shown every single day
+     teaches a reader to skip the one line that would one day carry a real
+     warning. The full block still renders, but only when there is something in
+     it. */
+  .todayline{display:flex;align-items:center;gap:8px;margin:0 0 14px;
+    font-size:var(--t-2nd);line-height:1.35;color:var(--muted)}
+  .today{border:1.5px solid var(--ink);border-radius:12px;padding:10px 13px;margin:0 0 16px}
+  .today .verdict{font-size:var(--t-body);font-weight:700;line-height:1.25;margin:0}
+  .today .stamp{margin:5px 0 0;font-size:var(--t-min);line-height:1.45;color:var(--muted)}
+  .today .rider{margin:7px 0 0;font-size:var(--t-2nd);line-height:1.45}
   .today.signed{border-color:var(--today);border-width:2px}
   .today.signed .verdict{color:var(--today)}
   .today.stale{border-style:dashed}
-  .today .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;
+  .badge{display:inline-block;font-size:var(--t-min);font-weight:700;letter-spacing:.06em;
     text-transform:uppercase;color:#fff;background:var(--today);border-radius:5px;
-    padding:2px 6px;margin-right:7px;vertical-align:2px}
-  .today.none .badge{background:var(--void)}
-  /* the card marker for a beach that has a bulletin today */
-  .gap.today{color:#fff;background:var(--today);border-color:var(--today)}
+    padding:2px 7px;flex:0 0 auto}
+  /* The violet tag stays on the collapsed line. Violet is outside the hazard
+     palette by construction, so it can never be read as a tier, and it is what
+     tells a reader that this line belongs to the TODAY axis rather than to the
+     standing character above it. The words next to it carry the absence. */
 
   /* An exception that modifies the character, sitting where it can act on it,
      rather than stranded in a facts bullet nothing reads. */
-  .caveat{margin:0 0 12px;padding:9px 12px;font-size:13px;line-height:1.45;
+  .caveat{margin:0 0 12px;padding:10px 12px;font-size:var(--t-2nd);line-height:1.45;
     border-radius:10px;background:#f4f6f8;border-left:4px solid var(--moderate-text)}
 
-  /* The rule that still works when this map is wrong, rendered under every level.
-     Deliberately NOT styled like a caveat: a caveat qualifies the verdict above
-     it, and this outranks the verdict above it. Solid ink, full border, no fill,
-     so it reads as the standing rule rather than as one more exception. */
-  .defer{margin:0 0 14px;padding:10px 13px;font-size:13px;line-height:1.45;
-    font-weight:600;border:1.5px solid var(--ink);border-radius:10px;color:var(--ink)}
+  /* The rule that still works when this map is wrong, rendered under every
+     level. Deliberately NOT styled like a caveat: a caveat qualifies the verdict
+     above it, and this outranks the verdict above it. Solid ink, full border, no
+     fill, so it reads as the standing rule rather than as one more exception. */
+  .defer{margin:0 0 16px;padding:12px 13px;font-size:var(--t-2nd);line-height:1.45;
+    font-weight:700;border:1.5px solid var(--ink);border-radius:10px;color:var(--ink)}
 
   /* Provenance sits directly under the claim it qualifies, not in a footer.
-     Two lines, not one, following OVSICORI: what produced this record, and whether
-     a human has confirmed it. They are different claims and collapsing them is how
-     a machine reading gets read as a lifeguard's word. */
-  .prov{margin:-4px 0 14px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+     ONE LINE now, two fields on it. Two stacked rows pushed the why below the
+     fold at PEEK; the two claims are still separate and still both named, which
+     is what OVSICORI's Autor / Revisado split is for. */
+  .prov{margin:0 0 10px;font-size:var(--t-2nd);line-height:1.5;color:var(--muted)}
   .prov b{font-weight:700;color:var(--ink)}
   .prov .row{display:block}
   .prov.unverified{color:var(--gap);background:var(--gap-bg);border:1px solid var(--gap-line);
-    border-radius:10px;padding:9px 12px;font-weight:600}
+    border-radius:10px;padding:9px 12px}
   .prov.unverified b{color:var(--gap)}
 
-  /* Absence in the sheet: the same three marks as on the card, stacked, each with
-     its own sentence. Never one banner for three different facts. */
-  .gaplist{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px}
-  .gaplist li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;
-    border-radius:10px;padding:9px 12px;border:1px solid}
+  /* Absence in the sheet: the same marks as on the card, stacked, each with its
+     own sentence. Never one banner for three different facts. */
+  .gaplist{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:8px}
+  .gaplist li{display:flex;gap:9px;align-items:flex-start;font-size:var(--t-2nd);
+    line-height:1.45;border-radius:10px;padding:10px 12px;border:1px solid}
   .gaplist li.never,.gaplist li.expired{color:var(--gap);background:var(--gap-bg);border-color:var(--gap-line)}
   .gaplist li.unsurveyed{color:var(--void);background:var(--void-bg);border-color:var(--void-line)}
-  .gaplist .mk{flex:0 0 18px;text-align:center;font-weight:800}
-  .gaplist b{display:block;font-weight:800}
+  .gaplist .mk{flex:0 0 18px;text-align:center;font-weight:700}
+  .gaplist b{display:block;font-weight:700}
 
-  .facts{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:9px}
-  .facts li{display:flex;gap:10px;font-size:14px;line-height:1.45;align-items:flex-start}
-  .facts .ic{flex:0 0 22px;text-align:center;font-size:15px}
-  .actions{display:grid;gap:9px;grid-template-columns:1fr 1fr}
+  .facts{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
+  .facts li{display:flex;gap:10px;font-size:var(--t-body);line-height:1.45;align-items:flex-start}
+  .facts .ic{flex:0 0 18px;text-align:center;font-size:var(--t-body)}
+  /* The one fact that is an instruction rather than a description. EVERY beach
+     carries it, word for word, not only the four with a named rip: the
+     lower-risk rider already tells the reader that dangerous rip currents are
+     possible near reefs, channels, headlands and river mouths, which is every
+     beach on this coast. Naming the hazard and withholding the escape on the
+     same card is deciding the sentence is decoration.
+     Hat 1: the sentence that could save him sat behind a tap on an arrow he did
+     not know was tappable. */
+  .facts li.escape{font-weight:700;background:#f4f6f8;border-radius:10px;padding:10px 12px}
+
+  .actions{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-bottom:8px}
   .btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;
-    border-radius:12px;border:1.5px solid rgba(11,28,44,.15);background:#fff;
-    font:inherit;font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;cursor:pointer}
-  .btn.primary{background:var(--high);border-color:var(--high);color:#fff}
+    border-radius:12px;border:1.5px solid rgba(11,28,44,.18);background:#fff;
+    font:inherit;font-size:var(--t-2nd);font-weight:700;color:var(--ink);
+    text-decoration:none;cursor:pointer;text-align:center;line-height:1.2;padding:0 8px}
+  .btn.primary{background:var(--high);border-color:var(--high);color:#fff;
+    font-size:var(--t-body)}
   .btn.wide{grid-column:1 / -1}
-  .close{position:absolute;top:8px;right:10px;width:38px;height:38px;border-radius:50%;
-    border:0;background:rgba(11,28,44,.07);font-size:20px;line-height:1;cursor:pointer;color:var(--ink)}
+  /* Hat 5, finding 10: a safety instrument with no correction channel keeps a
+     known error forever, and there was no contact anywhere in 2,291 lines.
+     The wordmark link is the other half of the same fix. */
+  .footlink{margin:2px 0 0;font-size:var(--t-min);line-height:1.5;color:var(--muted);
+    text-align:center}
+  .footlink a{color:var(--muted)}
+  /* 12 px in from both edges, and above the scroll container rather than
+     inside it. At an 8 px inset it sat half on the sheet-body's scrollbar
+     track, so on the phone it looked clipped by the sheet edge and on desktop
+     it fought the scrollbar for the same pixels. The 44 px hit area is
+     unchanged; only the inset and the stacking moved. */
+  .close{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;
+    border:0;background:rgba(11,28,44,.07);font-size:22px;line-height:1;cursor:pointer;
+    color:var(--ink);z-index:5;display:grid;place-items:center;padding:0}
+  /* Reserve the scrollbar's width whether or not it is showing, so the content
+     does not shift by 15 px the moment a sheet grows past its stop. */
+  .sheet-body{scrollbar-gutter:stable}
 
-  /* ---------- post markers ---------- */
-  .po{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
-    background:#fff;border:3px solid var(--ink);font-weight:800;font-size:13px;
-    box-shadow:0 2px 8px rgba(0,0,0,.4)}
-  /* One kind now: these are Caribbean Guard's real fixed rescue stations, not a
-     mix of staffed and proposed posts I had invented. Blue, because a station is
-     infrastructure rather than a swim verdict, and must not read as a status. */
-  .po.station{border-color:#1565c0}
+  /* ---------- the legend ----------
+     Merged: our four instructions, then Caribbean Guard's own V5 vocabulary in
+     their words. Two columns, Spanish then English, exactly as the V5 sheet
+     prints it, because a tourist and a local read the same box. Hat 5, finding
+     8: four numbered circles sat on the coast meaning nothing until tapped,
+     while the association's own map has carried a bilingual key in the corner
+     all along. */
+  .legend h3{margin:18px 0 8px;font-size:var(--t-2nd);font-weight:700;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .legend h3:first-child{margin-top:4px}
+  .legend .row{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;
+    padding:9px 0;border-top:1px solid #e7ecf1}
+  .legend .row .mark{display:grid;place-items:center;height:22px}
+  /* .es and .en are wrapped in .txt rather than being siblings of .mark. As
+     direct children of the grid they auto-placed into the NEXT ROW's first
+     column, which is the 34 px mark column, and the English wrapped to one word
+     per line. */
+  .legend .txt{display:block;min-width:0}
+  /* .cur and .oth, NOT .es and .en, and the comment that used to sit here said
+     "Spanish then English" and was false half the time: legendHTML() puts the
+     READER'S language first and the other second, so in English the left column
+     is English. Naming a column after a language it does not always hold is the
+     kind of small lie that survives until somebody styles Spanish and gets
+     English. The V5 sheet prints Spanish first because its reader is assumed to
+     be here; ours knows which language its reader chose. */
+  .legend .cur{display:block;font-size:var(--t-2nd);font-weight:700;line-height:1.3}
+  .legend .oth{display:block;font-size:var(--t-min);line-height:1.3;color:var(--muted)}
+  /* Two language columns, the reader's first, as the V5 sheet lays them out.
+     Stacks below 360 px, where two columns would force the type under the 12 px
+     floor and the floor outranks the layout. */
+  @media (min-width:360px){
+    .legend .txt{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center}
+  }
+
+  /* ---------- post markers ----------
+     Caribbean Guard's own hexagon, in Caribbean Guard's own orange. The dark
+     outline is what holds it over water: #f39c12 against Caribbean blue is
+     under the 3:1 non-text bar on its own. */
+  .po{display:grid;place-items:center;width:32px;height:32px;
+    background:var(--station);font-weight:700;font-size:var(--t-2nd);color:var(--ink);
+    clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0% 50%);
+    filter:drop-shadow(0 0 1.5px #0b1c2c) drop-shadow(0 2px 5px rgba(0,0,0,.55))}
+  /* The collapsed badge. Bigger than one station and carrying "x4" rather than
+     a bare numeral, so it reads as a count of stations and never as station
+     number four. Same hexagon and same orange, because it is the same kind of
+     thing: one mark standing for several. */
+  .po.cluster{width:38px;height:38px;font-size:var(--t-body);letter-spacing:-.02em}
 
   /* ---------- offline / signal banner ---------- */
-  .toast{position:absolute;left:12px;right:12px;z-index:1400;
-    top:calc(env(safe-area-inset-top,0px) + 62px);
-    background:var(--ink);color:#fff;border-radius:12px;padding:11px 14px;
-    font-size:13px;line-height:1.4;box-shadow:0 4px 18px rgba(0,0,0,.4);
+  .toast{position:absolute;left:var(--gut);right:var(--gut);z-index:1400;
+    top:calc(env(safe-area-inset-top,0px) + 66px);
+    background:var(--ink);color:#fff;border-radius:12px;padding:12px 14px;
+    font-size:var(--t-2nd);line-height:1.4;box-shadow:0 4px 18px rgba(0,0,0,.4);
     display:none}
   .toast.show{display:block}
 
-  /* ---------- the saved-copy bar ----------
-     Material Money's triple, in one strip: a LABELLED timestamp, a plain statement
-     of the refresh cadence, and a manual refresh affordance. It is permanent
-     rather than a toast, because "when was this saved" is a question somebody has
-     at the moment they act on the verdict, not six seconds after load.
-     Beachsafe's default value for a cache that has never populated is the literal
-     word "Never". That is the honest pattern and it is copied here. */
-  .saved{display:flex;align-items:center;gap:8px;margin:0 12px 8px;
-    background:rgba(11,28,44,.88);backdrop-filter:blur(8px);color:#fff;
-    border-radius:10px;padding:0 4px 0 11px;min-height:34px;
-    box-shadow:0 3px 12px rgba(0,0,0,.3)}
-  .saved .txt{flex:1;font-size:11.5px;line-height:1.3;font-weight:600;
-    background:none;border:0;color:inherit;font-family:inherit;text-align:left;
-    padding:7px 0;cursor:pointer;text-decoration:underline;text-underline-offset:2px;
-    text-decoration-color:rgba(255,255,255,.4)}
-  .saved .rf{flex:0 0 auto;width:34px;height:30px;border:0;border-radius:8px;
-    background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font:inherit;
-    display:grid;place-items:center}
-  .saved .rf svg{width:16px;height:16px}
-  .saved .rf[disabled]{opacity:.45}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .saved .rf.busy svg{animation:spin .9s linear infinite}
-  @media (prefers-reduced-motion:reduce){.saved .rf.busy svg{animation:none}}
-
   /* ---------- new build available ----------
-     Surfrider's pattern. A cache-first safety map with no way to say "the verdicts
-     you are reading are the old ones" will show a stale verdict forever, which is
-     the exact failure the provenance machinery exists to prevent, one layer down. */
-  .update{position:absolute;left:12px;right:12px;z-index:1500;
-    top:calc(env(safe-area-inset-top,0px) + 62px);
+     Surfrider's pattern. A cache-first safety map with no way to say "the
+     verdicts you are reading are the old ones" will show a stale verdict
+     forever, which is the exact failure the provenance machinery exists to
+     prevent, one layer down. */
+  .update{position:absolute;left:var(--gut);right:var(--gut);z-index:1500;
+    top:calc(env(safe-area-inset-top,0px) + 66px);
     display:none;align-items:center;gap:10px;
     background:#fff;color:var(--ink);border-radius:12px;padding:10px 10px 10px 13px;
-    box-shadow:0 4px 20px rgba(0,0,0,.45);font-size:13px;line-height:1.35}
+    box-shadow:0 4px 20px rgba(0,0,0,.45);font-size:var(--t-2nd);line-height:1.35}
   .update.show{display:flex}
-  .update .msg{flex:1;font-weight:600}
-  .update button{border:0;font:inherit;font-size:13px;font-weight:800;cursor:pointer;
-    border-radius:9px;min-height:38px;padding:0 13px}
+  .update .msg{flex:1;font-weight:700}
+  .update button{border:0;font:inherit;font-size:var(--t-2nd);font-weight:700;cursor:pointer;
+    border-radius:9px;min-height:44px;padding:0 13px}
   .update .go{background:var(--ink);color:#fff}
-  .update .no{background:transparent;color:var(--muted);padding:0 8px;min-width:38px}
+  .update .no{background:transparent;color:var(--muted);padding:0 8px;min-width:44px}
 
-  .leaflet-control-attribution{font-size:9px}
+  /* 12 px, like everything else. Leaflet's 10 px default is conventional and
+     it is still text on a page whose acceptance rule is that nothing is under
+     the floor. "How far is 200 m" is a question this map's own advice raises,
+     so the scale bar above is content, not chrome. */
+  .leaflet-control-attribution{font-size:var(--t-min);padding:0 5px}
+  /* The scale bar answers "how far is 200 m", which is the unit the escape
+     instruction is written in, so it has to be readable rather than tucked
+     under the dock. Lifted by the dock's own measured height. */
+  .leaflet-bottom.leaflet-left{bottom:calc(var(--safe-pad) + var(--dock-h) + 4px)}
+
+  /* The rail head and the permanent legend exist only on desktop. They are in
+     the DOM on a phone too, and hidden, rather than built twice. */
+  .railhead,.legend-perm{display:none}
+
+  /* ================= DESKTOP =================
+     Hat 5's seventh finding: what the board saw first was the phone stretched
+     to 1568 px, a row of small tiles clipped by the bottom edge, no legend, no
+     title, nothing saying what this is. Four of the five hats voted the same
+     layout, a left column holding every beach. */
   @media (min-width:820px){
-    .sheet{left:auto;right:16px;bottom:16px;width:390px;border-radius:16px;max-height:70vh}
-    .sheet.open{transform:translateY(0)}
+    /* The dock becomes the rail. Same cards, same DOM, different axis. */
+    .dock{top:0;right:auto;bottom:0;width:360px;
+      background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+      box-shadow:2px 0 24px rgba(0,0,0,.35);
+      display:flex;flex-direction:column;overflow:hidden;
+      padding-bottom:var(--safe-pad)}
+    .railhead{display:block;flex:0 0 auto;padding:16px var(--gut) 12px;
+      border-bottom:1px solid #e7ecf1}
+    .railhead .wm{display:block;font-size:var(--t-body);font-weight:700;
+      letter-spacing:.04em;color:var(--ink);text-decoration:none}
+    .railhead .what{margin:6px 0 0;font-size:var(--t-2nd);line-height:1.4;color:var(--muted)}
+    .dockrow{margin:10px var(--gut) 0;background:var(--void-bg);color:var(--ink);
+      box-shadow:none;border:1px solid var(--void-line)}
+    .dockrow .txt{text-decoration-color:rgba(11,28,44,.35)}
+    .dockrow .rf{background:rgba(11,28,44,.08);color:var(--ink)}
+    /* The legend is permanently open on desktop, so the chip that opens it as a
+       sheet has nothing left to do; and every card is visible, so the counter
+       has nothing left to count. */
+    .dockrow .btn-chip,.counter{display:none}
+    /* The rail scrolls its own two regions, never the page: six cards, a
+       permanent legend and a title do not fit in 800 px of laptop, and a page
+       that scrolls would take the map with it. Cards get whatever the legend
+       does not, which on a tall window is all six at once. */
+    .strip{flex:1 1 auto;min-height:0;flex-direction:column;overflow-x:hidden;
+      overflow-y:auto;scroll-snap-type:none;padding:12px var(--gut);gap:10px;
+      -webkit-mask-image:none;mask-image:none}
+    .card{flex:0 0 auto;width:100%;max-width:none;padding:12px 14px 13px}
+    .legend-perm{display:block;flex:0 0 auto;max-height:min(300px,38vh);
+      overflow-y:auto;padding:0 var(--gut) 12px;border-top:1px solid #e7ecf1}
+    .legend-perm .cur{font-size:var(--t-min)}
+    /* The beach panel is a full-height right column and it never sits on the
+       coast it is describing: fitCoast() pads the map by both of these widths,
+       so the strokes stay in the open middle. */
+    .sheet{left:auto;right:0;top:0;bottom:0;width:400px;height:auto;
+      border-radius:0;box-shadow:-2px 0 24px rgba(0,0,0,.35);
+      transform:translateX(102%)}
+    .sheet[data-stop="peek"],.sheet[data-stop="half"],.sheet[data-stop="full"]{height:auto}
+    .sheet.open{transform:translateX(0)}
+    .draghead{cursor:default}
+    .grab{display:none}
+    .sheet-body{padding-top:16px}
+    /* Nobody locates themselves from a laptop, and a laptop cannot dial, so the
+       locate control is demoted and the emergency number is read rather than
+       tapped. Both were unanimous across the hats. */
+    .fab{width:40px;height:40px;right:12px;bottom:16px}
+    .fab svg{width:20px;height:20px}
+    .compass{right:12px;bottom:66px}
+    .locate-first{display:none !important}
+    .sos{cursor:default}
+    .toast,.update{left:auto;right:16px;width:360px}
+    /* The dock is a full-height rail here, so --dock-h is the viewport and the
+       phone rule above would push the scale bar off the top. */
+    .leaflet-bottom.leaflet-left{bottom:0;left:360px}
   }
 </style>
 </head>
@@ -344,19 +667,23 @@
 <div id="map"></div>
 
 <div class="topbar">
-  <div class="brand">CARIBBEAN GUARD<small id="tagline">Mapa de seguridad costera</small></div>
+  <!-- Links home. Hat 5: the association's biggest tourist touchpoint was a
+       dead end with no route back to the organisation whose name is on it. -->
+  <a class="brand" id="brand" href="https://caribbeanguard.org" target="_blank" rel="noopener">
+    CARIBBEAN GUARD<small id="tagline">Mapa de seguridad costera</small></a>
   <div class="spacer"></div>
-  <a class="sos" href="tel:911">911</a>
-  <div class="lang" role="group" aria-label="Idioma">
+  <a class="sos" id="sos" href="tel:911"><b>911</b><span class="word" id="sos-word">Emergencia</span></a>
+  <div class="lang" role="group" id="lang-group" aria-label="Idioma">
     <button id="btn-es" aria-pressed="true">ES</button>
     <button id="btn-en" aria-pressed="false">EN</button>
   </div>
 </div>
 
-<!-- assertive, not polite: every message this carries is safety relevant
-     ("you are between two beaches", "you are outside this coastline") and a
-     polite region would be queued behind whatever else is speaking. -->
-<div class="toast" id="toast" role="status" aria-live="assertive" aria-atomic="true"></div>
+<!-- role="alert", not role="status" with aria-live="assertive". Hat 4, finding
+     12: that pairing is resolved inconsistently by assistive technology, and
+     every message this carries is safety relevant ("you are between two
+     beaches", "you are outside this coastline"). -->
+<div class="toast" id="toast" role="alert" aria-atomic="true"></div>
 
 <button class="fab" id="locate" aria-label="Mi ubicación">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -376,13 +703,22 @@
       <path d="M22 7 L27.4 24 L22 20.6 L16.6 24 Z" fill="#c62828"/>
       <path d="M22 37 L16.6 20 L22 23.4 L27.4 20 Z" fill="#8ea3b6"/>
     </g>
-    <text x="22" y="6.4" text-anchor="middle" font-size="7.5" font-weight="800"
+    <text x="22" y="6.4" text-anchor="middle" font-size="7.5" font-weight="700"
           fill="#0b1c2c" font-family="inherit">N</text>
   </svg>
 </button>
 
 <div class="dock" id="dock">
-  <div class="saved" id="saved" hidden>
+
+  <!-- Desktop only. Hat 5 opened this on a laptop in front of the board and
+       there was no title and nothing saying what the thing was. -->
+  <div class="railhead">
+    <a class="wm" href="https://caribbeanguard.org" target="_blank" rel="noopener">CARIBBEAN GUARD</a>
+    <p class="what" id="rail-what">Qué hacer en cada playa de esta costa, según Caribbean Guard.</p>
+  </div>
+
+  <div class="dockrow">
+    <button class="btn-chip" id="legend-open" type="button">Leyenda</button>
     <button class="txt" id="saved-txt" type="button"></button>
     <button class="rf" id="saved-refresh" type="button" aria-label="Actualizar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -390,8 +726,61 @@
         <path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 5v6h-6"/>
       </svg>
     </button>
+    <span class="counter" id="counter" aria-hidden="true"></span>
   </div>
-  <div class="picker" id="picker"></div>
+
+  <!-- First run only; JS collapses it to the round icon once it has been used. -->
+  <button class="locate-first" id="locate-first" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/>
+      <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
+    </svg>
+    <span id="locate-first-label">¿En qué playa estoy?</span>
+  </button>
+
+  <!-- THE CARDS ARE STATIC HTML AND THAT IS DELIBERATE.
+       Hat 4, finding 6: #picker shipped empty and filled only after 147 KB of
+       Leaflet had arrived and parsed, so on a 2-bar Slow 3G link there were ten
+       seconds of navy before the first instruction word appeared. Nobody needs a
+       satellite image to be told to stay out of the water. buildPicker() adopts
+       these on first run and replaces them on a language switch, so this markup
+       is the Spanish first paint and nothing more. Keep it in step with
+       cardHTML() below; it is generated from the same anatomy by hand. -->
+  <div class="strip" id="picker">
+    <button class="card" data-id="cg:zone/playa-negra" aria-current="false">
+      <span class="nm">Playa Negra</span>
+      <span class="pill low"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#1f9d55" stroke-width="3" stroke-linecap="round" stroke-dasharray="1.2 4.8"/></svg>IGUAL, TEN CUIDADO</span>
+      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
+    </button>
+    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false">
+      <span class="nm">Salsa Brava</span>
+      <span class="pill high"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#c62828" stroke-width="6.6" stroke-linecap="round"/></svg>NO ENTRES AL AGUA</span>
+      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
+    </button>
+    <button class="card" data-id="cg:zone/cocles" aria-current="false">
+      <span class="nm">Playa Cocles</span>
+      <span class="pill high"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#c62828" stroke-width="6.6" stroke-linecap="round"/></svg>SOLO CON GUARDAVIDAS</span>
+      <span class="hours"><b>Guardavidas 9:00 a 17:00</b></span>
+      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
+    </button>
+    <button class="card" data-id="cg:zone/chiquita" aria-current="false">
+      <span class="nm">Playa Chiquita</span>
+      <span class="pill moderate"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#f5b942" stroke-width="4.8" stroke-linecap="round" stroke-dasharray="9.6 6"/></svg>REVISA ANTES DE ENTRAR</span>
+      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">½</span>Recorrida en parte</span></span>
+    </button>
+    <button class="card" data-id="cg:zone/punta-uva" aria-current="false">
+      <span class="nm">Punta Uva</span>
+      <span class="pill low"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#1f9d55" stroke-width="3" stroke-linecap="round" stroke-dasharray="1.2 4.8"/></svg>IGUAL, TEN CUIDADO</span>
+      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
+    </button>
+    <button class="card void" data-id="void" aria-current="false">
+      <span class="nm">El resto de la costa</span>
+      <span class="vd">Sin describir</span>
+    </button>
+  </div>
+
+  <!-- Desktop only: the same legend the chip opens as a sheet on a phone. -->
+  <div class="legend-perm legend" id="legend-perm"></div>
 </div>
 
 <div class="update" id="update" role="status" aria-live="polite">
@@ -400,13 +789,23 @@
   <button class="no" id="update-no" aria-label="Cerrar">&times;</button>
 </div>
 
-<div class="sheet" id="sheet" role="dialog" aria-modal="false">
-  <div class="grab"></div>
+<!-- hidden AND inert while closed. Named by its own h2, which also takes focus
+     when it opens: hat 4 tapped a card, the panel opened, and TalkBack said
+     nothing at all. -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="false"
+     aria-labelledby="sheet-title" data-stop="peek" hidden inert>
+  <div class="draghead" id="draghead"><div class="grab"></div></div>
   <button class="close" id="sheet-close" aria-label="Cerrar">&times;</button>
   <div class="sheet-body" id="sheet-body"></div>
 </div>
 
 <script src="vendor/leaflet.js"></script>
+<!-- The map's linework, from workstream A. A classic script defining window.CGGeom
+     and nothing else: it captures window.L at definition time, so it must load
+     AFTER Leaflet and BEFORE this file. Stroke widths, dash ratios, the 40 m end
+     taper, the outlined rip arrow and label collision all live in there now, so
+     the card swatch and the map read ONE table instead of two copies. -->
+<script src="geometry.js"></script>
 <script>
 /* ============================================================
    1. GEOREFERENCE  <-- solved 2026-07-30, do not hand-edit
@@ -535,11 +934,38 @@ const ZONES = [
       authored:"desk", reviewed:null,
       why:{es:"Fondo de arena, pendiente suave y poca corriente la mayor parte del año. Es la zona más tranquila de la costa para familias y niños.",
            en:"Sand bottom, gentle slope and little current most of the year. The calmest stretch on this coast for families and children."},
-      facts:{es:["Sin arrecife cerca de la orilla","Oleaje bajo salvo en marejadas de diciembre a marzo","Puesto de rescate a 600 m al este"],
-             en:["No reef near the shore","Low surf except during December to March swells","Rescue post 600 m to the east"]}
+      /* A third fact here used to send the reader east to a rescue post that
+         does not exist. Hat 3, a volunteer guard, blocked on it: the nearest
+         station in this map's own data is 4.34 km east at Playa Chiquita, and
+         the distance that bullet named lands on Salsa Brava, live coral and a
+         no-swim break. A family walking east for help would have arrived at the
+         reef. Deleted rather than repointed: no station near here exists to
+         point at. */
+      facts:{es:["Sin arrecife cerca de la orilla","Oleaje bajo salvo en marejadas de diciembre a marzo"],
+             en:["No reef near the shore","Low surf except during December to March swells"]}
     },
     today:null,
-    line:[[9.6586,-82.77094],[9.65677,-82.76713],[9.65542,-82.76382],[9.65512,-82.76265],[9.65472,-82.75963],[9.65484,-82.75821],[9.6552,-82.75715]]
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
+       used to sit on this line was a 7-to-60-point decimation that cut inland
+       on every convex bend; the traced coastline replaces it and arrives over
+       the network. No short fallback copy is kept: a hazard line in the wrong
+       place is a claim, not a gap.
+       `span` and `at` are the two things that must NOT wait for a fetch. The
+       card has to paint its instruction before Leaflet parses, and the card
+       carries the "recorrida o no" chip, which is a longitude comparison; and
+       a QR deep link opens a sheet that needs somewhere to fly to and a
+       destination for Cómo llegar. Both are derived from the real geometry by
+       tools/export_zones.py, so they cannot drift from what is drawn.
+
+       Keeping them was put to the orchestrator as a choice against a purer
+       data flow, where everything on the card would wait for the fetch, and
+       was ruled on 2026-09-17: a card that is RIGHT at first paint beats a
+       cleaner dependency graph. Without these two, a QR scan on the sand opens
+       a sheet with nowhere to fly and a chip that is wrong for the first few
+       hundred milliseconds, on the one screen that has to be right in ten
+       seconds. Do not "simplify" them away. */
+    span:{w:-82.77094, e:-82.75715}, at:[9.65598,-82.76513],
+    line:[]
   },
   {
     id:"cg:zone/salsa-brava",
@@ -550,26 +976,66 @@ const ZONES = [
       authored:"desk", reviewed:null,
       why:{es:"Ola de arrecife que rompe sobre coral vivo en agua muy poco profunda. No es zona de baño. Riesgo de corte y golpe contra el arrecife incluso con mar en calma.",
            en:"Reef break over live coral in very shallow water. This is not a swimming area. Risk of laceration and impact on the reef even when the sea looks calm."},
-      facts:{es:["Prohibido nadar. Solo surfistas con experiencia","Arrecife a menos de 1 m bajo la superficie","Corriente de retorno en el canal del lado este"],
+      facts:{es:["Prohibido nadar. Solo surfistas con experiencia","Arrecife a menos de 1 m bajo la superficie","Corriente de resaca en el canal del lado este"],
              en:["No swimming. Experienced surfers only","Reef less than 1 m below the surface","Rip current in the channel on the east side"]}
     },
     today:null,
-    line:[[9.65541,-82.75683],[9.65578,-82.75661],[9.65743,-82.75691],[9.65841,-82.75633],[9.65843,-82.75593],[9.65819,-82.75559],[9.65818,-82.75583],[9.65853,-82.75612],[9.65932,-82.75593],[9.65925,-82.75531],[9.65918,-82.75547],[9.65965,-82.75497],[9.65974,-82.75454],[9.65949,-82.75428],[9.65907,-82.75427],[9.6587,-82.75488],[9.65885,-82.75476],[9.65902,-82.75489],[9.65901,-82.7546],[9.65829,-82.75373],[9.65816,-82.75301],[9.65852,-82.75301],[9.65966,-82.75252],[9.65999,-82.75176],[9.65964,-82.75126],[9.65947,-82.75133],[9.66012,-82.75144],[9.66049,-82.7512],[9.6605,-82.75059],[9.66071,-82.75015],[9.66068,-82.74987],[9.66042,-82.74963],[9.66048,-82.74996],[9.66067,-82.74956]]
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
+       used to sit on this line was a 7-to-60-point decimation that cut inland
+       on every convex bend; the traced coastline replaces it and arrives over
+       the network. No short fallback copy is kept: a hazard line in the wrong
+       place is a claim, not a gap.
+       `span` and `at` are the two things that must NOT wait for a fetch. The
+       card has to paint its instruction before Leaflet parses, and the card
+       carries the "recorrida o no" chip, which is a longitude comparison; and
+       a QR deep link opens a sheet that needs somewhere to fly to and a
+       destination for Cómo llegar. Both are derived from the real geometry by
+       tools/export_zones.py, so they cannot drift from what is drawn. */
+    span:{w:-82.75691, e:-82.74956}, at:[9.65895,-82.75438],
+    line:[]
   },
   {
     id:"cg:zone/cocles",
     name:{es:"Playa Cocles", en:"Playa Cocles"},
-    sub:{es:"Corrientes de retorno frecuentes", en:"Frequent rip currents"},
+    sub:{es:"Corrientes de resaca frecuentes", en:"Frequent rip currents"},
     character:{
       class:"high-risk",
       authored:"desk", reviewed:null,
-      why:{es:"La playa con más rescates de la costa. Bancos de arena cambiantes generan corrientes de retorno que salen mar adentro sin aviso. Báñate solo frente al puesto de guardavidas.",
+      why:{es:"La playa con más rescates de la costa. Bancos de arena cambiantes generan corrientes de resaca que salen mar adentro sin aviso. Báñate solo frente al puesto de guardavidas.",
            en:"The beach with the most rescues on this coast. Shifting sandbars create rip currents that pull straight out with no warning. Swim only in front of the lifeguard post."},
-      facts:{es:["Guardavidas de 9:00 a 17:00","Si te arrastra la corriente: no luches, nada paralelo a la playa","Banderas rojas marcan los canales activos"],
-             en:["Lifeguards 9:00 to 17:00","If a rip catches you: do not fight it, swim parallel to the beach","Red flags mark the active channels"]}
+      /* Three bullets left this list.
+         "Banderas rojas marcan los canales activos" is DELETED. There is no flag
+         system at Cocles; the COPY block below has known that since it was
+         written, and the fact shipped anyway. Hat 2 went looking for the flags,
+         found none, and stopped believing the rest of the page. An unconfirmed
+         fact stated flatly is the one thing this map's whole provenance
+         machinery exists to prevent.
+         The hours moved to `post` below, where they render next to the
+         instruction they qualify instead of three bullets under it.
+         The escape sentence moved to ESCAPE, so that every beach carries the
+         same words rather than a paraphrase each. */
+      facts:{es:[], en:[]}
     },
+    /* The post has a clock and the instruction has to know it. Hat 2, a local
+       parent, at 17:30 on a Saturday: the card said SOLO CON GUARDAVIDAS while
+       its own facts said the post closes at 17:00, so the only instruction on
+       screen could not be obeyed, on the evening families actually go down. */
+    post:{from:9, to:17,
+          es:"Guardavidas 9:00 a 17:00", en:"Lifeguards 9:00 to 17:00"},
     today:null,
-    line:[[9.66043,-82.74893],[9.66034,-82.74794],[9.66016,-82.74763],[9.65993,-82.74758],[9.65961,-82.74799],[9.66011,-82.74771],[9.66015,-82.74737],[9.65923,-82.74549],[9.65941,-82.74466],[9.65902,-82.7443],[9.65911,-82.74451],[9.65908,-82.74392],[9.65874,-82.74377],[9.65878,-82.74411],[9.65899,-82.74359],[9.65855,-82.74259],[9.65736,-82.74172],[9.65669,-82.74197],[9.65696,-82.74208],[9.65699,-82.74152],[9.65668,-82.74071],[9.65626,-82.74058],[9.65637,-82.74067],[9.65592,-82.74003],[9.65494,-82.73967],[9.65355,-82.73832],[9.65312,-82.73823],[9.65328,-82.73834],[9.65316,-82.73797],[9.65274,-82.73774],[9.65288,-82.73792],[9.6526,-82.73704],[9.65227,-82.73691],[9.65073,-82.73465],[9.64785,-82.73108],[9.6471,-82.72878],[9.64574,-82.7274],[9.64484,-82.72592]]
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
+       used to sit on this line was a 7-to-60-point decimation that cut inland
+       on every convex bend; the traced coastline replaces it and arrives over
+       the network. No short fallback copy is kept: a hazard line in the wrong
+       place is a claim, not a gap.
+       `span` and `at` are the two things that must NOT wait for a fetch. The
+       card has to paint its instruction before Leaflet parses, and the card
+       carries the "recorrida o no" chip, which is a longitude comparison; and
+       a QR deep link opens a sheet that needs somewhere to fly to and a
+       destination for Cómo llegar. Both are derived from the real geometry by
+       tools/export_zones.py, so they cannot drift from what is drawn. */
+    span:{w:-82.74893, e:-82.72592}, at:[9.65568,-82.73996],
+    line:[]
   },
   {
     id:"cg:zone/chiquita",
@@ -586,7 +1052,19 @@ const ZONES = [
              en:["Check the tide table before entering","Wear water shoes","No permanent lifeguard"]}
     },
     today:null,
-    line:[[9.64582,-82.72748],[9.64473,-82.7257],[9.64444,-82.72557],[9.64459,-82.72573],[9.64398,-82.72379],[9.64387,-82.72406],[9.64428,-82.72379],[9.64487,-82.72289],[9.64568,-82.72242],[9.64577,-82.72196],[9.64568,-82.72204],[9.64607,-82.72177],[9.64608,-82.72093],[9.64592,-82.72106],[9.64645,-82.72084],[9.6466,-82.72041],[9.64629,-82.72011],[9.64588,-82.72018],[9.64605,-82.72031],[9.64514,-82.71849],[9.6446,-82.71797],[9.64393,-82.7178],[9.64404,-82.71788],[9.64369,-82.71737],[9.64323,-82.71707],[9.6429,-82.71649],[9.64278,-82.71565],[9.64273,-82.71575],[9.64306,-82.715],[9.64301,-82.7145],[9.64334,-82.71333],[9.64299,-82.71304],[9.64309,-82.71314],[9.64255,-82.71212],[9.64256,-82.71164],[9.64223,-82.71097],[9.64224,-82.71109],[9.64232,-82.71058],[9.64209,-82.71072],[9.64246,-82.71075],[9.64263,-82.71056],[9.64277,-82.70992],[9.64264,-82.70969],[9.64228,-82.70963],[9.64164,-82.71022],[9.64184,-82.71029],[9.64183,-82.71003],[9.64131,-82.70957],[9.64137,-82.70967],[9.64121,-82.7088],[9.64057,-82.70839],[9.64074,-82.70777],[9.64071,-82.70733],[9.64058,-82.70742],[9.64128,-82.70736],[9.64146,-82.70695],[9.64103,-82.70562],[9.64054,-82.70493],[9.64011,-82.70481],[9.64022,-82.70489]]
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
+       used to sit on this line was a 7-to-60-point decimation that cut inland
+       on every convex bend; the traced coastline replaces it and arrives over
+       the network. No short fallback copy is kept: a hazard line in the wrong
+       place is a claim, not a gap.
+       `span` and `at` are the two things that must NOT wait for a fetch. The
+       card has to paint its instruction before Leaflet parses, and the card
+       carries the "recorrida o no" chip, which is a longitude comparison; and
+       a QR deep link opens a sheet that needs somewhere to fly to and a
+       destination for Cómo llegar. Both are derived from the real geometry by
+       tools/export_zones.py, so they cannot drift from what is drawn. */
+    span:{w:-82.72748, e:-82.70481}, at:[9.64286,-82.71555],
+    line:[]
   },
   {
     id:"cg:zone/punta-uva",
@@ -604,11 +1082,30 @@ const ZONES = [
          character where the character is read. */
       caveats:[{es:"El canal del extremo este es la excepción: ahí sí hay corriente y sale hacia afuera. No entres al agua en esa punta.",
                 en:"The channel at the far east end is the exception: there is current there and it runs out to sea. Do not enter the water at that point."}],
-      facts:{es:["Aguas tranquilas casi todo el año","Entrada de arena, sin coral en la orilla","Puesto de observación P.O. 4"],
-             en:["Calm water nearly year round","Sand entry, no coral at the shoreline","Observation post P.O. 4"]}
+      /* "Puesto de observación P.O. 4" is DELETED, and not renamed.
+         Hats 2 and 3 both stopped here: this coast had five names for one kind
+         of structure, and this bullet's P.O. 4 sits about 200 m from the
+         mapped station 4, so a reader cannot tell whether that is one structure
+         or two. We do not know either. One noun now, Caribbean Guard's own,
+         and one name per post: "Estación de Rescate N", carried by the pin. A
+         text mention we cannot join to a pin is deleted rather than guessed. */
+      facts:{es:["Aguas tranquilas casi todo el año","Entrada de arena, sin coral en la orilla"],
+             en:["Calm water nearly year round","Sand entry, no coral at the shoreline"]}
     },
     today:null,
-    line:[[9.64124,-82.70638],[9.64075,-82.70516],[9.64039,-82.70482],[9.64009,-82.70482],[9.64024,-82.70493],[9.63996,-82.70445],[9.63964,-82.70428],[9.63973,-82.70453],[9.63996,-82.70362],[9.63983,-82.70309],[9.63959,-82.70284],[9.63943,-82.70136],[9.63899,-82.69997],[9.63817,-82.69814],[9.63814,-82.69609],[9.63879,-82.69435],[9.63934,-82.69339],[9.63998,-82.69301],[9.63981,-82.69293],[9.64018,-82.69363],[9.64101,-82.69403],[9.64147,-82.69381],[9.64152,-82.69331],[9.64125,-82.69279],[9.64117,-82.69291],[9.64141,-82.69255],[9.64131,-82.69123],[9.64151,-82.69007],[9.64212,-82.68917],[9.64211,-82.68886],[9.64256,-82.68804],[9.64392,-82.68726]]
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
+       used to sit on this line was a 7-to-60-point decimation that cut inland
+       on every convex bend; the traced coastline replaces it and arrives over
+       the network. No short fallback copy is kept: a hazard line in the wrong
+       place is a claim, not a gap.
+       `span` and `at` are the two things that must NOT wait for a fetch. The
+       card has to paint its instruction before Leaflet parses, and the card
+       carries the "recorrida o no" chip, which is a longitude comparison; and
+       a QR deep link opens a sheet that needs somewhere to fly to and a
+       destination for Cómo llegar. Both are derived from the real geometry by
+       tools/export_zones.py, so they cannot drift from what is drawn. */
+    span:{w:-82.70638, e:-82.68726}, at:[9.63866,-82.69468],
+    line:[]
   }
 ];
 
@@ -637,24 +1134,32 @@ const ZONES = [
    can be true, because the annotated sheet these came off covers 1.86 km of
    16.66 km. We do not know which, so every station sheet says out loud that these
    are the ones inside the surveyed window and not necessarily all of them. */
+/* ONE NOUN, ONE NAME PER POST.
+   This coast had five words for this structure, including two nouns that are
+   not the Costa Rican term at all, plus "puesto de rescate", "puesto de
+   observación P.O. 4" and "puesto de guardavidas". Caribbean Guard's own V5
+   legend says ESTACIÓN DE RESCATE, so
+   that is the word, and the name is that word plus the number the pin carries.
+   Hat 3 signs the Revisado line on these; a name he did not use is a thing he
+   did not say. Salvamento is also not the Costa Rican term. */
 const POSTS = [
   {id:"cg:station/est1", n:"1", kind:"station", ll:[9.64474,-82.719],
-   name:{es:"Estación de salvamento · Playa Chiquita 1", en:"Rescue station · Playa Chiquita 1"},
+   name:{es:"Estación de Rescate 1", en:"Rescue Station 1"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null},
   {id:"cg:station/est2", n:"2", kind:"station", ll:[9.64333,-82.71809],
-   name:{es:"Estación de salvamento · Playa Chiquita 2", en:"Rescue station · Playa Chiquita 2"},
+   name:{es:"Estación de Rescate 2", en:"Rescue Station 2"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null},
   {id:"cg:station/est3", n:"3", kind:"station", ll:[9.64137,-82.71073],
-   name:{es:"Estación de salvamento · Playa Chiquita 3", en:"Rescue station · Playa Chiquita 3"},
+   name:{es:"Estación de Rescate 3", en:"Rescue Station 3"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null},
   {id:"cg:station/est4", n:"4", kind:"station", ll:[9.64029,-82.70878],
-   name:{es:"Estación de salvamento · Playa Chiquita 4", en:"Rescue station · Playa Chiquita 4"},
+   name:{es:"Estación de Rescate 4", en:"Rescue Station 4"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null}
@@ -725,20 +1230,24 @@ const T = {
   es:{tagline:"Mapa de seguridad costera",
       /* character classes. Each one is an instruction. See the three rules above. */
       "no-swim":"NO ENTRES AL AGUA", "high-risk":"SOLO CON GUARDAVIDAS",
-      "conditional":"REVISA ANTES DE ENTRAR", "lower-risk":"TEN CUIDADO IGUAL",
+      "conditional":"REVISA ANTES DE ENTRAR", "lower-risk":"IGUAL, TEN CUIDADO",
+      /* Trailing "igual" is how Buenos Aires says it. Limón fronts it. Hat 2 is
+         a Tico from Puerto Viejo and heard the old order as foreign, which on
+         the one line that carries the instruction is a reason not to obey it.
+         The English is unchanged: TAKE CARE ANYWAY was never wrong. */
       charLowerRiskRider:"Que el riesgo sea menor no quiere decir que sea seguro. Todavía puede haber corrientes de resaca peligrosas junto a los arrecifes, los canales, las puntas y las bocas de río.",
       defer:"Si hay un guardavidas o una bandera en la playa, eso manda sobre este mapa. Este mapa no ve el mar de hoy.",
-      axisCharacter:"Esta playa, siempre",
       axisToday:"Hoy",
       /* today notices */
       todayNoSwim:"Hoy no entres al agua",
       todayCare:"Hoy hay que tener más cuidado de lo normal",
       todayNormal:"Hoy sin novedad",
       todayNormalRider:"Sin novedad no quiere decir seguro. Lo que dice arriba sobre esta playa sigue valiendo.",
-      todayNone:"Nadie ha firmado un parte hoy",
-      todayNoneWhy:"Esta playa no tiene un parte de hoy. Lo que ves arriba es cómo es esta playa en general, no cómo está el mar en este momento.",
+      /* ONE LINE, not a block. See todayBlock(). "Parte" is peninsular; on this
+         coast the word is reporte. */
+      todayNoneLine:"Hoy: sin reporte firmado",
       todaySigned:(who,org,when)=>`Firmado por ${who}, ${org}, ${when}`,
-      todayStale:h=>`Este parte tiene más de ${h} horas. El mar cambia más rápido que eso.`,
+      todayStale:h=>`Este reporte tiene más de ${h} horas. El mar cambia más rápido que eso.`,
       /* provenance, two fields following OVSICORI */
       provAuthor:"Autor",
       provReviewed:"Revisado",
@@ -759,23 +1268,31 @@ const T = {
       gapExpiredTag:"Vencida",
       gapExpiredShort:"Revisión vencida",
       gapExpired:"Alguien revisó esta playa, pero hace demasiado. Las condiciones pueden haber cambiado desde entonces.",
-      gapUnsurveyedTag:"Sin relevar",
-      gapUnsurveyedShort:"Fuera del relevamiento",
-      gapUnsurveyed:"Esta playa queda fuera del tramo que Caribbean Guard relevó en su mapa anotado. No hay corrientes marcadas aquí porque nadie las marcó, no porque no las haya.",
-      gapPartialTag:"En parte",
-      gapPartialShort:"Relevada en parte",
-      gapPartial:"Solo una parte de esta playa entra en el tramo que Caribbean Guard relevó. Fuera de ese tramo no hay corrientes marcadas porque nadie las marcó.",
+      /* The verb that used to be here, and its noun, are Rioplatense and nobody
+         in Limón says either; worse, to a guard on duty that verb means being
+         relieved at the end of a shift, so hat 3 read the chip as "nobody took
+         over". Recorrer and tramo recorrido are the words here, and they say
+         the true thing: somebody walked this stretch and somebody did not.
+         (The old words are spelled out nowhere in this file on purpose. They
+         are on the release check as a grep, and a grep cannot tell a comment
+         from a string.) */
+      gapUnsurveyedTag:"Sin recorrer",
+      gapUnsurveyedShort:"Fuera del tramo recorrido",
+      gapUnsurveyed:"Esta playa queda fuera del tramo que Caribbean Guard recorrió en su mapa anotado. No hay corrientes marcadas aquí porque nadie las marcó, no porque no las haya.",
+      gapPartialTag:"Recorrida en parte",
+      gapPartialShort:"Recorrida en parte",
+      gapPartial:"Solo una parte de esta playa entra en el tramo que Caribbean Guard recorrió. Fuera de ese tramo no hay corrientes marcadas porque nadie las marcó.",
       /* the coast this map does not describe, as a card in the picker */
       voidName:"El resto de la costa",
       voidStatus:"Sin describir",
-      voidWhy:(total,zoned,surveyed)=>`Este mapa cubre ${total} km de costa. Cinco playas están descritas, y suman unos ${zoned} km. El mapa anotado de Caribbean Guard, del que salen las corrientes marcadas, cubre ${surveyed} km. El resto no está descrito ni relevado por nadie.`,
+      voidWhy:(total,zoned,surveyed)=>`Este mapa cubre ${total} km de costa. Cinco playas están descritas, y suman unos ${zoned} km. El mapa anotado de Caribbean Guard, del que salen las corrientes marcadas, cubre ${surveyed} km. El resto no está descrito ni recorrido por nadie.`,
       voidRule:"Que no haya nada dibujado en un tramo no quiere decir que ese tramo sea seguro. Quiere decir que nadie lo ha mirado.",
       /* stations */
-      here:"Estás aquí", hours:"Equipo", station:"Estación",
-      stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo relevado. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
+      station:"Estación de Rescate",
+      stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo recorrido. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
       stationHolds:"Estructura fija con implementos de flotación para rescate: tubos y torpedos, caja de mecate de 200 metros, salvavidas, chaleco y silbato. Si alguien es arrastrado por el mar, cualquier persona cerca tiene con qué ayudar.",
       /* chrome */
-      why:"Por qué", call:"Llamar al 911", route:"Cómo llegar", close:"Cerrar",
+      call:"Llamar al 911", route:"Cómo llegar",
       locating:"Buscando tu ubicación...",
       denied:"Activa la ubicación en tu teléfono para ver dónde estás.",
       outside:"Estás fuera de esta costa. El mapa cubre de Puerto Viejo a Manzanillo.",
@@ -785,11 +1302,25 @@ const T = {
       compassNone:"Este dispositivo no tiene brújula. La flecha marca el norte.",
       /* annotations */
       ripTitle:"Corriente de resaca",
-      ripLen:m=>`Aproximadamente ${m} m desde la orilla`,
-      ripDir:"La flecha apunta mar afuera, perpendicular a la playa. La ubicación es la que marcó Caribbean Guard; el rumbo exacto de su mapa no se pudo leer y no se afirma aquí.",
-      ripWhy:"Si te agarra: no luches contra ella. Nada en paralelo a la playa hasta salir, y después hacia la orilla. Levanta el brazo y grita si necesitas ayuda.",
+      /* ripLen is GONE. Nine values from 29 to 94 m, every one of them got by
+         measuring the length of a hand-drawn arrow on a sheet. Hat 3 drew those
+         arrows and says he drew symbols, not measurements. A number printed to
+         the metre is a claim of precision nobody made.
+         ripDir no longer describes a bearing either: nine identical straight
+         arrows taught a swimmer to expect the pull one way, and Caribbean
+         Guard's own dangerous-area sheet shows feeders running ALONG the shore
+         before a channel exits diagonally. Position only, until they redraw. */
+      ripDir:"La posición es la que marcó Caribbean Guard. La dirección no está dibujada: no se pudo leer en su mapa y no se afirma aquí.",
+      /* ripWhy is GONE and this is what replaced its second half. There were
+         two escape sentences on this page, one in the facts of a beach and a
+         differently worded one behind a tap on a rip arrow, and what is being
+         asked of a frightened swimmer is RECALL. Recall works on one memorised
+         sentence. escapeRip is that sentence everywhere; this is the extra line
+         the arrow sheet adds, and it is a different instruction (get attention)
+         rather than a second phrasing of the same one. */
+      escapeHelp:"Levanta el brazo y grita si necesitas ayuda.",
       areaTitle:"Zona marcada, sin definir",
-      areaWhy:"El mapa de Caribbean Guard marca esta zona en rojo, pero su leyenda no dice qué significa. Podría ser una zona peligrosa o una zona segura de bañado. No la interpretes hasta que la asociación lo confirme.",
+      areaWhy:"El mapa de Caribbean Guard marca esta zona en rojo, pero su leyenda no dice qué significa. Podría ser una zona peligrosa o una zona segura de baño. No la interpretes hasta que la asociación lo confirme.",
       /* the saved copy */
       savedNever:"No guardado en este teléfono",
       savedAt:when=>`Guardado en este teléfono · ${when}`,
@@ -799,12 +1330,53 @@ const T = {
       savedTitle:"La copia guardada",
       savedWhatIs:"Esta página se guarda entera en tu teléfono la primera vez que la abres: el mapa, las playas y los textos. Después funciona sin señal.",
       savedCadence:"Se actualiza sola cada vez que la abres con señal. Sin señal, ves la última copia guardada, con la fecha de arriba.",
-      savedIos:"En iPhone, si pasas como una semana usando Safari sin volver a abrir esta página, el sistema puede borrar la copia. Añadirla a la pantalla de inicio evita eso.",
+      savedIos:"En iPhone, si pasas como una semana usando Safari sin volver a abrir esta página, el sistema puede borrar la copia. Agregarla a la pantalla de inicio evita eso.",
       savedInstalled:"Ya está en tu pantalla de inicio. La copia guardada se queda.",
       savedNoSw:"Este navegador no puede guardar la página para usarla sin señal. Toma una foto de la pantalla de tu playa antes de bajar a la arena.",
-      installBtn:"Añadir a la pantalla de inicio",
-      installIos:"Para añadirla: toca el botón Compartir de Safari, abajo, y elige Añadir a inicio.",
-      installNudge:"Añade esta página a tu pantalla de inicio. Así se queda guardada en el teléfono y funciona sin señal.",
+      /* "Añadir" is Spain. Here it is agregar. */
+      installBtn:"Agregar a la pantalla de inicio",
+      installIos:"Para agregarla: toca el botón Compartir de Safari, abajo, y elige Agregar a inicio.",
+      installNudge:"Agrega esta página a tu pantalla de inicio. Así se queda guardada en el teléfono y funciona sin señal.",
+      /* ESCAPE. One sentence, word for word, on EVERY beach and on the rip
+         arrow sheet. Not only the four with a named rip: charLowerRiskRider
+         already names rip currents near reefs, channels, headlands and river
+         mouths on every lower-risk beach, so a page that names the hazard there
+         and withholds the escape has decided the sentence is decoration. Playa
+         Negra is the calmest stretch on this coast and it is still the sea.
+         It used to exist only inside the sheet of a rip arrow, which opens on a
+         tap on a mark nobody knows is tappable. Hat 1 read a whole Cocles panel
+         saying rips pull straight out with no warning and was never told to
+         swim parallel. This is the sentence that can save him and it now sits
+         in the facts of every beach that has the hazard. */
+      escapeRip:"Si una corriente te arrastra: no nades contra ella, flota, y nada paralelo a la playa hasta salir.",
+      /* The zone strokes did not load. Said out loud, because a coast drawn with
+         no hazard strokes on it looks exactly like a coast with no hazards, and
+         that is the one misreading this entire file is written to prevent. */
+      geomFailed:"No se pudieron cargar las zonas. No confíes en este mapa sin ellas.",
+      /* the post's clock, rendered next to the instruction */
+      postClosed:"ahora sin guardavidas",
+      /* legend */
+      legendTitle:"Leyenda",
+      legendDo:"Qué hacer",
+      legendMap:"En el mapa",
+      legendRip:"Corriente de Resaca",
+      legendStation:"Estación de Rescate",
+      legendArea:"Zona marcada, sin definir",
+      legendMe:"Tu ubicación",
+      legendPlaces:"Ubicaciones",
+      /* chrome added by the overhaul */
+      sosWord:"Emergencia",
+      railWhat:"Qué hacer en cada playa de esta costa, según Caribbean Guard.",
+      locateFirst:"¿En qué playa estoy?",
+      counter:(i,n)=>`${i} de ${n}`,
+      report:"Reportar un error",
+      reportSubject:"Corrección para el mapa",
+      reportIntro:"Escribe qué está mal y en qué playa. Nos llega a Caribbean Guard.",
+      homeLink:"caribbeanguard.org",
+      /* aria labels, all of them, because they were all stuck in Spanish */
+      ariaLang:"Idioma", ariaClose:"Cerrar", ariaRefresh:"Actualizar",
+      ariaLocate:"Mi ubicación", ariaHome:"Ir a caribbeanguard.org",
+      ariaSos:"Llamar al 911, emergencias",
       /* new build */
       updateMsg:"Hay una versión más nueva de este mapa.",
       updateGo:"Actualizar"},
@@ -814,14 +1386,12 @@ const T = {
       "conditional":"CHECK BEFORE YOU GO IN", "lower-risk":"TAKE CARE ANYWAY",
       charLowerRiskRider:"Lower risk does not mean safe. Life threatening rip currents are still possible near reefs, channels, headlands and river mouths.",
       defer:"If there is a lifeguard or a flag on the beach, that beats this map. This map cannot see today's sea.",
-      axisCharacter:"This beach, always",
       axisToday:"Today",
       todayNoSwim:"Stay out of the water today",
       todayCare:"More care than usual today",
       todayNormal:"Nothing unusual today",
       todayNormalRider:"Nothing unusual does not mean safe. What it says above about this beach still applies.",
-      todayNone:"Nobody has signed a bulletin today",
-      todayNoneWhy:"There is no bulletin for this beach today. What you see above is what this beach is like in general, not what the sea is doing right now.",
+      todayNoneLine:"Today: no signed report",
       todaySigned:(who,org,when)=>`Signed by ${who}, ${org}, ${when}`,
       todayStale:h=>`This bulletin is more than ${h} hours old. The sea changes faster than that.`,
       provAuthor:"Author",
@@ -848,10 +1418,10 @@ const T = {
       voidStatus:"Not described",
       voidWhy:(total,zoned,surveyed)=>`This map covers ${total} km of coast. Five beaches are described and they add up to about ${zoned} km. Caribbean Guard's annotated map, which is where the marked rip currents come from, covers ${surveyed} km. The rest is described and surveyed by nobody.`,
       voidRule:"A stretch with nothing drawn on it is not a stretch that is safe. It is a stretch nobody has looked at.",
-      here:"You are here", hours:"Equipment", station:"Station",
+      station:"Rescue Station",
       stationScope:"These are the four stations that appear inside the surveyed stretch. Caribbean Guard mentions nine along the whole coast. We do not know where the others are, so do not count on these being all of them.",
       stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
-      why:"Why", call:"Call 911", route:"Directions", close:"Close",
+      call:"Call 911", route:"Directions",
       locating:"Finding your location...",
       denied:"Turn on location on your phone to see where you are.",
       outside:"You are outside this coastline. The map covers Puerto Viejo to Manzanillo.",
@@ -860,9 +1430,8 @@ const T = {
       compassDenied:"No compass access. The arrow still points north.",
       compassNone:"This device has no compass. The arrow points north.",
       ripTitle:"Rip current",
-      ripLen:m=>`About ${m} m from the shore`,
-      ripDir:"The arrow points out to sea, perpendicular to the beach. The position is Caribbean Guard's; the exact bearing on their map could not be read and is not claimed here.",
-      ripWhy:"If it catches you: do not fight it. Swim parallel to the beach until you are out of it, then back in. Raise an arm and shout if you need help.",
+      ripDir:"The position is Caribbean Guard's. The direction is not drawn: it could not be read off their map and is not claimed here.",
+      escapeHelp:"Raise an arm and shout if you need help.",
       areaTitle:"Marked area, meaning unclear",
       areaWhy:"Caribbean Guard's map shades this area red, but its legend does not say what that means. It could be a hazard zone or a designated safe swimming zone. Do not read it either way until the association confirms.",
       savedNever:"Not saved on this phone",
@@ -879,6 +1448,28 @@ const T = {
       installBtn:"Add to home screen",
       installIos:"To add it: tap Safari's Share button at the bottom, then choose Add to Home Screen.",
       installNudge:"Add this page to your home screen. It stays saved on the phone and works with no signal.",
+      escapeRip:"If a current pulls you out: do not swim against it, float, and swim parallel to the beach until you are out of it.",
+      geomFailed:"The beach zones did not load. Do not trust this map without them.",
+      postClosed:"no lifeguards right now",
+      legendTitle:"Legend",
+      legendDo:"What to do",
+      legendMap:"On the map",
+      legendRip:"Rip Current",
+      legendStation:"Rescue Station",
+      legendArea:"Marked area, meaning unclear",
+      legendMe:"Your location",
+      legendPlaces:"Locations",
+      sosWord:"Emergency",
+      railWhat:"What to do at each beach on this coast, according to Caribbean Guard.",
+      locateFirst:"Which beach am I on?",
+      counter:(i,n)=>`${i} of ${n}`,
+      report:"Report an error",
+      reportSubject:"Correction for the map",
+      reportIntro:"Write what is wrong and which beach. It reaches Caribbean Guard.",
+      homeLink:"caribbeanguard.org",
+      ariaLang:"Language", ariaClose:"Close", ariaRefresh:"Refresh",
+      ariaLocate:"My location", ariaHome:"Go to caribbeanguard.org",
+      ariaSos:"Call 911, emergencies",
       updateMsg:"There is a newer version of this map.",
       updateGo:"Refresh"}
 };
@@ -955,9 +1546,33 @@ const COLOR = {low:"#1f9d55", moderate:"#f5b942", high:"#c62828"};
    the right shape for this and a bounding box would overstate it. */
 let SURVEY = {w:-82.724144, e:-82.707199};
 
+/* THE THREE NUMBERS ON THE "REST OF THE COAST" SHEET MUST SHARE A BASIS.
+
+   That sheet says: this map covers N km of coast, five beaches describe M of
+   it, and Caribbean Guard's annotated sheet covers S. `total` and `surveyed`
+   are both EAST-WEST EXTENTS, a chord at a fixed latitude. `zoned` used to be
+   the summed length of the drawn zone lines, which was near enough while those
+   lines were 7-to-60-point decimations, and stopped being near enough the day
+   the traced coastline replaced them: arc length along a sinuous shore is much
+   longer than the chord it spans. Measured, the traced zones sum to 15.0 km
+   against a 16.6 km chord, which would have told a reader that only 1.6 km of
+   this coast is undescribed. The true figure on a common basis is 7.2 km.
+
+   That card is the most defensible thing on this page and the one hat 5 said
+   is where a board would otherwise be exposed. A number that quietly argues
+   the opposite of what the card is for is worse than no number. So all three
+   are extents now, and none of them waits for a fetch. */
+function zonedExtentM(){
+  return ZONES.reduce((sum, z) =>
+    sum + map.distance([9.646, z.span.w], [9.646, z.span.e]), 0);
+}
+
+/* Reads z.span, not z.line. The drawn line arrives over the network and the
+   chip that says whether anybody walked this stretch has to be on the card in
+   the first paint, before Leaflet exists. Both come from the same traced
+   coastline, so they cannot disagree. */
 function surveyRelation(z){
-  const lons = z.line.map(p=>p[1]);
-  const lo = Math.min(...lons), hi = Math.max(...lons);
+  const lo = z.span.w, hi = z.span.e;
   if(hi < SURVEY.w || lo > SURVEY.e) return "out";
   if(lo >= SURVEY.w && hi <= SURVEY.e) return "in";
   return "partial";
@@ -1019,25 +1634,33 @@ function absences(z){
   if(c.gap === "expired")
     out.push({css:"expired",    mk:"!", tag:t.gapExpiredTag,    short:t.gapExpiredShort,    long:t.gapExpired});
   const rel = surveyRelation(z);
+  /* The marks are ø and ½, not ⌀ and ◐, and that is a font decision rather than
+     a taste one. The self-hosted Atkinson Hyperlegible is the latin subset,
+     U+0000 to U+00FF: ⌀ (U+2300) and ◐ (U+25D0) are outside it and would fall
+     back to whatever a cheap Android happens to have, which on a safety card is
+     a tofu box sitting where a meaning should be. Both replacements are in
+     Latin-1 and both still read as what they are: empty, and half. */
   if(rel === "out")
-    out.push({css:"unsurveyed", mk:"⌀", tag:t.gapUnsurveyedTag, short:t.gapUnsurveyedShort, long:t.gapUnsurveyed});
+    out.push({css:"unsurveyed", mk:"ø", tag:t.gapUnsurveyedTag, short:t.gapUnsurveyedShort, long:t.gapUnsurveyed});
   if(rel === "partial")
-    out.push({css:"unsurveyed", mk:"◐", tag:t.gapPartialTag,    short:t.gapPartialShort,    long:t.gapPartial});
+    out.push({css:"unsurveyed", mk:"½", tag:t.gapPartialTag,    short:t.gapPartialShort,    long:t.gapPartial});
   return out;
 }
 
-/* One row of marks on the card: a signed bulletin first if there is one, then
+/* One row of chips on the card: a signed bulletin first if there is one, then
    every absence that applies. One container, so a beach that is both unreviewed
-   and unsurveyed shows two marks side by side rather than two stacked rows. */
+   and unsurveyed shows two chips side by side rather than two stacked rows.
+   12 px, the floor: at the 9.5 px these used to be, hat 4 could not resolve
+   them at all, so the "unreviewed must look unreviewed" doctrine was invisible
+   and every beach read as reviewed. */
 function cardChips(z){
   const t = T[lang], s = todayState(z);
   const chips = [];
   if(s && !s.stale)
-    chips.push(`<span class="gap today"><span class="mk" aria-hidden="true">●</span>${t.axisToday}</span>`);
+    chips.push(`<span class="chip today"><span class="mk" aria-hidden="true">•</span>${t.axisToday}</span>`);
   absences(z).forEach(a=>
-    chips.push(`<span class="gap ${a.css}"><span
-      class="mk" aria-hidden="true">${a.mk}</span>${a.tag}</span>`));
-  return chips.length ? `<span class="gaps">${chips.join("")}</span>` : "";
+    chips.push(`<span class="chip ${a.css}"><span class="mk" aria-hidden="true">${a.mk}</span>${a.tag}</span>`));
+  return chips.length ? `<span class="chips">${chips.join("")}</span>` : "";
 }
 function gapList(z){
   const g = absences(z);
@@ -1050,11 +1673,16 @@ function gapList(z){
 }
 
 /* ---- provenance, two fields, following OVSICORI ----
-   Autor and Revisado are different claims and they render as different rows.
-   Collapsing them is how a machine reading of a published graphic gets read as a
-   lifeguard's word. The empty review state renders visibly rather than hiding:
-   theirs prints a bare "-", ours says who is missing. */
-function provenance(rec){
+   Autor and Revisado are different claims and they stay different claims.
+   Collapsing them into one is how a machine reading of a published graphic gets
+   read as a lifeguard's word. The empty review state renders visibly rather than
+   hiding: theirs prints a bare "-", ours says who is missing.
+
+   ONE LINE in the sheet now rather than two stacked rows, because the sheet
+   opens at PEEK and the instruction, the provenance and today all have to be
+   above the fold there with nothing to scroll. Two fields on one line is a
+   layout change; one field would have been a doctrine change. */
+function provenance(rec, inline){
   const t = T[lang];
   const authored = t["authored" + rec.authored.charAt(0).toUpperCase() + rec.authored.slice(1)];
   const r = rec.reviewed;
@@ -1067,34 +1695,92 @@ function provenance(rec){
     reviewed = t.reviewedBy(r.by, r.org, fmtDate(on));
     if(days > CHARACTER_VALID_DAYS) stale = " " + t.charStale(CHARACTER_VALID_DAYS);
   }
-  return `<p class="prov${!r || stale ? " unverified" : ""}">
+  const cls = !r || stale ? " unverified" : "";
+  if(inline)
+    return `<p class="prov${cls}"><b>${t.provAuthor}:</b> ${authored} · <b>${t.provReviewed}:</b> ${reviewed}${stale}</p>`;
+  return `<p class="prov${cls}">
     <span class="row"><b>${t.provAuthor}:</b> ${authored}</span>
     <span class="row"><b>${t.provReviewed}:</b> ${reviewed}${stale}</span>
   </p>`;
 }
 
-/* ---- the today block, always rendered, including when it is empty ----
-   Rendered empty and grey rather than empty and amber. Nobody signing a bulletin
-   is the ordinary state on 16 km of coast run by one association, and an amber
-   alarm shown every single day teaches people that amber means nothing. */
+/* ---- the today axis ----
+   COLLAPSED TO ONE LINE WHEN NOBODY HAS SIGNED, WHICH IS EVERY DAY SO FAR.
+
+   It used to render the empty state as the most prominent block on every beach:
+   a dashed box, a badge, a verdict line and a three-line explanation, all of it
+   saying nothing has happened. Hat 1 read "nobody", decided the app knew
+   nothing and closed it before reaching the red instruction underneath. Hat 5
+   put it more sharply from the board's side: a permanent grey box teaches a
+   reader to skip the one line that would one day carry a real warning.
+
+   So the axis keeps its violet tag and its place under the provenance, and
+   shrinks to "Hoy: sin reporte firmado". The full block still exists and still
+   renders in full, the moment there is anything in it. */
 function todayBlock(z){
   const t = T[lang], s = todayState(z);
   if(!s){
-    return `<p class="axis">${t.axisToday}</p>
-      <div class="today none">
-        <p class="verdict"><span class="badge">${t.axisToday}</span>${t.todayNone}</p>
-        <p class="stamp">${t.todayNoneWhy}</p>
-      </div>`;
+    return `<p class="todayline"><span class="badge">${t.axisToday}</span>${t.todayNoneLine}</p>`;
   }
   const label = {"no-swim":t.todayNoSwim, "care":t.todayCare, "normal":t.todayNormal}[s.notice];
   const rider = s.notice === "normal" ? `<p class="rider">${t.todayNormalRider}</p>` : "";
   const old   = s.stale ? `<p class="rider">${t.todayStale(TODAY_VALID_HOURS)}</p>` : "";
-  return `<p class="axis">${t.axisToday}</p>
-    <div class="today signed${s.stale ? " stale" : ""}">
+  return `<div class="today signed${s.stale ? " stale" : ""}">
       <p class="verdict"><span class="badge">${t.axisToday}</span>${label}</p>
       <p class="stamp">${t.todaySigned(s.rec.by, s.rec.org, fmtStamp(s.at))}</p>
       ${old}${rider}
     </div>`;
+}
+
+/* ---- the post's clock ----
+   Renders only for a zone that has one. The closed state is appended in ink,
+   never in red: a post that has gone home is not a hazard tier, and colouring
+   it like one would be the third colour claim on a card that already carries
+   two. Reads the device clock, which is the only clock a phone on the sand has.
+   Deliberately no timezone handling: the reader and the post are in the same
+   place, so local is the correct and only sensible reading.
+
+   IT COMPUTES ONCE, AT RENDER, AND THAT IS ACCEPTED. A page left open across
+   17:00 keeps showing the card as it was when it was drawn, until something
+   else re-renders it: a language switch, a tap on a card, a refresh. Nobody
+   stands on the sand with this page open and untouched for the twenty minutes
+   either side of the boundary, and the alternative is a timer that repaints
+   every card on a safety map on a schedule, which is a live-updating behaviour
+   this file does not otherwise have and cannot test cheaply. Reviewed and
+   accepted 2026-09-17. If a bulletin-signing surface ever lands and the cards
+   start refreshing on their own, fold this into that loop rather than adding a
+   second one. */
+function hoursLine(z){
+  const p = z.post;
+  if(!p) return "";
+  const t = T[lang], h = new Date().getHours();
+  const closed = (h < p.from || h >= p.to) ? ` · ${t.postClosed}` : "";
+  return `<span class="hours"><b>${p[lang]}</b>${closed}</span>`;
+}
+
+/* ---- ESCAPE ----
+   The instruction that works when everything else on this page is wrong, on
+   EVERY beach, word for word.
+
+   It was on the four beaches with a named rip, and that was wrong for the exact
+   reason the lowest tier exists: charLowerRiskRider already tells the reader, on
+   every lower-risk beach, that dangerous rip currents are still possible near
+   reefs, channels, headlands and river mouths. A page that names the hazard on a
+   beach and then withholds the escape on that same beach has decided the
+   sentence is decoration. Playa Negra is the calmest stretch on this coast and
+   it is still the sea.
+
+   One sentence, five beaches, and the same sentence on the rip arrow sheet. The
+   thing being asked of a frightened swimmer is recall, and recall works on one
+   memorised sentence, not on four paraphrases. */
+function factsOf(z){
+  const list = (z.character.facts[lang] || []).slice()
+    .map(f => `<li><span class="ic" aria-hidden="true">•</span><span>${f}</span></li>`);
+  /* » and not an arrow glyph: U+00BB is inside the latin subset this page
+     self-hosts, U+2192 is not, and a tofu box on the one instruction that
+     matters is worse than a plain mark. */
+  list.push(`<li class="escape"><span class="ic" aria-hidden="true">»</span><span>${T[lang].escapeRip}</span></li>`);
+  return `<ul class="facts">${list.join("")}</ul>`;
 }
 
 /* ---------- map ---------- */
@@ -1146,10 +1832,17 @@ const map = L.map("map",{
    of black. Asking for a z17 tile out there returns nothing, which is why the
    pan limit stays on FULL while the layer is allowed to request the wider box. */
 const TILE_FULL = L.latLngBounds([[9.61429, -82.801208], [9.687398, -82.6474]]);
-const TILE_CONTEXT = L.latLngBounds([[9.55, -82.88], [9.75, -82.57]]);
+/* Widened, and this is what actually fixed the navy landing view. fitCoast()
+   derives the zoom floor from the viewport, so a 390x844 phone lands at about
+   z11.8 and Leaflet asks for LEVEL 12; at that zoom a pixel is 43 m, so 844 px
+   of phone is 36 km of ground and the old z12 box was 22 km tall. The opening
+   view ran out of imagery about 7 km above and below the coast on every
+   portrait phone. This box is what the pyramid now covers. `bounds` is a hard
+   gate: Leaflet will not request a tile outside it however many are on disk. */
+const TILE_CONTEXT = L.latLngBounds([[9.0570, -83.1617], [10.2448, -82.2869]]);
 
 const TILES = L.tileLayer("tiles/{z}/{x}/{y}.jpg", {
-  minZoom: 12, maxNativeZoom: 17, maxZoom: 18,
+  minZoom: 10, maxNativeZoom: 17, maxZoom: 18,
   bounds: TILE_CONTEXT,
   // No flat fill showing through at the edges of coverage, and no grey flash
   // between a tile being requested and arriving.
@@ -1166,11 +1859,32 @@ map.attributionControl.setPrefix("").addAttribution("Caribbean Guard");
    16.6 km and let the empty bands above and below be the page background. The
    image carries alpha for the same reason, so the rotated corners read as
    background rather than as black wedges. */
+/* On a phone the chrome is a band at the top and a band at the bottom. On
+   desktop it is two COLUMNS, the rail on the left and the beach panel on the
+   right, and the map has to be padded by both or the coast ends up underneath
+   the panel describing it. Hat 5's vote was explicit: the right-hand panel must
+   never overlap the coast it describes. */
+function desktop(){ return window.matchMedia("(min-width:820px)").matches; }
 function chrome(){
+  const dockEl = document.querySelector(".dock");
+  /* getElementById, not the `sheet` const below. fitCoast() runs inline at
+     parse time, before that const is initialised, and reading a const in its
+     temporal dead zone throws rather than returning undefined. */
+  const sh = document.getElementById("sheet");
+  if(desktop()){
+    const sheetOpen = sh && !sh.hidden && sh.classList.contains("open");
+    return {
+      top: (document.querySelector(".topbar")?.offsetHeight || 64) + 8,
+      bot: 16,
+      left: (dockEl?.offsetWidth || 360) + 16,
+      right: (sheetOpen ? (sh.offsetWidth || 400) : 0) + 16
+    };
+  }
   return {
     top: (document.querySelector(".topbar")?.offsetHeight || 64) + 8,
-    // the dock, not the picker: the saved-copy bar sits above the cards inside it
-    bot: (document.querySelector(".dock")?.offsetHeight || 96) + 8
+    // the dock, not the strip: the saved line sits above the cards inside it
+    bot: (dockEl?.offsetHeight || 96) + 8,
+    left: 0, right: 0
   };
 }
 
@@ -1201,7 +1915,19 @@ function fitPadding(){
     top = Math.floor(top * k);
     bot = Math.floor(bot * k);
   }
-  return {top, bot, x: Math.min(8, size.x * 0.3)};
+  // The horizontal chrome gets the same treatment and for the same reason: on a
+  // narrow desktop window the rail plus the panel can exceed the viewport, and
+  // a padding wider than the map produces a garbage zoom that then latches into
+  // the floor. Below 820 both are 0 and this is the old single value.
+  const x = Math.min(8, size.x * 0.3);
+  let left = (c.left || 0) + x, right = (c.right || 0) + x;
+  const capX = size.x * 0.7;
+  if(left + right > capX && left + right > 0){
+    const k = capX / (left + right);
+    left = Math.floor(left * k);
+    right = Math.floor(right * k);
+  }
+  return {top, bot, x, left, right};
 }
 /* Wide viewports COVER, narrow ones CONTAIN, and the difference is not cosmetic.
 
@@ -1265,7 +1991,7 @@ function fitCoast(opts){
   // Padding is read AFTER invalidateSize, because it is clamped against the map
   // size and that size has just changed.
   const c = fitPadding();
-  const pad = L.point(c.x, c.top).add(L.point(c.x, c.bot));
+  const pad = L.point(c.left, c.top).add(L.point(c.right, c.bot));
   // Derive the floor from getBoundsZoom, NOT from getZoom() after fitBounds.
   // fitBounds animates, so on the next line getZoom() is still the OLD zoom and
   // the floor lands above the fit: the map then sits below its own minimum and
@@ -1318,7 +2044,7 @@ function fitCoast(opts){
   // animated refit during a rotation is a camera moving under somebody's thumb,
   // and it also leaves the map in an intermediate state that nothing can assert
   // against.
-  map.fitBounds(BB, {paddingTopLeft:[c.x, c.top], paddingBottomRight:[c.x, c.bot],
+  map.fitBounds(BB, {paddingTopLeft:[c.left, c.top], paddingBottomRight:[c.right, c.bot],
                      animate:false});
 }
 /* sizeBackdrop() lived here. It stretched a blurred copy of the base image to
@@ -1362,14 +2088,79 @@ const PLACES = [
 ];
 const SEA = {ll: [9.67400, -82.72000], t: "Mar Caribe"};
 
-// Zone names sit on the zone's own midpoint, which is on the waterline, so the
-// label lands over water rather than over the beach it is naming.
-const zoneLabels = ZONES.map(z => {
-  const m = z.line[Math.floor(z.line.length / 2)];
-  return label(m, z.name.es, "zone");
-});
-const placeLabels = PLACES.map(p => label(p.ll, p.t, "place"));
+// Zone names sit on z.at, the zone's own midpoint, which is on the waterline,
+// so the label lands over water rather than over the beach it is naming. It is
+// a datum on the record rather than a slice of z.line, so the names are on the
+// picture before the traced geometry arrives.
+const zoneLabels = ZONES.map(z => label(z.at, z.name.es, "zone"));
+// NOT `placeLabels`. CGGeom exports a FUNCTION of that name and this const
+// would shadow it at exactly the point restyleLabels() wants to call it.
+const placeMarks = PLACES.map(p => label(p.ll, p.t, "place"));
 const seaLabel = label(SEA.ll, SEA.t, "sea");
+
+/* Declared HERE, not in the stations block 200 lines below, and that is not
+   tidiness. map.whenReady(restyleLabels) fires synchronously because the map is
+   already ready by then, so restyleLabels runs long before the stations block
+   is reached. Reading a const in its temporal dead zone throws, and `typeof`
+   does not save you from that. A plain flag does. */
+let postMarkers = {};
+let clusterMarker = null;
+let stationsReady = false;
+
+/* ONE HEXAGON, OR FOUR.
+   Caribbean Guard's four stations sit inside 1.1 km of Playa Chiquita. At the
+   whole-coast view that is about 25 px, so four 32 px hexagons pile on top of
+   each other and on the beach name underneath them, and a reader counts two
+   pins where there are four. Below z15 they collapse to one badge carrying the
+   COUNT; at z15 and above they are four numbered stations again.
+   The badge reads "x4" rather than "4" on purpose: a bare 4 in the same
+   hexagon that station 4 uses is the same mark meaning two different things,
+   which is the failure this whole file is written against. */
+const STATION_CLUSTER_ZOOM = 15;
+function stationsClustered(){ return map.getZoom() < STATION_CLUSTER_ZOOM; }
+function applyStationVisibility(){
+  if(!stationsReady) return;
+  const clustered = stationsClustered();
+  Object.values(postMarkers).forEach(m=>{
+    const e = m.getElement();
+    if(e) e.style.display = clustered ? "none" : "";
+  });
+  const ce = clusterMarker && clusterMarker.getElement();
+  if(ce) ce.style.display = clustered ? "" : "none";
+}
+
+/* The station marks are OBSTACLES to the labels and never the other way round.
+   CGGeom.placeLabels resolves label against label and hides the loser; it
+   cannot be handed the markers, because it hides anything that clashes with a
+   box already taken and two overlapping stations would silently lose one. A
+   hidden hazard mark is a different and much worse defect than a hidden place
+   name, so this pass only ever hides labels. */
+const OBSTACLE_PAD = 4;
+function stationBoxes(){
+  const out = [];
+  const add = m => {
+    const e = m && m.getElement();
+    if(!e || e.style.display === "none") return;
+    const r = e.getBoundingClientRect();
+    if(r.width) out.push(r);
+  };
+  Object.values(postMarkers).forEach(add);
+  add(clusterMarker);
+  return out;
+}
+function hideLabelsUnderStations(){
+  const boxes = stationBoxes();
+  if(!boxes.length) return;
+  [...zoneLabels, ...placeMarks, seaLabel].forEach(m=>{
+    const e = m.getElement();
+    if(!e || e.style.display === "none") return;
+    const r = e.getBoundingClientRect();
+    const hit = boxes.some(b =>
+      r.left < b.right + OBSTACLE_PAD && r.right  > b.left - OBSTACLE_PAD &&
+      r.top  < b.bottom + OBSTACLE_PAD && r.bottom > b.top  - OBSTACLE_PAD);
+    if(hit) e.style.display = "none";
+  });
+}
 
 /* What shows depends on zoom, because the same label set is clutter at one scale
    and too sparse at another. The sea label only earns its place while enough sea
@@ -1377,10 +2168,26 @@ const seaLabel = label(SEA.ll, SEA.t, "sea");
    single beach and the card already says where you are. */
 function restyleLabels(){
   const z = map.getZoom();
-  const el = m => m.getElement();
-  zoneLabels.forEach(m => { const e = el(m); if(e) e.style.display = z >= 12.5 && z < 16.5 ? "" : "none"; });
-  placeLabels.forEach(m => { const e = el(m); if(e) e.style.display = z >= 12.5 ? "" : "none"; });
-  const se = el(seaLabel); if(se) se.style.display = z <= 14.5 ? "" : "none";
+  const zones  = z >= 12.5 && z < 16.5;
+  const places = z >= 12.5;
+  const sea    = z <= 14.5;
+  /* The zoom rules above are this file's ruling and CGGeom.placeLabels never
+     overturns them: `visible:false` stays hidden. What it adds is collision, in
+     screen rectangles rather than in metres, because the labels are DOM
+     elements of different lengths and the thing that must not overlap is the
+     ink. "PUERTO VIEJOPlaya Cocles" ran together on the landing view and the
+     station pins sat on top of "Playa Chiquita" (hat 5, finding 12).
+     Zone names outrank town names: a town the reader cannot see named is still
+     a town they can see, and the beach name is what the whole map is for. */
+  // Stations first, so their boxes are current when the labels are measured
+  // against them. Idempotent, so calling it from both places costs nothing.
+  applyStationVisibility();
+  CGGeom.placeLabels(map, [
+    ...zoneLabels.map(m  => ({marker:m, priority:10, visible:zones})),
+    ...placeMarks.map(m  => ({marker:m, priority:1,  visible:places})),
+    {marker:seaLabel, priority:5, visible:sea}
+  ]);
+  hideLabelsUnderStations();
 }
 map.on("zoomend", restyleLabels);
 map.whenReady(restyleLabels);
@@ -1469,128 +2276,172 @@ window.addEventListener("load", ()=>refit(0));
    works in sunlight, on a cheap screen, and for the 1 in 12 men who cannot
    separate red from green.
 
-   The polarity here is deliberate and it is the reverse of what this file used to
+   The table, the ground-width solve and the dash ratios all moved to
+   geometry.js, because the card swatch and the map stroke must be the same
+   numbers and they were two copies of them. `CGGeom.TIERS` is the reference
+   weight and dash per tier; `CGGeom.zoneStroke(tier, zoom)` is what the map
+   draws at a given zoom.
+
+   The polarity is deliberate and it is the reverse of what this file used to
    do. It previously drew the worst tier as a fine dotted line and the best as a
-   solid one, which made the most dangerous thing on the map the faintest mark on
-   it. Every convention a tourist already carries, road markings, hazard tape,
-   warning signage, says the loud mark is the dangerous one. So high is now the
-   heaviest and most solid, and low is the lightest. At a glance the map should
-   shout hazard and merely note its absence, not the other way round.
+   solid one, which made the most dangerous thing on the map the faintest mark
+   on it. Every convention a tourist already carries, road markings, hazard
+   tape, warning signage, says the loud mark is the dangerous one. So high is
+   the heaviest and most solid, and low is the lightest.
 
-   These three carry the CHARACTER, which is a property of the place. A bulletin a
-   guard signed this morning is a property of the moment, so it never recolours
-   these: it draws its own halo underneath. See todayHalo(). */
-const STROKE = {
-  high:     {weight:11, dash:null},     // heaviest, unbroken: a wall
-  moderate: {weight:8,  dash:"16 10"},  // broken: proceed with care
-  low:      {weight:5,  dash:"2 8"}     // lightest: a note, not a promise
-};
+   These three carry the CHARACTER, which is a property of the place. A bulletin
+   a guard signed this morning is a property of the moment, so it never
+   recolours these: it draws its own halo underneath. See todayHalo().
 
-/* Stroke weight and dash length are a function of zoom, not constants.
-
-   At the whole-coast view an 11 px line is about 200 m wide on the ground and
-   swallows the beach it describes; a 16 px dash gap closes up and "caution"
-   stops looking dashed at all, so the pattern that carries the status for anyone
-   who cannot separate the colours quietly disappears. Zoomed in to a single
-   beach the same 11 px is a thread.
-
-   Both scale, and the RATIO between the three weights is preserved at every
-   zoom, because that ranking is the thing doing the work: the loudest mark is
-   always the most dangerous one. */
-/* Metres per pixel at this latitude, which is what makes the scaling below
-   physical rather than a curve someone liked the look of. */
-const MPP = z => 156543.03392 * Math.cos(9.645 * Math.PI / 180) / Math.pow(2, z);
-
-/* The stroke is sized to a WIDTH ON THE GROUND, not to a zoom ramp.
-
-   The ramp this replaces ran k = 0.42 + t * 1.08 over zoom 11.5 to 17, which put
-   the `high` stroke at 7.9 px at the whole-coast view. At z13 a pixel is 18.9 m,
-   so that line was 149 m wide describing a beach about 40 m wide, and the halo
-   under it added `weight * 2.4 + 6` on top: the mark was roughly a kilometre
-   across and swallowed the thing it was annotating. Zoomed out, the map read as
-   a far more dangerous and far less precise place than it is.
-
-   So: pick the width the line should occupy on the ground and solve for pixels.
-   TARGET_M is 30, a little under a beach width, so the stroke never claims more
-   coast than the zone actually holds. Clamps at both ends, because physics alone
-   would make it invisible at z13 and absurd at z18. */
-const TARGET_M = 30;
-function zoneStroke(tier){
-  const base = STROKE[tier];
-  // Solved against the heaviest tier so the RATIO between the three is preserved
-  // at every zoom, which is the thing doing the work: the loudest mark is always
-  // the most dangerous one.
-  const k = Math.max(0.22, Math.min(1.3, TARGET_M / (MPP(map.getZoom()) * STROKE.high.weight)));
-  const out = {weight: Math.max(1.6, base.weight * k)};
-  if(base.dash){
-    // scale the pattern with the line, or a thin line gets a coarse dash and a
-    // thick one gets a dotted texture that reads as a different status
-    out.dashArray = base.dash.split(" ").map(n => Math.max(2, +n * k)).join(" ");
-  }
-  // The halo scales WITH the stroke. It used to be `weight * 2.4 + 6`, and that
-  // constant 6 px is 113 m at z13: a today-bulletin halo was wider zoomed out
-  // than the beach it sat under, which is how the map came to look like a
-  // continuous wall of hazard from the opening view.
-  out.halo = out.weight * 2.0 + 4 * k;
-  return out;
-}
+   WHAT CHANGED AT THE LANDING ZOOM, and it is hat 4's fourth blocker. The old
+   code scaled each dash COMPONENT by one factor, so at z12 low's "2 8" floored
+   to "2 2": 1:4 became 1:1 and all three textures converged at exactly the zoom
+   a deuteranope first looks at. The ratio is now fixed per tier and only the
+   gap has a floor, measured from the gap that is still VISIBLE after round caps
+   eat half a weight at each end. */
 
 let zonesReady = false;
-function restyleZones(){
-  // fitCoast() emits zoomend during startup, before the zone layers exist.
-  // `typeof layers === "undefined"` does NOT guard this: typeof still throws on a
-  // const in the temporal dead zone. An ordinary flag does.
-  if(!zonesReady) return;
-  ZONES.forEach(z=>{
-    const l = layers[z.id]; if(!l) return;
-    const st = zoneStroke(tierOf(z));
-    l.line.setStyle({weight: st.weight * (l.current ? 1.25 : 1),
-                     dashArray: st.dashArray || null});
-    if(l.halo) l.halo.setStyle({weight: st.halo});
-  });
+
+/* The dimming of the zones you did NOT ask about.
+   cgSetStyle() handles weight, dash and halo weight but deliberately not
+   opacity, because opacity is not a property of the stroke vocabulary. So it is
+   applied over the top, after the weights, and it reaches the halo too. Only a
+   beach with a bulletin signed today has a halo, and dimming a beach nobody is
+   looking at is the intent in both cases. */
+function dimGroup(g, op){
+  g.eachLayer(l=>{ if(l.setStyle) l.setStyle({opacity:op}); });
 }
 
-/* ---------- draw zones ---------- */
+function restyleZones(){
+  // fitCoast() emits zoomend during startup, before the zone layers exist.
+  // `typeof layers === "undefined"` does NOT guard this: typeof still throws on
+  // a const in the temporal dead zone. An ordinary flag does.
+  if(!zonesReady) return;
+  const z0 = map.getZoom();
+  ZONES.forEach(z=>{
+    const g = layers[z.id]; if(!g) return;
+    const st = CGGeom.zoneStroke(tierOf(z), z0);
+    const halo = todayHalo(z);
+    g.cgSetStyle({
+      weight: st.weight * (g.cgCurrent ? 1.25 : 1),
+      dashArray: st.dashArray,
+      halo: halo ? {color: halo, weight: st.halo} : null
+    });
+    dimGroup(g, g.cgCurrent === false && anyCurrent ? .55 : 1);
+  });
+}
+let anyCurrent = false;
+
+/* ---------- draw zones ----------
+   Runs when data/zones-geometry.json lands, not at parse time. The cards do not
+   wait for it: they are static HTML and they are the thing somebody standing on
+   the sand needs first. The lines are the thing that needs to be right. */
 const layers = {};
-ZONES.forEach(z=>{
-  const g = L.layerGroup().addTo(map);
-  const st0 = zoneStroke(tierOf(z));
+function drawZones(){
+  ZONES.forEach(z=>{
+    if(!z.line.length || layers[z.id]) return;
+    const st = CGGeom.zoneStroke(tierOf(z), map.getZoom());
 
-  /* A bulletin signed today draws UNDER the character stroke, never over it and
-     never instead of it. If a guard signs "stay out today" at Punta Uva, the map
-     has to shout, but recolouring the line would erase the standing character the
-     moment somebody signed one calm morning, which is the exact conflation the
-     two axis split exists to undo. A halo is additive: both claims stay legible
-     and the character stroke stays on top. */
-  const halo = todayHalo(z);
-  let haloLayer = null;
-  if(halo){
-    haloLayer = L.polyline(z.line,{color:halo, weight:st0.halo,
-                                   opacity:.5, lineCap:"round"}).addTo(g);
-  }
+    /* A bulletin signed today draws UNDER the character stroke, never over it
+       and never instead of it. If a guard signs "stay out today" at Punta Uva
+       the map has to shout, but recolouring the line would erase the standing
+       character the moment somebody signed one calm morning, which is the exact
+       conflation the two-axis split exists to undo. A halo is additive: both
+       claims stay legible and the character stroke stays on top. */
+    const halo = todayHalo(z);
 
-  // No casing. A translucent white stroke under every line read as a grey
-  // sausage the colour sat inside, which is worse than the legibility problem it
-  // was there to solve. The strokes carry their own contrast: the map darkens
-  // under them instead (see .leaflet-overlay-pane filter).
-  const line = L.polyline(z.line,{color:COLOR[tierOf(z)],
-                                  weight:st0.weight,
-                                  dashArray:st0.dashArray || null,
-                                  opacity:1,lineCap:"round"}).addTo(g);
-  const hit = L.polyline(z.line,{color:"#000",weight:44,opacity:0}).addTo(g);
-  hit.on("click",()=>openZone(z));
-  layers[z.id]={line, halo:haloLayer};
-});
-zonesReady = true;
+    /* No casing, and now no blunt ends either. The stroke tapers to 40% over
+       its last 40 m at each end, so a zone stops rather than being cut off, and
+       the halo tapers with it: a full-width halo under a tapering line puts the
+       blunt end straight back. */
+    const g = CGGeom.taperedPolyline(z.line, {
+      color: COLOR[tierOf(z)],
+      weight: st.weight,
+      dashArray: st.dashArray,
+      halo: halo ? {color: halo, weight: st.halo, opacity:.5} : null
+    }, map).addTo(map);
+
+    // Our own hit line, separate and invisible. Everything taperedPolyline
+    // draws is interactive:false, so it cannot swallow a tap meant for this.
+    L.polyline(z.line,{color:"#000",weight:44,opacity:0})
+      .addTo(map).on("click",()=>openZone(z));
+    layers[z.id] = g;
+  });
+  zonesReady = true;
+  restyleZones();
+}
 map.on("zoomend", restyleZones);
-restyleZones();
 
-const postMarkers = {};
+/* The traced coastline. Five zones, 160 to 917 points each, against the 7 to 60
+   they replace. It is in the service worker's critical precache, so after the
+   first visit this resolves from disk with no signal. */
+const geomReady = fetch("data/zones-geometry.json")
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(g => {
+    ZONES.forEach(z=>{
+      const pts = g.zones && g.zones[z.id];
+      if(pts && pts.length) z.line = pts;
+      else console.warn("[cg] no geometry for", z.id);
+    });
+    drawZones();
+    restyleLabels();
+  })
+  .catch(err => {
+    console.warn("[cg] zone geometry did not load:", err);
+    /* SAY SO. The cards, their instructions and their provenance chips are all
+       still on screen and all still true, because they are static HTML and do
+       not depend on this fetch. The map is the part that is now lying: a coast
+       with no strokes on it is indistinguishable from a coast with no hazards,
+       and "absence rendered as nothing" is the precise misreading the whole
+       absence vocabulary in this file exists to prevent.
+       role="alert" and no timeout: this is not a notice that expires, it is the
+       state the map is in until it is reloaded with signal. */
+    say(T[lang].geomFailed, 60000);
+  });
+
+/* ORANGE HEXAGONS, not blue circles.
+   Caribbean Guard's own annotated V5 sheet, the one already printed on a sign
+   this map's readers walk past, draws a rescue station as an orange hexagon.
+   This file had turned them into blue numbered circles, which hat 5 named as
+   the map having stopped being theirs, and hat 1 as four marks meaning nothing
+   until tapped. The shape and the colour are both theirs. See .po. */
 POSTS.forEach(p=>{
-  const icon = L.divIcon({className:"", html:`<div class="po ${p.kind}">${p.n}</div>`,
-    iconSize:[30,30], iconAnchor:[15,15]});
-  postMarkers[p.id] = L.marker(p.ll,{icon}).addTo(map).on("click",()=>openPost(p));
+  const icon = L.divIcon({className:"", html:`<div class="po">${p.n}</div>`,
+    iconSize:[32,32], iconAnchor:[16,16]});
+  postMarkers[p.id] = L.marker(p.ll,{icon, keyboard:true,
+    alt:`${T[lang].legendStation} ${p.n}`}).addTo(map).on("click",()=>openPost(p));
 });
+
+/* The collapsed badge. Its position is the centroid of the real stations, so it
+   is recomputed whenever joinStations() moves one onto the authoritative
+   geometry. Tapping it zooms to the four rather than opening a sheet: the
+   question a reader has at the overview is "what are those", and the answer is
+   four separate stations, which is a thing to SHOW rather than to describe. */
+function stationCentroid(){
+  const n = POSTS.length;
+  return [POSTS.reduce((s,p)=>s+p.ll[0],0)/n, POSTS.reduce((s,p)=>s+p.ll[1],0)/n];
+}
+function buildCluster(){
+  if(clusterMarker) map.removeLayer(clusterMarker);
+  const icon = L.divIcon({className:"", iconSize:[38,38], iconAnchor:[19,19],
+    html:`<div class="po cluster">&times;${POSTS.length}</div>`});
+  clusterMarker = L.marker(stationCentroid(), {icon, keyboard:true,
+    alt:`${POSTS.length} ${T[lang].legendStation}`})
+    .addTo(map)
+    /* A fixed zoom, not a fit to the four stations' bounds. Fitting their
+       1.1 km span into a 390 px phone with the sheet open landed at z14.25,
+       which is still below STATION_CLUSTER_ZOOM, so tapping the badge left the
+       badge on screen and nothing appeared to happen. The badge's entire job is
+       to expand, so it flies to a zoom that is guaranteed to expand it.
+       Through flyClear rather than flyTo, so the stations do not land under the
+       sheet that is already open. */
+    .on("click", ()=>flyClear(L.latLngBounds([stationCentroid()]).pad(0.002),
+                              {maxZoom:15.75, duration:.6}));
+}
+buildCluster();
+stationsReady = true;
+map.on("zoomend", restyleLabels);   // stations and labels settle together
+restyleLabels();
 
 /* Move the markers onto the authoritative geometry once it arrives, and say so
    if the inline fallback had drifted. Silent preference for one of two copies is
@@ -1608,75 +2459,242 @@ function joinStations(gj){
   });
   const missing = POSTS.filter(p=>!gj.features.some(f=>f.id === p.id));
   if(missing.length) console.warn("[cg] stations with no record in the data:", missing.map(p=>p.id));
+  // The badge sits on their centroid, so it moves when they do.
+  buildCluster();
+  restyleLabels();
 }
 
-/* ---------- bottom sheet ---------- */
+/* ---------- bottom sheet: three stops, and a real dialog ----------
+
+   THE STOPS. PEEK is the opening state: the name, the instruction, who has
+   reviewed it and today's line, all above the fold with nothing to scroll.
+   HALF is for the why and the facts. FULL is for the deferral and the actions.
+   The old sheet had one height, 74vh, and opened with the empty TODAY block
+   filling its top 40%, which is how hat 1 came to close it before reaching the
+   red instruction underneath.
+
+   THE ACCESSIBILITY. Four separate defects from hat 4, fixed together because
+   they are one object:
+     - closing only translated the panel off-screen, so TalkBack kept swiping
+       into "Cerrar, botón" on a panel that was not visible. Closed is now
+       `hidden` and `inert`.
+     - the dialog had no accessible name. It is now labelled by its own h2.
+     - opening never moved focus, so a screen reader said nothing at all. Focus
+       now lands on the heading, and returns to whatever opened the sheet.
+     - Escape did nothing. It closes.
+
+   THE LANGUAGE SWITCH. setLang used to end with sheet.classList.remove("open"),
+   so tapping ES while reading the English Cocles panel threw the verdict away.
+   Every opener now records how to render itself again, and setLang replays it
+   in place. See `lastRender`. */
 const sheet = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
-document.getElementById("sheet-close").onclick = ()=>sheet.classList.remove("open");
+const STOPS = ["peek", "half", "full"];
+let lastRender = null;    // () => void, replays the open sheet in the new language
+let lastFocus = null;     // what to give focus back to on close
+let sheetTimer = null;
 
-/* The sheet renders TODAY first and CHARACTER second, and labels both.
+function sheetStop(stop){
+  sheet.dataset.stop = stop;
+  sheet.style.height = "";
+}
 
-   Today first because it is the more perishable claim and the one somebody is
-   about to act on. Character second because it is what survives when nobody has
-   signed anything, which is the state all five beaches are in right now.
+function openSheet(html, render){
+  lastRender = render || null;
+  const active = document.activeElement;
+  const reopening = sheet.classList.contains("open");
+  if(!reopening) lastFocus = (active && active !== document.body) ? active : null;
+  sheetBody.innerHTML = html;
+  clearTimeout(sheetTimer);
+  sheet.hidden = false;
+  sheet.removeAttribute("inert");
+  if(!reopening) sheetStop("peek");
+  // A reflow between un-hiding and adding .open, or the browser collapses the
+  // two style changes into one frame and the slide-in never animates.
+  void sheet.offsetHeight;
+  sheet.classList.add("open");
+  const h2 = document.getElementById("sheet-title");
+  if(h2 && !reopening) h2.focus({preventScroll:true});
+}
 
-   A map that says NOT A SWIMMING AREA has to be able to say who decided that and
+function closeSheet(){
+  if(!sheet.classList.contains("open")) return;
+  sheet.classList.remove("open");
+  lastRender = null;
+  // Wait out the slide before removing it from the tree, so the animation is
+  // seen; `hidden` is display:none and would cut it off mid-flight.
+  clearTimeout(sheetTimer);
+  sheetTimer = setTimeout(()=>{
+    sheet.hidden = true;
+    sheet.setAttribute("inert", "");
+    sheet.style.height = "";
+  }, 300);
+  if(lastFocus && document.contains(lastFocus)) lastFocus.focus({preventScroll:true});
+  lastFocus = null;
+  markCurrent(null);
+  if(desktop()) refit(0);   // the map gets its right-hand column back
+}
+
+document.getElementById("sheet-close").onclick = closeSheet;
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape" && sheet.classList.contains("open")) closeSheet();
+});
+
+/* Drag between the stops, and off the bottom to close.
+   The handle is the whole top strip rather than the 44x5 bar, because a 5 px
+   target is not a target. The sheet body joins in only when it is scrolled to
+   the top and the gesture is downward, which is the one case where dragging the
+   sheet and scrolling its contents are not in conflict. */
+(function(){
+  const head = document.getElementById("draghead");
+  let startY = 0, startH = 0, dragging = false, moved = 0;
+
+  function begin(e, fromBody){
+    if(desktop()) return;
+    if(fromBody && sheetBody.scrollTop > 0) return;
+    startY = e.clientY;
+    startH = sheet.getBoundingClientRect().height;
+    dragging = true; moved = 0;
+    sheet.classList.add("dragging");
+    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+  }
+  function move(e){
+    if(!dragging) return;
+    moved = e.clientY - startY;
+    const max = window.innerHeight;
+    const h = Math.max(0, Math.min(max, startH - moved));
+    sheet.style.height = h + "px";
+  }
+  function end(){
+    if(!dragging) return;
+    dragging = false;
+    sheet.classList.remove("dragging");
+    const vh = window.innerHeight;
+    const h = sheet.getBoundingClientRect().height;
+    sheet.style.height = "";
+    // Below 60% of PEEK the gesture was a dismissal, not a resize.
+    if(h < vh * 0.33 * 0.6){ closeSheet(); return; }
+    const targets = {peek: vh * 0.33, half: vh * 0.70, full: vh};
+    let best = "peek", bestD = Infinity;
+    STOPS.forEach(k=>{ const d = Math.abs(targets[k] - h); if(d < bestD){ bestD = d; best = k; } });
+    sheetStop(best);
+  }
+
+  head.addEventListener("pointerdown", e=>begin(e, false));
+  sheetBody.addEventListener("pointerdown", e=>begin(e, true));
+  window.addEventListener("pointermove", move, {passive:true});
+  window.addEventListener("pointerup", end);
+  window.addEventListener("pointercancel", end);
+})();
+
+/* The footer every sheet carries. Hat 5, finding 10: a safety instrument with
+   no correction channel keeps a known error forever, and there was no contact
+   address anywhere in 2,291 lines. The donate line AJ asked about is
+   deliberately not here. */
+const CG_MAIL = "caribbeanguard.pv@gmail.com";
+const CG_HOME = "https://caribbeanguard.org";
+/* The mailto carries a BODY as well as a subject, and that is the difference
+   between a correction channel and a blank compose window. Hat 5's finding was
+   that a safety instrument with no way to be told it is wrong keeps a known
+   error forever; a reader who taps this and faces an empty message mostly
+   closes it. The body says what we need: what is wrong, and which beach. */
+function reportHref(subject){
+  const t = T[lang];
+  return `mailto:${CG_MAIL}?subject=${encodeURIComponent(subject)}` +
+         `&body=${encodeURIComponent(t.reportIntro + "\n\n")}`;
+}
+function sheetFoot(){
+  const t = T[lang];
+  return `<p class="footlink"><a href="${CG_HOME}" target="_blank" rel="noopener">${t.homeLink}</a></p>`;
+}
+
+/* THE ORDER INSIDE THE SHEET, top to bottom, and every position is argued:
+
+     name and sub          where you are
+     INSTRUCTION           what to do. Largest thing on the sheet, above the fold
+                           at PEEK, and no longer sitting below an apology.
+     Autor / Revisado      how much this claim is worth, one line, under the
+                           claim it qualifies rather than in a footer
+     today                 one line while nobody has signed; the full block the
+                           moment somebody has
+     why                   the reasoning, for whoever wants it
+     rider and caveats     the exceptions that modify the instruction
+     facts                 including the escape sentence on every rip beach
+     absences              what nobody has checked
+     DEFERRAL              the rule that outranks everything above it, boxed
+     actions               Cómo llegar · Reportar un error · 911
+
+   The three reorderings against the old sheet: today came first and pushed the
+   instruction below the fold; the deferral sat mid-sheet where it read as one
+   more caveat rather than as the thing that beats the map; and the provenance
+   sat under the deferral, three screens from the verdict it qualifies.
+
+   A map that says NO ENTRES AL AGUA has to be able to say who decided that and
    when, and the honest answer today is nobody. Saying so out loud costs some of
    the artefact's authority, and that is the correct trade: an organisation that
-   admits what it has not checked is more trustworthy than one that implies it has
-   checked everything. It also turns the claim from a guarantee into a timestamped
-   observation, which is the difference that matters if this is ever read back to
-   somebody after an accident. */
+   admits what it has not checked is more trustworthy than one that implies it
+   has checked everything. */
 function openZone(z){
-  const t = T[lang], c = z.character;
-  const rider = c.class === "lower-risk"
-    ? `<p class="caveat">${t.charLowerRiskRider}</p>` : "";
-  const caveats = (c.caveats || [])
-    .map(cv=>`<p class="caveat">${cv[lang]}</p>`).join("");
-  sheetBody.innerHTML = `
-    <h2>${z.name[lang]}</h2>
+  const render = ()=>{
+    const t = T[lang], c = z.character;
+    const rider = c.class === "lower-risk"
+      ? `<p class="caveat">${t.charLowerRiskRider}</p>` : "";
+    const caveats = (c.caveats || [])
+      .map(cv=>`<p class="caveat">${cv[lang]}</p>`).join("");
+    // z.at, not a midpoint of z.line: the line may not have arrived yet and a
+    // QR deep link opens this sheet 350 ms after load. Both are the same point.
+    const mid = z.at.join(",");
+    return `
+    <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
     <p class="sub">${z.sub[lang]}</p>
+    ${statusPill(tierOf(z), t[c.class])}
+    ${hoursLine(z)}
+    ${provenance(c, true)}
     ${todayBlock(z)}
-    <p class="axis">${t.axisCharacter}</p>
-    <span class="status ${tierOf(z)}">${t[c.class]}</span>
     <p class="why">${c.why[lang]}</p>
     ${rider}${caveats}
-    <p class="defer">${t.defer}</p>
-    ${provenance(c)}
+    ${factsOf(z)}
     ${gapList(z)}
-    <ul class="facts">${c.facts[lang].map(f=>`<li><span class="ic">•</span><span>${f}</span></li>`).join("")}</ul>
+    <p class="defer">${t.defer}</p>
     <div class="actions">
-      <a class="btn primary" href="tel:911">${t.call}</a>
       <a class="btn" target="_blank" rel="noopener"
-         href="https://www.google.com/maps/dir/?api=1&destination=${z.line[Math.floor(z.line.length/2)].join(",")}">${t.route}</a>
-    </div>`;
-  sheet.classList.add("open");
+         href="https://www.google.com/maps/dir/?api=1&destination=${mid}">${t.route}</a>
+      <a class="btn" href="${reportHref(t.reportSubject + ": " + z.name.es)}">${t.report}</a>
+      <a class="btn primary wide" href="tel:911">${t.call}</a>
+    </div>
+    ${sheetFoot()}`;
+  };
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
   markCurrent(z.id);
-  flyClear(L.latLngBounds(z.line).pad(0.55));
+  // Before the geometry lands there is one point to fly to rather than a line.
+  flyClear(z.line.length ? L.latLngBounds(z.line).pad(0.55)
+                         : L.latLngBounds([z.at]).pad(0.02));
   history.replaceState(null,"","?z=" + localId(z.id));
 }
 
-/* The coast this map does not describe, opened from its own card in the picker.
+/* The coast this map does not describe, opened from its own card in the strip.
    Every number in it is computed from the data that is actually loaded, so it
    cannot drift from what is drawn. */
 function openVoid(){
-  const t = T[lang];
-  const km = m => (m / 1000).toFixed(m < 3000 ? 2 : 1);
-  const total = map.distance([9.646, IMG_BOUNDS[0][1]], [9.646, IMG_BOUNDS[1][1]]);
-  const zoned = ZONES.reduce((sum, z) =>
-    sum + z.line.slice(1).reduce((s, p, i) => s + map.distance(z.line[i], p), 0), 0);
-  const surveyed = map.distance([9.643, SURVEY.w], [9.643, SURVEY.e]);
-  sheetBody.innerHTML = `
-    <span class="status" style="background:var(--void)">${t.voidStatus}</span>
-    <h2>${t.voidName}</h2>
+  const render = ()=>{
+    const t = T[lang];
+    const km = m => (m / 1000).toFixed(m < 3000 ? 2 : 1);
+    const total = map.distance([9.646, IMG_BOUNDS[0][1]], [9.646, IMG_BOUNDS[1][1]]);
+    const zoned = zonedExtentM();
+    const surveyed = map.distance([9.643, SURVEY.w], [9.643, SURVEY.e]);
+    return `
+    <h2 id="sheet-title" tabindex="-1">${t.voidName}</h2>
+    <p class="sub">${t.voidStatus}</p>
     <p class="why">${t.voidWhy(km(total), km(zoned), km(surveyed))}</p>
     <p class="caveat">${t.voidRule}</p>
     <p class="defer">${t.defer}</p>
     <div class="actions">
-      <a class="btn primary wide" href="tel:911">${t.call}</a>
-    </div>`;
-  sheet.classList.add("open");
+      <a class="btn" href="${reportHref(t.reportSubject)}">${t.report}</a>
+      <a class="btn primary" href="tel:911">${t.call}</a>
+    </div>
+    ${sheetFoot()}`;
+  };
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
   markCurrent(null);
   history.replaceState(null, "", location.pathname);
 }
@@ -1685,8 +2703,21 @@ function openVoid(){
    Leaflet centres on the full map, the sheet then eats the bottom 60% of the
    screen, and the zone you just asked about ends up pushed off the top edge. */
 function flyClear(bounds, opts){
-  const sheetH = sheet.classList.contains("open") ? sheet.offsetHeight : 0;
-  const headH  = document.querySelector(".topbar")?.offsetHeight || 64;
+  const open  = sheet.classList.contains("open");
+  const headH = document.querySelector(".topbar")?.offsetHeight || 64;
+  if(desktop()){
+    // Two columns, not two bands: the rail on the left and the panel on the
+    // right. Padding by both is what keeps the coast out from under the panel.
+    const rail = document.querySelector(".dock")?.offsetWidth || 360;
+    const panel = open ? (sheet.offsetWidth || 400) : 0;
+    map.flyToBounds(bounds, Object.assign({
+      duration:.7, maxZoom:17,
+      paddingTopLeft:[rail + 24, headH + 16],
+      paddingBottomRight:[panel + 24, 32]
+    }, opts||{}));
+    return;
+  }
+  const sheetH = open ? sheet.offsetHeight : 0;
   map.flyToBounds(bounds, Object.assign({
     duration:.7, maxZoom:17,
     paddingTopLeft:[24, headH + 16],
@@ -1695,23 +2726,117 @@ function flyClear(bounds, opts){
 }
 
 function openPost(p){
-  const t=T[lang];
-  sheetBody.innerHTML = `
-    <span class="status station">${t.station} ${p.n}</span>
-    <h2>${p.name[lang]}</h2>
+  const render = ()=>{
+    const t = T[lang];
+    /* The deferral renders here too, and it is not boilerplate. This sheet says
+       a fixed structure nearby holds rescue flotation, which is the most
+       reassuring thing on the whole map, and it is exactly the sheet a reader
+       could finish believing the map has them covered. The rule that outranks
+       the map outranks it here as well: the guard standing on the sand beats
+       this page, on every sheet, without exception. It was missing from this
+       one and from the shaded-area sheet, which were the only two that
+       described something reassuring. */
+    return `
+    <h2 id="sheet-title" tabindex="-1">${p.name[lang]}</h2>
     <p class="sub">${p.hours[lang]}</p>
+    ${titleChip(markStation(), t.station)}
+    ${provenance(p, true)}
     <p class="why">${t.stationHolds}</p>
     <p class="caveat">${t.stationScope}</p>
-    ${provenance(p)}
+    <p class="defer">${t.defer}</p>
     <div class="actions">
-      <a class="btn primary" href="tel:911">${t.call}</a>
       <a class="btn" target="_blank" rel="noopener"
          href="https://www.google.com/maps/dir/?api=1&destination=${p.ll.join(",")}">${t.route}</a>
-    </div>`;
-  sheet.classList.add("open");
+      <a class="btn" href="${reportHref(t.reportSubject + ": " + p.name.es)}">${t.report}</a>
+      <a class="btn primary wide" href="tel:911">${t.call}</a>
+    </div>
+    ${sheetFoot()}`;
+  };
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
   flyClear(L.latLngBounds([p.ll]).pad(0.002), {maxZoom:16.5});
   history.replaceState(null,"","?p=" + localId(p.id));
 }
+
+/* ---------- the legend ----------
+   Caribbean Guard's own V5 sheet carries a bilingual key in its corner and this
+   map shipped without one, so four numbered marks sat on the coast meaning
+   nothing until tapped (hat 5, finding 8) and the stroke vocabulary was taught
+   only on the cards (hat 1, finding 7).
+
+   MERGED, in two sections. "Qué hacer" is our four instructions, each with the
+   stroke that carries it. "En el mapa" is their vocabulary in their words:
+   Corriente de Resaca, Estación de Rescate. Spanish then English, two columns,
+   exactly as V5 prints it.
+
+   THE ROWS ARE CONDITIONAL ON THE LAYER EXISTING. V5 also keys roads, paths and
+   Ubicaciones, and this map draws none of those today. A legend entry for a
+   mark that is not on the map is a second kind of lie, and this page's whole
+   argument is about not making the first kind. `hasLocations` flips the moment
+   a locations layer lands in the data, and the row appears then. */
+let hasLocations = false;
+
+/* The marks, drawn as the map draws them rather than described, and defined
+   ONCE: the legend and the sheet that opens when you tap the thing have to show
+   the same mark, or the legend is teaching a vocabulary the sheets do not use.
+   The station's dark outline is the one the marker carries: #f39c12 alone does
+   not clear 3:1 over Caribbean water. */
+const markRip = () => `<svg width="30" height="14" viewBox="0 0 30 14" aria-hidden="true">
+    <line x1="2" y1="7" x2="20" y2="7" stroke="#0b1c2c" stroke-width="5"
+          stroke-linecap="round" opacity=".85"/>
+    <line x1="2" y1="7" x2="20" y2="7" stroke="#e53935" stroke-width="3"
+          stroke-dasharray="5 3" stroke-linecap="round"/>
+    <path d="M18 2.5 L25 7 L18 11.5" fill="none" stroke="#0b1c2c" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+    <path d="M18 2.5 L25 7 L18 11.5" fill="none" stroke="#e53935" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+const markStation = () => `<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+    <polygon points="5.5,1 16.5,1 22,11 16.5,21 5.5,21 0,11" fill="#f39c12"
+             stroke="#0b1c2c" stroke-width="1.2"/></svg>`;
+const markArea = () => `<svg width="26" height="16" viewBox="0 0 26 16" aria-hidden="true">
+    <rect x="1" y="1" width="24" height="14" rx="3" fill="#5b6b7a" fill-opacity=".16"
+          stroke="#5b6b7a" stroke-width="2" stroke-dasharray="4 4"/></svg>`;
+const markMe = () => `<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+    <circle cx="11" cy="11" r="9" fill="#1565c0" fill-opacity=".16"/>
+    <circle cx="11" cy="11" r="5" fill="#1565c0" stroke="#fff" stroke-width="2"/></svg>`;
+const markPlaces = () => `<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+    <polygon points="11,1 13.6,8 21,8 15,12.5 17.3,20 11,15.4 4.7,20 7,12.5 1,8 8.4,8"
+             fill="#f2d024" stroke="#0b1c2c" stroke-width="1"/></svg>`;
+
+function legendHTML(){
+  const t = T[lang], o = lang === "es" ? "en" : "es", u = T[o];
+  const row = (mark, a, b) =>
+    `<div class="row"><span class="mark" aria-hidden="true">${mark}</span>
+       <span class="txt"><span class="cur">${a}</span><span class="oth">${b}</span></span></div>`;
+  const cls = ["no-swim","high-risk","conditional","lower-risk"];
+  const tiers = cls.map(c=>{
+    const tier = CHARACTER[c].tier;
+    return row(swatch(tier), t[c], u[c]);
+  }).join("");
+
+  return `<h3>${t.legendDo}</h3>${tiers}
+    <h3>${t.legendMap}</h3>
+    ${row(markRip(), t.legendRip, u.legendRip)}
+    ${row(markStation(), t.legendStation, u.legendStation)}
+    ${row(markArea(), t.legendArea, u.legendArea)}
+    ${hasLocations ? row(markPlaces(), t.legendPlaces, u.legendPlaces) : ""}
+    ${row(markMe(), t.legendMe, u.legendMe)}`;
+}
+
+function openLegend(){
+  const render = ()=>`<h2 id="sheet-title" tabindex="-1">${T[lang].legendTitle}</h2>
+    <div class="legend">${legendHTML()}</div>
+    <p class="defer">${T[lang].defer}</p>
+    ${sheetFoot()}`;
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  // A legend is a reading task, not a glance, so it opens past PEEK.
+  sheetStop("half");
+}
+function renderLegendPerm(){
+  const el = document.getElementById("legend-perm");
+  if(el) el.innerHTML = legendHTML();
+}
+document.getElementById("legend-open").onclick = openLegend;
 
 /* ---------- beach picker ----------
    The coast is 12 km of near identical jungle and sand. Nobody pans a map to
@@ -1723,31 +2848,77 @@ function openPost(p){
    never reference them anywhere, which meant the pattern vocabulary existed on
    the map but was taught nowhere. A user cannot learn that solid means stop if
    nothing ever tells them. */
+/* The swatch is drawn ON A DARK PLATE, and that is not decoration.
+   The real stroke lives on satellite imagery, which is dark. Moderate is
+   #f5b942, and #f5b942 on a white card measures about 1.5:1, so the one tier
+   whose dash pattern matters most to a deuteranope simply vanished at the exact
+   place the pattern is being taught. The plate shows the stroke on the ground
+   it actually occupies, which is both legible and literally true. */
 function swatch(tier){
-  const s = STROKE[tier];     // the card shows the reference weights, not the
-                              // current zoom's, so the legend stays stable
-  return `<svg class="sw" width="26" height="12" viewBox="0 0 26 12" aria-hidden="true" focusable="false">
-    <line x1="1" y1="6" x2="25" y2="6" stroke="${COLOR[tier]}"
-          stroke-width="${Math.max(3, s.weight * 0.6)}" stroke-linecap="round"
-          ${s.dash ? `stroke-dasharray="${s.dash.split(" ").map(n=>+n*0.6).join(" ")}"` : ""}/>
+  /* CGGeom.TIERS is the same table the map draws from, and the swatch derives
+     its pattern the same way zoneStroke does: gap = gapK * weight, dash =
+     ratio * gap, ratio null means solid. One table, two readers, so the card
+     cannot teach a pattern the map does not draw. That was the whole point of
+     putting the stroke on the card in the first place.
+     The card shows the REFERENCE weight rather than the current zoom's, so the
+     legend stays still while the map under it rescales. */
+  const s = CGGeom.TIERS[tier];
+  const w = Math.max(3, s.weight * 0.6);
+  const gap = s.gapK * w, dash = s.ratio == null ? null : s.ratio * gap;
+  return `<svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false">
+    <rect width="30" height="16" rx="4" fill="#24384a"/>
+    <line x1="3" y1="8" x2="27" y2="8" stroke="${COLOR[tier]}"
+          stroke-width="${w}" stroke-linecap="round"
+          ${dash == null ? "" : `stroke-dasharray="${+dash.toFixed(2)} ${+gap.toFixed(2)}"`}/>
   </svg>`;
+}
+
+/* THE STATUS PILL. One component, used on the card and in the sheet, so the
+   thing somebody reads on the strip and the thing they read after tapping are
+   the same object rather than two that can drift apart.
+   Tier colour is the left bar. Text is always ink. See the .pill CSS.
+
+   IT TAKES A TIER AND AN INSTRUCTION, AND NOTHING ELSE. It used to also carry a
+   station's name, a hazard's noun and an area title, which made the component
+   that means "do this" the component that a noun arrived in. Those take
+   titleChip() below. */
+function statusPill(tier, instruction){
+  return `<span class="pill ${tier}">${swatch(tier)}${instruction}</span>`;
+}
+
+/* The neutral counterpart: what KIND of thing this sheet is about, with the mark
+   the map draws for it, so the sheet doubles as a key for whatever was tapped. */
+function titleChip(mark, text){
+  return `<span class="chip title">${mark}${text}</span>`;
+}
+
+/* CARD ANATOMY, top to bottom: name, instruction, hours, provenance chips.
+   The instruction is the largest text on it and nothing else may become larger.
+   Keep the static markup in the body in step with this. */
+function cardHTML(z){
+  const t = T[lang];
+  return `<button class="card" data-id="${z.id}" aria-current="false">
+      <span class="nm">${z.name[lang]}</span>
+      ${statusPill(tierOf(z), t[z.character.class])}
+      ${hoursLine(z)}
+      ${cardChips(z)}
+    </button>`;
 }
 
 function buildPicker(){
   const t = T[lang];
   // Character on the card, because the character is what the map stroke says and
-  // the card is the legend for the stroke. A signed bulletin adds a mark; it
+  // the card is the legend for the stroke. A signed bulletin adds a chip; it
   // never replaces the character label.
-  const cards = ZONES.map(z=>`
-    <button class="card" data-id="${z.id}" aria-current="false">
-      <span class="nm">${z.name[lang]}</span>
-      <span class="st ${tierOf(z)}">${swatch(tierOf(z))}${t[z.character.class]}</span>
-      ${cardChips(z)}
-    </button>`).join("");
-  // The absence, listed as a peer of the presences. Last, because it is the rest.
+  const cards = ZONES.map(cardHTML).join("");
+  /* The absence, listed as a peer of the presences, and a DIFFERENT SPECIES of
+     card: dashed, hatched, and carrying no status pill at all. Hat 1 skimmed
+     straight past the most defensible thing on the page because it had the same
+     size, shape and row as a beach and was only greyer. Still last, because it
+     is the rest. */
   const voidCard = `<button class="card void" data-id="void" aria-current="false">
       <span class="nm">${t.voidName}</span>
-      <span class="st">${t.voidStatus}</span>
+      <span class="vd">${t.voidStatus}</span>
     </button>`;
   document.getElementById("picker").innerHTML = cards + voidCard;
   document.querySelectorAll(".card").forEach(c=>{
@@ -1755,20 +2926,50 @@ function buildPicker(){
       ? openVoid
       : ()=>openZone(ZONES.find(z=>z.id === c.dataset.id));
   });
+  renderCounter();
   // after layout, not during it: offsetHeight read in the same frame as the
   // innerHTML write returns the height of the markup that has not been laid out
   requestAnimationFrame(measureDock);
 }
+
+/* "2 de 6". A horizontal scroller with both scrollbars hidden does not announce
+   its own length: hats 1 and 2 both saw two cards, concluded that was all there
+   was, and never reached Cocles at card three. The edge fade (a mask on .strip)
+   says there is more; this says how much more and where you are. Hidden on
+   desktop, where all six are stacked and visible. */
+function renderCounter(){
+  const el = document.getElementById("counter");
+  if(!el) return;
+  const cards = [...document.querySelectorAll(".card")];
+  if(!cards.length) return;
+  const strip = document.getElementById("picker");
+  const mid = strip.scrollLeft + strip.clientWidth / 2;
+  let best = 0, bestD = Infinity;
+  cards.forEach((c, i)=>{
+    const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
+    if(d < bestD){ bestD = d; best = i; }
+  });
+  el.textContent = T[lang].counter(best + 1, cards.length);
+}
+document.getElementById("picker").addEventListener("scroll", ()=>{
+  clearTimeout(renderCounter._t);
+  renderCounter._t = setTimeout(renderCounter, 80);
+}, {passive:true});
+
 function markCurrent(id){
   document.querySelectorAll(".card").forEach(c=>{
     const on = c.dataset.id===id;
     c.setAttribute("aria-current",on);
+    /* A deep link (?z=cocles) has to move the strip, not only the map. The QR
+       code on the post at Cocles opens card three, and until this ran the
+       reader landed on card one and had to hunt for the beach they were
+       standing on. */
     if(on) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
   });
-  Object.entries(layers).forEach(([k,o])=>
-    o.line.setStyle({opacity: k===id ? 1 : .55}));
-  Object.entries(layers).forEach(([k,o])=>{ o.current = (k===id); });
+  anyCurrent = !!id && !!layers[id];
+  Object.entries(layers).forEach(([k,g])=>{ g.cgCurrent = (k === id); });
   restyleZones();
+  setTimeout(renderCounter, 420);   // after the smooth scroll settles
 }
 
 /* The dock's height is not a constant and it is not knowable up front: it grows
@@ -1799,10 +3000,61 @@ function measureDock(mayFit = true){
 /* ---------- locate ---------- */
 let meMarker=null, meCircle=null;
 const toast=document.getElementById("toast");
-function say(msg,ms=4200){ toast.textContent=msg; toast.classList.add("show");
-  clearTimeout(say._t); say._t=setTimeout(()=>toast.classList.remove("show"),ms); }
 
-document.getElementById("locate").onclick=()=>{
+/* THE TWO BANNERS SHARE ONE STRIP AND THE SAFETY ONE IS ON TOP.
+   Both are pinned under the top bar. The update banner sits at z-index 1500 and
+   the toast at 1400, so a "newer version of this map" notice was drawn straight
+   over "the beach zones did not load, do not trust this map without them" and
+   hid it completely. A convenience notice may never cover a safety one.
+   Whichever appears first keeps the strip and the other one stacks beneath it,
+   so the order they arrive in does not decide which one gets read. */
+function stackBanners(){
+  const upd = document.getElementById("update");
+  const updShown = upd && upd.classList.contains("show");
+  const toastShown = toast.classList.contains("show");
+  toast.style.marginTop = (updShown && !toastShown) ? (upd.offsetHeight + 10) + "px" : "";
+  if(upd) upd.style.marginTop = (toastShown && updShown) ? (toast.offsetHeight + 10) + "px" : "";
+}
+
+function say(msg,ms=4200){
+  toast.textContent=msg;
+  stackBanners();              // measure the other banner BEFORE showing this one
+  toast.classList.add("show");
+  stackBanners();              // and again, so the other one moves if it is up
+  clearTimeout(say._t);
+  say._t=setTimeout(()=>{ toast.classList.remove("show"); stackBanners(); }, ms);
+}
+
+/* THE FIRST RUN IS A LABELLED ACTION, NOT AN ICON.
+   Hat 1's only question standing on the sand is "which beach am I on", and the
+   control that answers it was an unlabelled crosshair below a compass, which
+   reads as a map widget rather than as an answer. Nothing ever called
+   getCurrentPosition on load either, so the map never offered.
+   So on the first visit the dock carries "¿En qué playa estoy?" full width, and
+   once it has been used once it collapses to the icon, because by then the icon
+   has a meaning. The flag is per-device and survives a reload; if localStorage
+   is unavailable the labelled action simply stays, which is the safe failure. */
+const LOCATE_KEY = "cg-located";
+function locateUsed(){
+  try{ return localStorage.getItem(LOCATE_KEY) === "1"; }catch(e){ return false; }
+}
+function renderLocate(){
+  const first = document.getElementById("locate-first");
+  const fab = document.getElementById("locate");
+  const show = !locateUsed() && !desktop();
+  first.classList.toggle("show", show);
+  fab.classList.toggle("hidden", show);
+  requestAnimationFrame(measureDock);
+}
+function runLocate(){
+  try{ localStorage.setItem(LOCATE_KEY, "1"); }catch(e){}
+  renderLocate();
+  doLocate();
+}
+document.getElementById("locate-first").onclick = runLocate;
+document.getElementById("locate").onclick = runLocate;
+
+function doLocate(){
   const t=T[lang];
   if(!navigator.geolocation){ say(t.denied); return; }
   say(t.locating);
@@ -1837,8 +3089,15 @@ document.getElementById("locate").onclick=()=>{
        Now: the nearest zone must be close in absolute terms AND clearly closer
        than the runner-up. If two zones are in contention the map says so and lets
        the person choose, because a wrong verdict here is worse than no verdict. */
-    const near = ZONES.map(z=>({z, d: Math.min(...z.line.map(pt=>map.distance(ll,pt)))}))
-                      .sort((a,b)=>a.d-b.d);
+    // z.line while it is there, z.at as the fallback. Falling back to a single
+    // midpoint makes the distances coarser, so the MARGIN_M test below is
+    // harder to pass, so the map says "you are between two beaches" more often
+    // rather than less. An uncertainty that fails towards asking is the right
+    // direction for this particular guess.
+    const near = ZONES.map(z=>{
+      const pts = z.line.length ? z.line : [z.at];
+      return {z, d: Math.min(...pts.map(pt=>map.distance(ll,pt)))};
+    }).sort((a,b)=>a.d-b.d);
     const NEAR_M = 250, MARGIN_M = 150;
     if(near[0] && near[0].d < NEAR_M &&
        (!near[1] || near[1].d - near[0].d > MARGIN_M)){
@@ -1848,20 +3107,59 @@ document.getElementById("locate").onclick=()=>{
       if(near[0] && near[0].d < 700) say(t.ambiguous, 7000);
     }
   },()=>say(T[lang].denied,5000),{enableHighAccuracy:true,timeout:9000,maximumAge:30000});
-};
+}
 
-/* ---------- language ---------- */
+/* ---------- language ----------
+   EVERY aria-label moves, not one. Hat 4, finding 12: in English the close
+   button still announced "Cerrar", refresh "Actualizar" and the toggle group
+   "Idioma"; only #locate was ever relabelled, so a screen reader in English got
+   a Spanish interface with one English word in it.
+
+   AND THE OPEN SHEET IS RE-RENDERED, NOT DISMISSED. This function used to end
+   with sheet.classList.remove("open"): hat 4 opened Playa Cocles, could not read
+   the English, tapped ES, and the verdict vanished. Switching language is a
+   request to read the same thing in another language. */
 function setLang(l){
   lang=l;
+  const t = T[l];
   document.documentElement.lang=l;
   document.getElementById("btn-es").setAttribute("aria-pressed",l==="es");
   document.getElementById("btn-en").setAttribute("aria-pressed",l==="en");
-  document.getElementById("tagline").textContent=T[l].tagline;
-  document.getElementById("locate").setAttribute("aria-label",
-    l==="es" ? "Mi ubicación" : "My location");
+  document.getElementById("tagline").textContent = t.tagline;
+  document.getElementById("rail-what").textContent = t.railWhat;
+  document.getElementById("sos-word").textContent = t.sosWord;
+  document.getElementById("locate-first-label").textContent = t.locateFirst;
+  document.getElementById("legend-open").textContent = t.legendTitle;
+  document.getElementById("locate").setAttribute("aria-label", t.ariaLocate);
+  document.getElementById("locate-first").setAttribute("aria-label", t.locateFirst);
+  document.getElementById("sheet-close").setAttribute("aria-label", t.ariaClose);
+  document.getElementById("saved-refresh").setAttribute("aria-label", t.ariaRefresh);
+  document.getElementById("lang-group").setAttribute("aria-label", t.ariaLang);
+  document.getElementById("update-no").setAttribute("aria-label", t.ariaClose);
+  document.getElementById("brand").setAttribute("aria-label", t.ariaHome);
+  /* The "newer version" banner renders its strings once, when the worker
+     reports an update, and then sits there until it is acted on. Switching
+     language left it in the language it was born in, which on a page whose
+     whole top bar is a language toggle reads as a piece of someone else's
+     interface. Only touched while it is actually showing. */
+  if(document.getElementById("update").classList.contains("show")){
+    document.getElementById("update-msg").textContent = t.updateMsg;
+    document.getElementById("update-go").textContent  = t.updateGo;
+  }
+  document.getElementById("sos").setAttribute("aria-label", t.ariaSos);
+  document.getElementById("compass").setAttribute("aria-label", l==="es" ? "Norte" : "North");
   buildPicker();
   renderSaved();
-  sheet.classList.remove("open");
+  renderLegendPerm();
+  if(stationsReady){
+    Object.entries(postMarkers).forEach(([id, m])=>{
+      const post = POSTS.find(x=>x.id === id);
+      if(post && m._icon) m._icon.alt = `${t.legendStation} ${post.n}`;
+    });
+    buildCluster();
+    restyleLabels();
+  }
+  if(lastRender) lastRender();
 }
 document.getElementById("btn-es").onclick=()=>setLang("es");
 document.getElementById("btn-en").onclick=()=>setLang("en");
@@ -1882,47 +3180,17 @@ document.getElementById("btn-en").onclick=()=>setLang("en");
    ============================================================ */
 const ANNOT = {rips:[], stations:[], areas:[]};
 
-/* Arrow weight and head size are a function of zoom, not constants.
+/* Arrow weight, head size and the minimum drawn shaft are a function of zoom,
+   and all three moved to geometry.js along with the thing that matters more:
+   THE ARROW IS OUTLINED NOW, not shadowed.
 
-   A rip is 30 to 100 m long. At the whole-coast view that is a couple of pixels,
-   so a fixed 13 px head is a red blob detached from a shaft nobody can see, and
-   eleven of them read as noise. Zoomed in, the same head is a pinprick on a
-   200 px shaft. So both scale with zoom, clamped at each end: readable as a
-   direction when close, and legible as a cluster of hazards when far. */
-function arrowScale(){
-  const z = map.getZoom();
-  // z11.5 whole coast -> z18 standing on the beach
-  const t = Math.max(0, Math.min(1, (z - 12) / 5));
-  return {weight: 2.5 + t * 4.5, head: 6 + t * 14, shaftMin: 20 - t * 16};
-}
-
-function arrowHead(a, b, colour){
-  // A rip is a direction, not a place, so it needs a head. Leaflet has no arrow,
-  // so this is two short segments rotated onto the bearing of the last leg.
-  const p1 = map.latLngToLayerPoint(a), p2 = map.latLngToLayerPoint(b);
-  // NOT named L: that shadows Leaflet's own L inside this function and the very
-  // next line, L.point(...), throws "L.point is not a function".
-  const sc = arrowScale();
-  const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x), LEN = sc.head, SPREAD = 0.42;
-  const wing = d => map.layerPointToLatLng(
-    L.point(p2.x - LEN * Math.cos(ang + d), p2.y - LEN * Math.sin(ang + d)));
-  return L.polyline([wing(-SPREAD), b, wing(SPREAD)],
-                    {color:colour, weight:sc.weight, opacity:1,
-                     lineCap:"round", lineJoin:"round"});
-}
-
-/* At the overview a 40 m rip is shorter than its own arrowhead, so the shaft is
-   stretched to a readable minimum along its own bearing. The position stays the
-   position; only the drawn length changes, and it stops mattering by z15. */
-function shaftPoints(pts){
-  const sc = arrowScale();
-  if(sc.shaftMin <= 1) return pts;
-  const a = map.latLngToLayerPoint(pts[0]), b = map.latLngToLayerPoint(pts[pts.length-1]);
-  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
-  if(len >= sc.shaftMin || len === 0) return pts;
-  const k = sc.shaftMin / len;
-  return [pts[0], map.layerPointToLatLng(L.point(a.x + dx * k, a.y + dy * k))];
-}
+   Hat 4 measured the old one. #e53935 against the water sampled next to it,
+   rgb(45,72,65), is 2.00:1, and 1.79:1 as a deuteranope sees it, against the
+   3:1 bar WCAG 1.4.11 sets for a graphical object that carries meaning. A drop
+   shadow cannot fix that, because contrast is measured at an edge and a shadow
+   is a blur. Ink at 0.85 against the red is 4.4:1, and that ink edge is what
+   the eye locks onto, so the arrow stops depending on whatever water it
+   happens to be floating over. */
 
 function drawAnnotations(gj){
   const layer = L.layerGroup().addTo(map);
@@ -1933,15 +3201,14 @@ function drawAnnotations(gj){
     const k = f.properties.kind, g = f.geometry;
     if(k === "rip_current"){
       const pts = g.coordinates.map(c=>[c[1], c[0]]);
-      const drawn = shaftPoints(pts);
-      const sc = arrowScale();
-      const shaft = L.polyline(drawn,{color:"#e53935",weight:sc.weight,opacity:1,
-                                      dashArray:"9 6",lineCap:"round"}).addTo(layer);
-      const head = arrowHead(drawn[drawn.length-2] || drawn[0],
-                             drawn[drawn.length-1], "#e53935").addTo(layer);
-      const hit = L.polyline(pts,{color:"#000",weight:30,opacity:0}).addTo(layer);
-      hit.on("click", ()=>openAnnot("rip", f));
-      ANNOT.rips.push({f, shaft, head});
+      const arrow = CGGeom.outlinedArrow(map, pts, {}).addTo(layer);
+      // Our own hit line, on the TRUE position rather than the drawn one: at
+      // the overview a 40 m rip is shorter than its own arrowhead and the shaft
+      // is stretched to stay legible, but the tap target belongs where the
+      // hazard is.
+      L.polyline(pts,{color:"#000",weight:30,opacity:0})
+        .addTo(layer).on("click", ()=>openAnnot("rip", f));
+      ANNOT.rips.push({f, pts, arrow});
     }
     else if(k === "shaded_area_meaning_unknown"){
       const ring = g.coordinates[0].map(c=>[c[1], c[0]]);
@@ -1957,38 +3224,46 @@ function drawAnnotations(gj){
   // Heads and shafts are sized in screen space, so both are rebuilt on zoom.
   map.on("zoomend", ()=>{
     restyleZones();
-    const sc = arrowScale();
-    ANNOT.rips.forEach(r=>{
-      const pts = r.f.geometry.coordinates.map(c=>[c[1], c[0]]);
-      const drawn = shaftPoints(pts);
-      r.shaft.setLatLngs(drawn);
-      r.shaft.setStyle({weight: sc.weight});
-      const h = arrowHead(drawn[drawn.length-2] || drawn[0], drawn[drawn.length-1], "#e53935");
-      r.head.setLatLngs(h.getLatLngs());
-      r.head.setStyle({weight: sc.weight});
-    });
+    ANNOT.rips.forEach(r=>r.arrow.cgRedraw(map, r.pts, {}));
   });
   return layer;
 }
 
 function openAnnot(kind, f){
-  const t = T[lang];
-  const body = kind === "rip"
-    ? `<span class="status high">${t.ripTitle}</span>
-       <h2>${t.ripTitle}</h2>
-       <p class="sub">${t.ripLen(f.properties.length_m)}</p>
-       <p class="why">${t.ripWhy}</p>
-       <p class="defer">${t.defer}</p>
-       <p class="prov">${t.ripDir}</p>`
-    : `<span class="status station" style="background:#5b6b7a">${t.areaTitle}</span>
-       <h2>${t.areaTitle}</h2>
-       <p class="why">${t.areaWhy}</p>`;
-  sheetBody.innerHTML = body + provenance(f.properties) + `
+  const render = ()=>{
+    const t = T[lang];
+    /* No `sub` line here any more. It used to print ripLen, "aproximadamente
+       38 m desde la orilla", one of nine values got by measuring the length of a
+       hand-drawn arrow. The escape instruction takes that slot instead, which
+       is the thing a swimmer actually needs from this sheet. */
+    /* Same skeleton as openZone, in the same order, and that is the fix rather
+       than a tidy-up: name, mark, provenance, the thing to know, the deferral.
+       These two sheets had the provenance UNDER the deferral on the rip and
+       missing the deferral entirely on the area, so the two sheets a reader
+       reaches by tapping the map read differently from the five they reach by
+       tapping a card. A page that argues its verdicts are dated observations
+       cannot put the date somewhere different depending on which mark you
+       touched. */
+    const body = kind === "rip"
+      ? `<h2 id="sheet-title" tabindex="-1">${t.ripTitle}</h2>
+         ${titleChip(markRip(), t.legendRip)}
+         ${provenance(f.properties, true)}
+         <p class="why">${t.escapeRip} ${t.escapeHelp}</p>
+         <p class="prov">${t.ripDir}</p>
+         <p class="defer">${t.defer}</p>`
+      : `<h2 id="sheet-title" tabindex="-1">${t.areaTitle}</h2>
+         ${titleChip(markArea(), t.legendArea)}
+         ${provenance(f.properties, true)}
+         <p class="why">${t.areaWhy}</p>
+         <p class="defer">${t.defer}</p>`;
+    return body + `
     <div class="actions">
+      <a class="btn" href="${reportHref(t.reportSubject + ": " + t.ripTitle)}">${t.report}</a>
       <a class="btn primary" href="tel:911">${t.call}</a>
-      <button class="btn" onclick="document.getElementById('sheet').classList.remove('open')">${t.close}</button>
-    </div>`;
-  sheet.classList.add("open");
+    </div>
+    ${sheetFoot()}`;
+  };
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
 }
 
 fetch("data/cg-hazards.geojson")
@@ -2009,6 +3284,13 @@ fetch("data/cg-hazards.geojson")
                : g.coordinates;
       cs.forEach(c=>lons.push(c[0]));
     });
+    /* The Ubicaciones row in the legend appears only if a locations layer
+       actually landed. See legendHTML(). */
+    hasLocations = gj.features.some(f=>{
+      const k = f.properties && f.properties.kind;
+      return k === "location" || k === "place" || k === "ubicacion";
+    });
+    renderLegendPerm();
     if(lons.length){
       SURVEY = {w:Math.min(...lons), e:Math.max(...lons)};
       const open = document.querySelector('.card[aria-current="true"]');
@@ -2105,7 +3387,11 @@ const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
 let installPrompt = null;     // Chromium's beforeinstallprompt, stashed
 let savedAt = null;           // when the cache was last written, from the worker
 
-const savedBar = document.getElementById("saved");
+/* The saved bar is no longer a bar. It is one 12 px line inside .dockrow,
+   sharing that line with the legend chip and the strip counter, because on a
+   390 px phone every row of chrome is a row of map the reader does not get.
+   It still says the same three things it always said: that the page is saved
+   on this device, when, and how to refresh it by hand. */
 const savedTxt = document.getElementById("saved-txt");
 const savedRf  = document.getElementById("saved-refresh");
 
@@ -2127,7 +3413,6 @@ function renderSaved(state){
   } else if(!state && Date.now() < failUntil){
     return;
   }
-  savedBar.hidden = false;
   savedTxt.textContent =
       state === "refreshing" ? t.savedRefreshing
     : state === "failed"     ? t.savedFailed
@@ -2153,22 +3438,23 @@ function openSaved(){
   } else if(isIOS()){
     install = `<p class="caveat">${t.installIos}</p>`;
   }
-  sheetBody.innerHTML = `
-    <span class="status" style="background:var(--ink)">${when}</span>
-    <h2>${t.savedTitle}</h2>
+  const html = `
+    <h2 id="sheet-title" tabindex="-1">${t.savedTitle}</h2>
+    <p class="sub">${when}</p>
     ${SW_SUPPORTED
       ? `<p class="why">${t.savedWhatIs}</p>
          <p class="prov"><span class="row">${t.savedCadence}</span></p>
          ${isIOS() && !standalone() ? `<p class="caveat">${t.savedIos}</p>` : ""}`
       : `<p class="why">${t.savedNoSw}</p>`}
-    ${install}`;
+    ${install}
+    ${sheetFoot()}`;
+  openSheet(html, openSaved);
   const btn = document.getElementById("do-install");
   if(btn) btn.onclick = ()=>{
     const p = installPrompt; installPrompt = null;
-    sheet.classList.remove("open");
+    closeSheet();
     if(p) p.prompt();
   };
-  sheet.classList.add("open");
 }
 savedTxt.onclick = openSaved;
 
@@ -2208,11 +3494,15 @@ if(SW_SUPPORTED){
         document.getElementById("update-msg").textContent = t.updateMsg;
         document.getElementById("update-go").textContent  = t.updateGo;
         banner.classList.add("show");
+        stackBanners();
         document.getElementById("update-go").onclick = ()=>{
           banner.classList.remove("show");
+          stackBanners();
           worker.postMessage({action:"SKIP_WAITING"});
         };
-        document.getElementById("update-no").onclick = ()=>banner.classList.remove("show");
+        document.getElementById("update-no").onclick = ()=>{
+          banner.classList.remove("show"); stackBanners();
+        };
       }
       if(reg.waiting && navigator.serviceWorker.controller) offerUpdate(reg.waiting);
       reg.addEventListener("updatefound", ()=>{
@@ -2264,6 +3554,12 @@ renderSaved();
    will produce, so the shortest stable form wins and ?z=cocles keeps working. */
 (function(){
   setLang(lang);
+  renderLocate();
+  /* The dock is the rail on desktop and a band on a phone, and which one it is
+     changes the map's padding, the locate control and whether the legend is a
+     sheet or a column. Nothing here reads a stored breakpoint, so a window
+     dragged across 820 px settles correctly. */
+  window.addEventListener("resize", ()=>{ renderLocate(); });
   const q=new URLSearchParams(location.search);
   const z=ZONES.find(x=>localId(x.id)===q.get("z"));
   const p=POSTS.find(x=>localId(x.id)===q.get("p"));
