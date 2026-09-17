@@ -113,7 +113,7 @@
        visual vocabulary (hat 5, finding 9). Orange is also the only station
        colour a reader who has seen the printed sheet on the sign already knows. */
     --station:#f39c12;
-    --sheet-r:20px;
+    --sheet-r:10px;
     --safe-pad: env(safe-area-inset-bottom, 0px);
     --dock-h: 96px;    /* set from JS; the fab and compass stack above the dock */
     /* 8 px grid and a 16 px gutter, used everywhere below rather than eyeballed
@@ -159,6 +159,43 @@
      rather than Leaflet's grey so a tile arriving reads as the picture filling
      in, not as a broken image repairing itself. */
   .leaflet-container{background:var(--ink);font-family:inherit}
+
+  /* ---------- THE IMAGERY IS DESATURATED, AND ONLY THE IMAGERY ----------
+     Daniel's ruling 2026-09-17: keep satellite, compensate.
+
+     THE PROBLEM THIS SOLVES. Safeswim's marks are legible at every zoom because
+     nothing else on their screen is saturated: their basemap is desaturated
+     OpenStreetMap, beige land and pale water, so the safety pins own all of the
+     colour on the page. Ours are drawn on live satellite imagery full of
+     saturated jungle green, turquoise shallows, red roofs and white surf. At the
+     whole-coast view a 2 px red line competes with a reef for the same attention
+     and frequently loses, which is the one failure a hazard line may not have.
+
+     WHY IMAGERY STAYS ANYWAY. A tourist standing on the sand matches what they
+     can see to what is on the screen, and that match is the entire reason a QR
+     code on a sign works. A plain basemap is a diagram of a beach; imagery is
+     THIS beach. It also costs 2,389 precached tiles and the georeferencing
+     behind them to walk away from.
+
+     So the compromise is to take the colour out of the ground and leave it on
+     the marks. 0.65 is measured against what it has to survive rather than
+     chosen for looks: below about 0.55 the turquoise of a shallow reef goes grey
+     and the reef stops being visible as a reef, which is information a swimmer
+     uses; above about 0.8 the jungle is still loud enough to fight a green
+     lower-risk stroke.
+
+     SCOPED TO THE TILE PANE, WHICH IS THE WHOLE TRICK. Everything that carries
+     meaning is in a pane above it -- zone strokes in overlayPane (400), the
+     extent band in cgBandPane (350), stations and labels in the marker panes --
+     so none of them is touched and the tier colours stay exactly as documented.
+     Filtering .leaflet-container instead would have drained the strokes too, and
+     a 35% desaturated red is no longer #c62828.
+
+     It is one composited layer and the filter resolves once per layer rather
+     than per frame, so panning on the budget Android this is built for costs
+     nothing extra. Tunable in one place if it ever reads wrong on a real phone
+     in real sun, which is the only test that settles it. */
+  .leaflet-tile-pane{filter:saturate(.65)}
   /* Replaces the old white casing. A shadow lifts the strokes off the imagery
      without putting a grey band around them, and it costs no width, so a thin
      line stays thin. */
@@ -254,7 +291,7 @@
      are in the strip. Everything on it is at the 12 px floor. */
   .dockrow{display:flex;align-items:center;gap:8px;margin:0 var(--gut) 8px;
     background:rgba(11,28,44,.88);backdrop-filter:blur(8px);color:#fff;
-    border-radius:10px;padding:0 6px 0 6px;min-height:40px;
+    border-radius:4px;padding:0 6px 0 6px;min-height:40px;
     box-shadow:0 3px 12px rgba(0,0,0,.3)}
   .dockrow .btn-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
     background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
@@ -269,7 +306,7 @@
      both scrollbars hidden does not announce its own length. */
   .counter{flex:0 0 auto;font-size:var(--t-min);font-weight:600;letter-spacing:.02em;
     font-variant-numeric:tabular-nums;opacity:.9;padding:0 2px}
-  .dockrow .rf{flex:0 0 auto;width:34px;height:32px;border:0;border-radius:8px;
+  .dockrow .rf{flex:0 0 auto;width:34px;height:32px;border:0;border-radius:4px;
     background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font:inherit;
     display:grid;place-items:center}
   .dockrow .rf svg{width:16px;height:16px}
@@ -283,7 +320,7 @@
      reads as a map widget. Once it has been used once it collapses back to the
      icon, because by then the icon has a meaning. */
   .locate-first{display:none;width:calc(100% - var(--gut) * 2);margin:0 var(--gut) 8px;
-    min-height:48px;border-radius:12px;border:0;background:#fff;color:var(--ink);
+    min-height:48px;border-radius:6px;border:0;background:#fff;color:var(--ink);
     font:inherit;font-size:var(--t-body);font-weight:600;cursor:pointer;
     box-shadow:0 3px 14px rgba(0,0,0,.34);align-items:center;justify-content:center;gap:9px}
   .locate-first.show{display:flex}
@@ -306,7 +343,7 @@
      and the next card still peeks in at the edge, which is what tells a thumb
      there is a next card. */
   .card{flex:0 0 84vw;max-width:340px;scroll-snap-align:center;
-    background:rgba(255,255,255,.97);border-radius:14px;padding:14px var(--gut) 16px;
+    background:rgba(255,255,255,.97);border-radius:6px;padding:14px var(--gut) 16px;
     border:2px solid transparent;box-shadow:0 3px 14px rgba(0,0,0,.34);cursor:pointer;
     text-align:left;font:inherit;color:var(--ink);display:block}
   .card[aria-current="true"]{border-color:var(--ink)}
@@ -399,14 +436,16 @@
   /* ---------- locate button ---------- */
   .fab{position:absolute;right:var(--gut);z-index:1000;
     bottom:calc(var(--safe-pad) + var(--dock-h) + 16px);
-    width:52px;height:52px;border-radius:50%;border:0;background:#fff;
-    box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;cursor:pointer}
+    width:44px;height:44px;border-radius:4px;background:#fff;
+    border:1px solid rgba(11,28,44,.16);
+    box-shadow:0 1px 4px rgba(0,0,0,.22);display:grid;place-items:center;cursor:pointer}
   .fab svg{width:24px;height:24px}
   .fab.hidden{display:none}
   .compass{position:absolute;right:var(--gut);z-index:1000;
-    bottom:calc(var(--safe-pad) + var(--dock-h) + 76px);
-    width:44px;height:44px;border-radius:50%;border:0;background:#fff;
-    box-shadow:0 3px 14px rgba(0,0,0,.35);display:grid;place-items:center;
+    bottom:calc(var(--safe-pad) + var(--dock-h) + 66px);
+    width:44px;height:44px;border-radius:4px;background:#fff;
+    border:1px solid rgba(11,28,44,.16);
+    box-shadow:0 1px 4px rgba(0,0,0,.22);display:grid;place-items:center;
     cursor:pointer;padding:0;font:inherit}
   .compass svg{width:30px;height:30px;overflow:visible}
   .compass #needle{transform-origin:22px 22px;transition:transform .18s linear}
@@ -443,7 +482,7 @@
      Hat 4, finding 7: closing only translated it off-screen, so TalkBack swiped
      into "Cerrar, botón" and a panel that was not visible. */
   .sheet[hidden]{display:none}
-  .grab{width:44px;height:5px;border-radius:3px;background:#d5dbe1;margin:10px auto 2px;
+  .grab{width:44px;height:5px;border-radius:2px;background:#d5dbe1;margin:10px auto 2px;
     flex:0 0 auto}
   /* The whole top strip is the drag handle, not the 44x5 bar, because a 5 px
      target is not a target. */
@@ -464,8 +503,67 @@
      global :focus-visible outline, which is the thing hat 4 asked for. */
   .sheet h2[tabindex="-1"]:focus,
   .sheet h2[tabindex="-1"]:focus-visible{outline:none}
-  .sheet .sub{margin:0 0 14px;color:var(--muted);font-size:var(--t-2nd);line-height:1.35;
+  .sheet .sub{margin:0 0 18px;color:var(--muted);font-size:var(--t-2nd);line-height:1.35;
     font-weight:600;letter-spacing:.01em}
+
+  /* ---------- THE EYEBROW ----------
+     Adopted from safeswim.org.nz on Daniel's instruction, 2026-09-17. See
+     docs/design/safeswim-teardown.md for the measurements.
+
+     Safeswim's whole panel is ONE component repeated without variation:
+
+        EYEBROW    the question this block answers
+        verdict    the answer, in plain language, big
+        detail     why, how, what to do
+
+     CURRENT WATER QUALITY / "Good water quality". SURF LIFE SAVING / "Beach not
+     lifeguarded". FORECAST / "Water and weather". TIDE / "Currently outgoing".
+     Four sections, one shape, and a reader learns it once.
+
+     Our sheet had six blocks in six shapes and nothing saying what any of them
+     was FOR. The eyebrow is the smallest thing that fixes it: it labels the job
+     of the block before the block speaks, so the instruction is visibly an
+     instruction and the trust line is visibly a caveat, without either having
+     to be wrapped in its own box to say so. That is also how the boxes we
+     deleted this morning stay deleted.
+
+     12 PX, NOT SAFESWIM'S 10. Theirs is 10/700 uppercase at +0.2px. Ours is the
+     same shape at 12, because --t-min is the floor hat 4 set and an
+     accessibility floor outranks fidelity to a precedent. A 10 px label on a
+     budget Android in midday sun is a label nobody reads, and copying one would
+     be imitating Safeswim rather than adapting it. */
+  /* On the phone the rail is a horizontal dock and the label would eat a row of
+     the one screen that has to show an instruction in ten seconds. Desktop only,
+     switched on in the >=820px block with the rest of the rail. */
+  .rail-eyebrow{display:none}
+  .eyebrow{display:block;margin:0 0 5px;font-size:var(--t-min);font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    line-height:1.3}
+
+  /* ---------- THE EMERGENCY BLOCK ----------
+     Safeswim's, almost verbatim in structure:
+
+        IF SOMEONE IN THE WATER IS IN TROUBLE:
+        Dial 111
+
+     The LEAD-IN is the part worth taking. It names the TRIGGER before it names
+     the number, so the call is attached to a situation rather than floating as
+     one more button on a panel that also offers directions. Ours was a bare red
+     `Call 911` bar: correct, prominent, and silent about when to press it.
+     Dark navy rather than red, and that is deliberate. Red is a hazard tier on
+     this map -- it is what NO ENTRES AL AGUA is drawn in -- and a red block that
+     is not a tier teaches the reader that red sometimes means something else.
+     Safeswim's own chrome navy (#21263D) is outside our hazard palette by
+     construction, the same argument that keeps TODAY violet. */
+  .sos911{margin:0 0 16px;border-radius:4px;background:#21263D;color:#fff;
+    padding:13px 14px}
+  .sos911 .lead{display:block;font-size:var(--t-2nd);font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;line-height:1.35;
+    margin:0 0 9px;color:#fff}
+  .sos911 .dial{display:flex;align-items:center;justify-content:center;
+    min-height:52px;border-radius:4px;background:var(--high);color:#fff;
+    font-size:var(--t-instr);font-weight:800;letter-spacing:.01em;
+    text-decoration:none}
 
   /* THE WHY LOST ITS BOX TOO, for the same reason the card's instruction did.
      It was a grey panel with an ink bar, inside a white sheet, above a grey
@@ -473,15 +571,14 @@
      border. Five panels deep, the reader sorts containers instead of reading
      sentences. One short sentence in plain ink at body size needs no container
      to be found: it is directly under the largest words on the sheet. */
-  .why{margin:0 0 14px;font-size:var(--t-body);line-height:1.5;color:var(--ink)}
+  .why{margin:0 0 20px;font-size:var(--t-body);line-height:1.5;color:var(--ink)}
 
   /* THE ESCAPE SENTENCE IS THE SECOND INSTRUCTION ON THE SHEET and it is
      styled like one: ink, 600, its own rule above it. It is not a fact and it
      was rendering as the last bullet of a list of facts, which is where a
      reader who is skimming stops reading. The only sentence here that somebody
      has to recall in the water gets its own line. */
-  .escape{display:flex;gap:10px;align-items:flex-start;margin:0 0 18px;
-    padding-top:13px;border-top:1px solid rgba(11,28,44,.14);
+  .escape{display:flex;gap:10px;align-items:flex-start;margin:0 0 20px;
     font-size:var(--t-body);line-height:1.45;font-weight:600;color:var(--ink)}
   .escape .ic{flex:0 0 auto;color:var(--muted);font-weight:800}
 
@@ -490,8 +587,7 @@
      believe it. The review state is bold because it qualifies the sheet above
      it; the deferral that follows is the rule that outranks the sheet above it,
      and it is the same sentence it has always been. See trustLine(). */
-  .trust{margin:16px 0 14px;padding-top:13px;border-top:1px solid rgba(11,28,44,.14);
-    font-size:var(--t-2nd);line-height:1.5;color:var(--muted)}
+  .trust{margin:0 0 16px;font-size:var(--t-2nd);line-height:1.5;color:var(--muted)}
   .trust b{font-weight:600;color:var(--ink)}
 
   /* An exception that modifies the character, sitting where it can act on it,
@@ -504,7 +600,7 @@
      above it, and this outranks the verdict above it. Solid ink, full border, no
      fill, so it reads as the standing rule rather than as one more exception. */
   .defer{margin:0 0 16px;padding:12px 13px;font-size:var(--t-2nd);line-height:1.45;
-    font-weight:600;border:1.5px solid var(--ink);border-radius:10px;color:var(--ink)}
+    font-weight:600;border:1.5px solid var(--ink);border-radius:4px;color:var(--ink)}
 
   /* Provenance sits directly under the claim it qualifies, not in a footer.
      ONE LINE now, two fields on it. Two stacked rows pushed the why below the
@@ -514,12 +610,12 @@
   .prov b{font-weight:600;color:var(--ink)}
   .prov .row{display:block}
   .prov.unverified{color:var(--gap);background:var(--gap-bg);border:1px solid var(--gap-line);
-    border-radius:10px;padding:9px 12px}
+    border-radius:4px;padding:9px 12px}
   .prov.unverified b{color:var(--gap)}
 
   .actions{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-bottom:8px}
   .btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;
-    border-radius:12px;border:1.5px solid rgba(11,28,44,.18);background:#fff;
+    border-radius:6px;border:1.5px solid rgba(11,28,44,.18);background:#fff;
     font:inherit;font-size:var(--t-2nd);font-weight:600;color:var(--ink);
     text-decoration:none;cursor:pointer;text-align:center;line-height:1.2;padding:0 8px}
   .btn.primary{background:var(--high);border-color:var(--high);color:#fff;
@@ -559,8 +655,8 @@
      8: four numbered circles sat on the coast meaning nothing until tapped,
      while the association's own map has carried a bilingual key in the corner
      all along. */
-  .legend h3{margin:18px 0 8px;font-size:var(--t-2nd);font-weight:600;
-    letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .legend h3{margin:20px 0 8px;font-size:var(--t-min);font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .legend h3:first-child{margin-top:4px}
   .legend .row{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;
     padding:9px 0;border-top:1px solid #e7ecf1}
@@ -603,7 +699,7 @@
   /* ---------- offline / signal banner ---------- */
   .toast{position:absolute;left:var(--gut);right:var(--gut);z-index:1400;
     top:calc(env(safe-area-inset-top,0px) + 66px);
-    background:var(--ink);color:#fff;border-radius:12px;padding:12px 14px;
+    background:var(--ink);color:#fff;border-radius:6px;padding:12px 14px;
     font-size:var(--t-2nd);line-height:1.4;box-shadow:0 4px 18px rgba(0,0,0,.4);
     display:none}
   .toast.show{display:block}
@@ -616,12 +712,12 @@
   .update{position:absolute;left:var(--gut);right:var(--gut);z-index:1500;
     top:calc(env(safe-area-inset-top,0px) + 66px);
     display:none;align-items:center;gap:10px;
-    background:#fff;color:var(--ink);border-radius:12px;padding:10px 10px 10px 13px;
+    background:#fff;color:var(--ink);border-radius:6px;padding:10px 10px 10px 13px;
     box-shadow:0 4px 20px rgba(0,0,0,.45);font-size:var(--t-2nd);line-height:1.35}
   .update.show{display:flex}
   .update .msg{flex:1;font-weight:600}
   .update button{border:0;font:inherit;font-size:var(--t-2nd);font-weight:600;cursor:pointer;
-    border-radius:9px;min-height:44px;padding:0 13px}
+    border-radius:4px;min-height:44px;padding:0 13px}
   .update .go{background:var(--ink);color:#fff}
   .update .no{background:transparent;color:var(--muted);padding:0 8px;min-width:44px}
 
@@ -651,6 +747,7 @@
       box-shadow:2px 0 24px rgba(0,0,0,.35);
       display:flex;flex-direction:column;overflow:hidden;
       padding-bottom:var(--safe-pad)}
+    .rail-eyebrow{display:block;margin:2px var(--gut) 6px}
     .railhead{display:block;flex:0 0 auto;padding:16px var(--gut) 12px;
       border-bottom:1px solid #e7ecf1}
     .railhead .wm{display:block;font-size:var(--t-body);font-weight:600;
@@ -785,6 +882,7 @@
        these on first run and replaces them on a language switch, so this markup
        is the Spanish first paint and nothing more. Keep it in step with
        cardHTML() below; it is generated from the same anatomy by hand. -->
+  <h3 class="eyebrow rail-eyebrow" id="rail-beaches">Playas</h3>
   <div class="strip" id="picker">
     <button class="card" data-id="cg:zone/playa-negra" aria-current="false">
       <span class="nm">Playa Negra</span>
@@ -1295,6 +1393,19 @@ const T = {
          the last line on the sheet and the sentence after it is the one that
          has to be read. */
       trustNever:"Nadie de Caribbean Guard ha revisado esta playa.",
+      /* THE EYEBROWS. Adopted from safeswim.org.nz, 2026-09-17. Each one names
+         the QUESTION the block under it answers, the way theirs read CURRENT
+         WATER QUALITY / SURF LIFE SAVING / FORECAST / TIDE. They are topic
+         nouns, never a restatement of the sentence below: "SI TE ARRASTRA UNA
+         CORRIENTE" over a sentence that already opens with those words would
+         make the reader read the same clause twice, so the rip block takes
+         Caribbean Guard's own legend noun instead. */
+      ebWhatToDo:"Qué hacer",
+      ebRip:"Corrientes de resaca",
+      ebWhoSays:"Quién lo dice",
+      ebBeaches:"Playas",
+      /* The trigger, before the number. See .sos911. */
+      sosLead:"Si alguien está en peligro en el agua:",
       trustReviewed:(who,when)=>`Revisada por ${who}, ${when}.`,
       trustExpired:(who,when)=>`Revisada por ${who} en ${when}, hace más de un año.`,
       axisToday:"Hoy",
@@ -1453,6 +1564,12 @@ const T = {
       defer:"If there is a lifeguard or a flag on the beach, that beats this map. This map cannot see today's sea.",
       /* The head of the trust line. See trustLine(). */
       trustNever:"Nobody at Caribbean Guard has reviewed this beach.",
+      /* See the note on the Spanish block. */
+      ebWhatToDo:"What to do",
+      ebRip:"Rip currents",
+      ebWhoSays:"Who says so",
+      ebBeaches:"Beaches",
+      sosLead:"If someone in the water is in trouble:",
       trustReviewed:(who,when)=>`Reviewed by ${who}, ${when}.`,
       trustExpired:(who,when)=>`Reviewed by ${who} on ${when}, over a year ago.`,
       axisToday:"Today",
@@ -2687,12 +2804,18 @@ function openZone(z){
     return `
     <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
     <p class="sub">${z.sub[lang]}</p>
+    <span class="eyebrow">${t.ebWhatToDo}</span>
     ${statusPill(tierOf(z), t[c.class])}
     ${hoursLine(z)}
     <p class="why">${c.why[lang]}</p>
     ${rider}${caveats}
+    <span class="eyebrow">${t.ebRip}</span>
     <p class="escape"><span class="ic" aria-hidden="true">»</span>${t.escapeRip}</p>
-    <a class="btn primary call" href="tel:911">${t.call}</a>
+    <div class="sos911">
+      <span class="lead">${t.sosLead}</span>
+      <a class="dial" href="tel:911">${t.call}</a>
+    </div>
+    <span class="eyebrow">${t.ebWhoSays}</span>
     ${trustLine(z)}
     <div class="actions">
       <a class="btn" target="_blank" rel="noopener"
@@ -3355,6 +3478,7 @@ function setLang(l){
   document.getElementById("btn-en").setAttribute("aria-pressed",l==="en");
   document.getElementById("tagline").textContent = t.tagline;
   document.getElementById("rail-what").textContent = t.railWhat;
+  document.getElementById("rail-beaches").textContent = t.ebBeaches;
   document.getElementById("sos-word").textContent = t.sosWord;
   document.getElementById("locate-first-label").textContent = t.locateFirst;
   document.getElementById("legend-open").textContent = t.legendTitle;
