@@ -550,6 +550,54 @@
     letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
     line-height:1.3}
 
+  /* ---------- THE SEA STRIP ----------
+     Safeswim's column strip, which is the one component of theirs we had no
+     data for until now: glyph above, value below, one column per thing, on an
+     aligned grid, with the day label over the column.
+
+     IT IS NOT INSIDE A BEACH, AND THAT IS THE WHOLE DESIGN.
+     Open-Meteo's marine model resolves all five of our beaches to ONE grid cell
+     at 9.791664, -82.70833, between 15.5 and 17.1 km offshore, and returns
+     byte-identical wave height, period and direction for every one of them.
+     Playa Negra and Punta Uva are 8 km apart and get the same 1.32 m. The land
+     model is no finer: one cell for all five, 5 to 9 km inland.
+     So five per-beach blocks would print one number five times and invite a
+     reader to compare beaches on a distinction the model never made. That is
+     the coastline-tracing-the-reef failure again, one axis over: a plausible
+     number in a place it was never measured. One strip, over the whole list,
+     labelled for the whole coast.
+
+     GREY AND NOT RED WHEN STALE. An old reading is an absence, not a hazard,
+     and the absence vocabulary in this file is grey and amber by construction.
+     Past SEA_STALE_H it dims and says how old it is rather than disappearing:
+     "the sea is unknown" and "the sea is calm" must never look the same. */
+  .sea{display:block;margin:2px var(--gut) 10px;padding:11px 12px;
+    border-radius:6px;background:#21263D;color:#fff}
+  .sea[hidden]{display:none}
+  .sea .head{display:flex;align-items:baseline;gap:8px;margin:0 0 9px}
+  .sea .head .eyebrow{margin:0;color:rgba(255,255,255,.72)}
+  .sea .stamp{margin-left:auto;font-size:var(--t-min);color:rgba(255,255,255,.6);
+    font-weight:600;white-space:nowrap}
+  .sea .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .sea .col{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+  /* The arrow points the way the swell is TRAVELLING, which is 180 degrees off
+     the meteorological bearing the model reports: "from 56" means moving toward
+     236. The label says VIENE DE and the letters say NE, so the two agree and
+     the arrow is the picture of it rather than a second, contradictory claim. */
+  .sea .col:nth-child(3) .tile svg{transform:rotate(calc(var(--from) + 180deg))}
+  .sea .tile{display:grid;place-items:center;width:34px;height:34px;border-radius:4px;
+    background:rgba(255,255,255,.12);color:#fff}
+  .sea .tile svg{width:22px;height:22px;display:block}
+  .sea .val{font-size:var(--t-2nd);font-weight:700;line-height:1.2;white-space:nowrap}
+  .sea .lbl{font-size:var(--t-min);font-weight:600;letter-spacing:.04em;
+    text-transform:uppercase;color:rgba(255,255,255,.62);line-height:1.2;
+    text-align:center}
+  .sea .foot{margin:9px 0 0;font-size:var(--t-min);line-height:1.45;
+    color:rgba(255,255,255,.62)}
+  .sea .foot a{color:rgba(255,255,255,.8)}
+  .sea.stale{background:#2b2f3d}
+  .sea.stale .val,.sea.stale .tile{color:rgba(255,255,255,.62)}
+
   /* ---------- THE STATUS CARD ----------
      This is the Safeswim component I missed on the first pass, and Daniel was
      right to say so: I took their skeleton and left their skin. Their verdict is
@@ -937,6 +985,11 @@
        these on first run and replaces them on a language switch, so this markup
        is the Spanish first paint and nothing more. Keep it in step with
        cardHTML() below; it is generated from the same anatomy by hand. -->
+  <!-- THE SEA. Hidden until it has something true to say; see loadSea(). It sits
+       ABOVE the beach list and outside every beach on purpose, because the model
+       it comes from has one cell for this whole coast. -->
+  <section class="sea" id="sea" hidden></section>
+
   <h3 class="eyebrow rail-eyebrow" id="rail-beaches">Playas</h3>
   <div class="strip" id="picker">
     <button class="card" data-id="cg:zone/playa-negra" aria-current="false">
@@ -1455,6 +1508,15 @@ const T = {
          CORRIENTE" over a sentence that already opens with those words would
          make the reader read the same clause twice, so the rip block takes
          Caribbean Guard's own legend noun instead. */
+      seaTitle:"El mar hoy",
+      seaAll:"Modelo para toda esta costa, no para una playa.",
+      seaWave:"Ola", seaPeriod:"Periodo", seaFrom:"Viene de", seaTemp:"Agua",
+      seaModel:t=>`Modelo, ${t}`,
+      seaStale:h=>`Modelo de hace más de ${h} horas.`,
+      seaCredit:"Datos de Open-Meteo.com",
+      /* Eight points, in Spanish, because a bearing in degrees is not something
+         anybody on a beach can use. */
+      seaDirs:["N","NE","E","SE","S","SO","O","NO"],
       ebWhatToDo:"Qué hacer",
       ebRip:"Corrientes de resaca",
       ebWhoSays:"Quién lo dice",
@@ -1620,6 +1682,13 @@ const T = {
       /* The head of the trust line. See trustLine(). */
       trustNever:"Nobody at Caribbean Guard has reviewed this beach.",
       /* See the note on the Spanish block. */
+      seaTitle:"The sea today",
+      seaAll:"Model for this whole coast, not for one beach.",
+      seaWave:"Wave", seaPeriod:"Period", seaFrom:"From", seaTemp:"Water",
+      seaModel:t=>`Model, ${t}`,
+      seaStale:h=>`Model is more than ${h} hours old.`,
+      seaCredit:"Data by Open-Meteo.com",
+      seaDirs:["N","NE","E","SE","S","SW","W","NW"],
       ebWhatToDo:"What to do",
       ebRip:"Rip currents",
       ebWhoSays:"Who says so",
@@ -3542,6 +3611,7 @@ function setLang(l){
   document.getElementById("tagline").textContent = t.tagline;
   document.getElementById("rail-what").textContent = t.railWhat;
   document.getElementById("rail-beaches").textContent = t.ebBeaches;
+  renderSea();
   document.getElementById("sos-word").textContent = t.sosWord;
   document.getElementById("locate-first-label").textContent = t.locateFirst;
   document.getElementById("legend-open").textContent = t.legendTitle;
@@ -3793,6 +3863,124 @@ fetch("data/cg-hazards.geojson")
    The nudge to install fires when installing is possible and useful, and says
    something accurate when it is not.
    ============================================================ */
+
+/* ---------- THE SEA ----------
+   Open-Meteo's marine model, one request, for the whole coast.
+
+   WHY OPEN-METEO. It is the only source checked on 2026-09-17 that has a marine
+   product covering this point, needs no API key, and answers a browser directly
+   (access-control-allow-origin: *, verified with a real Origin header). A key
+   would have to ship in this file, world-readable, on a static site with no
+   backend to hide it behind. OpenWeatherMap has no marine product at any tier;
+   Surfline and surf-forecast publish no API and forbid derivative use; the US
+   National Weather Service returns InvalidPoint here because Costa Rica is
+   outside its domain; IMN Costa Rica publishes nothing machine-readable.
+   Its terms carry no safety-of-life prohibition, only an as-is disclaimer, and
+   the free tier is non-commercial, which is what Caribbean Guard is. CC-BY 4.0,
+   so the credit line is a licence condition and not a courtesy: do not remove it.
+
+   ONE REQUEST, NOT FIVE, AND NOT PER BEACH. See the .sea note in the stylesheet.
+
+   IT IS A FORECAST AND THE COPY SAYS SO. There is no wave OBSERVATION anywhere
+   near here: the nearest NDBC buoy is 42058 at about 830 km, and its wave height
+   field currently reads missing. Every number below is a model output, every
+   label says "modelo", and the timestamp is the model's own hour rather than the
+   time we fetched it. This page is allowed to say what a model predicts. It is
+   not allowed to say what the sea is doing, which is the same sentence at the
+   bottom of every beach sheet.
+
+   AND IT COMPUTES NO VERDICT. No provider publishes a rip current index for
+   Costa Rica, so a swim / no-swim line here would be Caribbean Guard asserting a
+   threshold that nobody at Caribbean Guard has signed. Daniel's ruling
+   2026-09-17: show the numbers, let the four tiers carry the instruction. When
+   the guards give us wave heights they actually close a beach at, that belongs
+   on the TODAY axis with a name on it, not in this strip. */
+const SEA_URL = "https://marine-api.open-meteo.com/v1/marine" +
+  "?latitude=9.647&longitude=-82.727" +
+  "&current=wave_height,wave_period,wave_direction,sea_surface_temperature" +
+  "&timezone=America%2FCosta_Rica";
+const SEA_STALE_H = 3;
+const seaEl = document.getElementById("sea");
+let seaData = null;
+
+function seaDir(deg){
+  const d = T[lang].seaDirs;
+  return d[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
+function renderSea(){
+  if(!seaData){ seaEl.hidden = true; return; }
+  const t = T[lang], c = seaData;
+  /* The model's own hour, parsed as LOCAL. Open-Meteo returns "2026-09-17T12:00"
+     with no zone because we asked for America/Costa_Rica, and new Date() on a
+     bare string like that is local in every browser that matters. Appending "Z"
+     here, or asking for UTC, would print a reading three hours off on the one
+     line whose whole job is saying when. */
+  const at = new Date(c.time.replace(" ", "T"));
+  const ageH = (Date.now() - at.getTime()) / 3600000;
+  const stale = ageH > SEA_STALE_H;
+  const hhmm = at.toLocaleTimeString(lang === "es" ? "es-CR" : "en-GB",
+                                     {hour:"2-digit", minute:"2-digit"});
+  /* INLINE SVG, NOT GLYPHS, AND THIS FILE ALREADY KNEW WHY.
+     The first version of this drew the four tiles with the characters
+     ≋ ↻ ↑ °. Every one of the first three is outside the latin subset
+     (U+0000 to U+024F) that web/fonts/ self-hosts, so on a device with no
+     system fallback for them they render as tofu boxes -- the exact failure
+     that is argued at length over the » in the escape sentence and the ø and ½
+     in the absence marks. A mark this page draws must come from our own bytes.
+     Drawn rather than lettered, they also match Safeswim's tiles, which are
+     icons on a ground and never text. */
+  const ICON = {
+    wave: `<path d="M2 13c2.2 0 2.2-2.6 4.4-2.6S8.6 13 10.8 13 13 10.4 15.2 10.4 17.4 13 19.6 13"/>
+           <path d="M2 17.4c2.2 0 2.2-2.6 4.4-2.6s2.2 2.6 4.4 2.6 2.2-2.6 4.4-2.6 2.2 2.6 4.4 2.6"/>`,
+    period: `<path d="M18.2 7.4A7.2 7.2 0 1 0 19.6 12"/><path d="M19.6 4.6v3.2h-3.2"/>
+             <path d="M11 7.8V12l2.8 1.8"/>`,
+    from: `<path d="M11 18.6V5.6"/><path d="M6.4 10.2 11 5.6l4.6 4.6"/>`,
+    temp: `<path d="M13.4 13.2V5.4a2.4 2.4 0 1 0-4.8 0v7.8a4 4 0 1 0 4.8 0"/>
+           <path d="M11 9.6v4.8"/>`
+  };
+  const col = (kind, val, lbl) =>
+    `<div class="col"><span class="tile" aria-hidden="true"><svg viewBox="0 0 22 22"
+       fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+       stroke-linejoin="round">${ICON[kind]}</svg></span>
+       <span class="val">${val}</span><span class="lbl">${lbl}</span></div>`;
+  seaEl.className = "sea" + (stale ? " stale" : "");
+  seaEl.hidden = false;
+  seaEl.innerHTML = `
+    <div class="head">
+      <span class="eyebrow">${t.seaTitle}</span>
+      <span class="stamp">${t.seaModel(hhmm)}</span>
+    </div>
+    <div class="cols" style="--from:${Math.round(((c.wave_direction % 360) + 360) % 360)}deg">
+      ${col("wave",   c.wave_height.toFixed(1) + " m", t.seaWave)}
+      ${col("period", Math.round(c.wave_period) + " s", t.seaPeriod)}
+      ${col("from",   seaDir(c.wave_direction), t.seaFrom)}
+      ${col("temp",   Math.round(c.sea_surface_temperature) + "°C", t.seaTemp)}
+    </div>
+    <p class="foot">${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaAll}
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener">${t.seaCredit}</a></p>`;
+}
+
+/* NETWORK-FIRST WITH A CACHED FALLBACK, and no precache entry.
+   The service worker must never hold this: a precached sea state would be
+   served from disk on a visit weeks later and would look current. The fetch is
+   allowed to fail silently and the strip simply does not render, because a
+   coast with no sea strip reads as "no reading", which is true, while a strip
+   with an old number reads as a reading, which is not. That is the same
+   argument as the geometry fetch above, inverted: geometry failing is worth
+   shouting about because a coast with no strokes looks safe; the sea failing is
+   not, because the four tiers do not depend on it. */
+fetch(SEA_URL, {cache:"no-store"})
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(d => {
+    const c = d && d.current;
+    if(!c || c.wave_height == null){ throw new Error("no marine values"); }
+    seaData = c;
+    renderSea();
+    measureDock();
+  })
+  .catch(err => console.warn("[cg] sea state did not load:", err));
+
 const SW_SUPPORTED = "serviceWorker" in navigator;
 const standalone = () => window.matchMedia("(display-mode: standalone)").matches ||
                          navigator.standalone === true;

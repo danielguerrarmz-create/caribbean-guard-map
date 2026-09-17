@@ -256,3 +256,75 @@ the same ruling. So the tier colour lives in the glyph tile and the left accent
 bar at full strength, and the ground stays a constant that means nothing.
 
 This is adopting one of Safeswim's two treatments rather than softening either.
+
+---
+
+## 9. The sea strip, and the source behind it
+
+Added 2026-09-17 after Daniel asked for per-beach weather and a live
+swim / no-swim condition. **Neither is possible honestly here**, and the
+measurements are why.
+
+### The source
+
+| | Open-Meteo Marine | OpenWeatherMap | Surfline | surf-forecast | api.weather.gov |
+|---|---|---|---|---|---|
+| marine product | yes | **none at any tier** | yes | yes | yes |
+| covers 9.647, -82.727 | yes, real values | n/a | yes | yes | **`InvalidPoint`**, US only |
+| API key | **none** | required, would ship in this file | no public API | no API | none |
+| CORS from a static page | `allow-origin: *`, verified | - | - | - | - |
+| free limits | 600/min, 10k/day, 300k/mo | - | - | - | - |
+| licence | CC-BY 4.0, credit required | proprietary | proprietary, forbids derivative use | proprietary | public domain |
+| forbids safety-of-life use | no, as-is disclaimer only | unknown | - | - | no |
+
+Open-Meteo, therefore. A key cannot be used at all: this is a static site with
+no backend, so any key ships world-readable in the page source.
+
+### Why the strip is not inside a beach
+
+Queried on 2026-09-17, one request per beach:
+
+| | marine cell | land cell |
+|---|---|---|
+| distinct cells across our five beaches | **1** | **1** |
+| cell position | 9.791664, -82.70833 | 9.595782, -82.709045 |
+| distance from the beach it describes | 15.5 to 17.1 km offshore | 5.0 to 9.1 km inland |
+| values returned | byte-identical | byte-identical |
+
+Playa Negra and Punta Uva are 8 km apart and both get 1.32 m from a cell 16 km
+out to sea. Five per-beach blocks would print one number five times and invite a
+reader to compare beaches on a distinction the model never made. That is the
+same fault as the coastline that traced the reef: a plausible number in a place
+it was never measured.
+
+So: **one strip, over the whole list, labelled for the whole coast.**
+
+### Three rules this strip obeys
+
+1. **It is a forecast and it says so.** There is no wave observation near here;
+   the closest NDBC buoy is 42058 at about 830 km and its wave-height field
+   currently reads missing. The label is `Modelo` and the timestamp is the
+   model's own hour, not our fetch time.
+2. **It computes no verdict.** No provider publishes a rip-current index for
+   Costa Rica. A swim / no-swim line would be Caribbean Guard asserting a
+   threshold nobody at Caribbean Guard has signed. Daniel's ruling: show the
+   numbers, let the four tiers carry the instruction.
+3. **It is never precached.** `sw.js` already ignores cross-origin requests, so
+   this passes straight through. A precached sea state would be served from disk
+   weeks later and would look current. When the fetch fails the strip does not
+   render at all, because "no reading" is true and an old number is not.
+
+### The bug worth remembering
+
+The first version drew the four tiles with the characters wave-tilde, clockwise-
+arrow, up-arrow and degree. Three of the four are outside the U+0000 to U+024F
+latin subset that `web/fonts/` self-hosts, so on a device with no system
+fallback they render as tofu boxes. This file argues that exact point twice
+already, over the guillemet in the escape sentence and the slashed-o in the
+absence marks, and the rule was still broken the first time a new component
+needed an icon.
+
+They are inline SVG now, which is also what Safeswim's tiles are: icons on a
+ground, never text. The direction arrow rotates to the reported bearing plus
+180 degrees, because "from 56" means travelling toward 236, and an arrow that
+points the wrong way is a second claim contradicting the label beside it.
