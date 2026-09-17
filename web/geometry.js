@@ -71,7 +71,18 @@
      HALO is weight * 1.6, and nothing else. It used to be weight * 2.4 + 6, and
      that constant 6 px is 113 m at z13: a bulletin halo wider than the beach it
      sat under. A halo that scales with its stroke cannot outgrow it. */
-  var TARGET_M = 30;
+  /* HALVED ON 2026-09-17, and the ground solve is why it needed halving.
+     TARGET_M was 30 and K_MAX was 1.3, which put the `high` stroke at 14.3 px
+     at z17. A 14 px line at 0.89 m/px is 13 m of ground: a red band as wide as
+     half the beach, drawn on top of the imagery the reader is trying to see
+     through it. Daniel's finding was "all linework needs to be simplified", and
+     the wandering trace was only half of that; the other half is that the line
+     was too heavy to read as a line at all.
+     TARGET_M is now 14, so the heaviest stroke describes 14 m of water rather
+     than 30, and K_MAX is 1.0, so nothing is ever drawn heavier than its tier
+     weight. `high` lands at 7 px at z17 against 14.3, and the ranking between
+     the three tiers and the dash textures below are all unchanged. */
+  var TARGET_M = 14;
   var MIN_WEIGHT = 2;        // a 1.6 px line on a 2x DPR phone in sun is not there
   var MIN_VISIBLE_GAP = 3;   // px of actual daylight, after round caps eat theirs
   var HALO_K = 1.6;
@@ -82,12 +93,12 @@
        ratio:  dash length / gap length. null is solid.
        gapK:   nominal gap in units of stroke weight, so the texture stays
                proportional to the line when the floor is not binding. */
-    high: { weight: 11, ratio: null, gapK: 0 },
-    moderate: { weight: 8, ratio: 1.6, gapK: 1.25 },
-    low: { weight: 5, ratio: 0.25, gapK: 1.6 }
+    high: { weight: 7, ratio: null, gapK: 0 },
+    moderate: { weight: 5.5, ratio: 1.6, gapK: 1.25 },
+    low: { weight: 4, ratio: 0.25, gapK: 1.6 }
   };
 
-  var K_MIN = 0.22, K_MAX = 1.3;
+  var K_MIN = 0.3, K_MAX = 1.0;
 
   function round2(n) { return Math.round(n * 100) / 100; }
 

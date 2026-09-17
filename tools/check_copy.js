@@ -149,19 +149,53 @@ for (const label of labels) {
    claims to be the last word. */
 const SHEETS = ["openZone", "openVoid", "openPost", "openAnnot", "openLegend"];
 
+/* A renderer may satisfy this DIRECTLY, by interpolating t.defer itself, or
+   INDIRECTLY, by calling trustLine(), which is the one line the beach sheet was
+   cut down to on 2026-09-17 and which carries the sentence word for word.
+
+   The indirect route is only allowed because trustLine() is checked separately,
+   immediately below, and by the same regex. Without that second check this
+   would be a hole exactly the size of the rule: "openZone calls a function
+   named trustLine" is not evidence that anything renders the sentence. Any
+   future helper takes the same deal -- add it here AND check its body. */
+function rendersDefer(body) {
+  return /\bt\.defer\b|\bT\[lang\]\.defer\b/.test(body);
+}
+
+/* ANCHORED ON THE WHOLE NAME, not on a prefix. `live.indexOf("function " +
+   name)` was the version this had, and it matched "function trustLineX" when
+   asked for trustLine: a mutation that renamed the definition and left the call
+   site pointing at nothing still passed, because the checker found the renamed
+   function and read the sentence out of it. A check that cannot go red on the
+   fault it exists for is not a check. The boundary is `(`, optionally spaced. */
+function bodyOf(name) {
+  const at = new RegExp("function\\s+" + name + "\\s*\\(").exec(live);
+  if (!at) return null;
+  const start = at.index;
+  /* To the next top-level function, which is where this file's sheet renderers
+     end. Good enough to scope one function without parsing JavaScript. */
+  const next = live.indexOf("\nfunction ", start + 1);
+  return live.slice(start, next === -1 ? live.length : next);
+}
+
+const trust = bodyOf("trustLine");
+if (trust === null) {
+  fail("deferral",
+    "trustLine() not found. The beach sheet delegates the deferral sentence to " +
+    "it; if it was renamed this checker has to be told.");
+} else if (!rendersDefer(trust)) {
+  fail("deferral", "trustLine() does not render the deferral sentence.");
+}
+
 for (const name of SHEETS) {
-  const start = live.indexOf("function " + name);
-  if (start === -1) {
+  const body = bodyOf(name);
+  if (body === null) {
     fail("deferral",
       `${name}() not found. It was renamed or removed; this checker has to be ` +
       "told, because a sheet it cannot find is a sheet it cannot check.");
     continue;
   }
-  /* To the next top-level function, which is where this file's sheet renderers
-     end. Good enough to scope one function without parsing JavaScript. */
-  const next = live.indexOf("\nfunction ", start + 1);
-  const body = live.slice(start, next === -1 ? live.length : next);
-  if (!/\bt\.defer\b|\bT\[lang\]\.defer\b/.test(body)) {
+  if (!rendersDefer(body) && !(trust !== null && /\btrustLine\s*\(/.test(body))) {
     fail("deferral", `${name}() does not render the deferral sentence.`);
   }
 }

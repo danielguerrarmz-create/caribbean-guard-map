@@ -30,28 +30,53 @@
      A fallback would put the CDN back in the threat model to buy nothing: if the
      local copy is shipped anyway, ship only the local copy. -->
 <link rel="stylesheet" href="vendor/leaflet.css">
-<!-- Atkinson Hyperlegible, self hosted, Regular and Bold only.
-     Designed by the Braille Institute for low vision readers: the letterforms
-     that collapse into each other in ordinary grotesques (I l 1, O 0, b d p q)
-     are drawn differently on purpose. Hat 4 is mildly presbyopic on a budget
-     Android in midday sun, which is the same failure mode as low vision.
+<!-- Inter, self hosted, 400 / 600 / 800, latin subset, 71 KB in total.
+     It replaced Atkinson Hyperlegible on 2026-09-17. Atkinson is a better
+     letterform-by-letterform font for a low vision reader, and it was chosen
+     for that; it shipped in two weights, and two weights cannot build a
+     hierarchy across six levels. Daniel's finding was that the page had none.
+     Inter is a text-first grotesque with a tall x-height and open apertures,
+     which is most of what the low vision case actually needs at 15 px in
+     midday sun, and three weights let every level carry a weight signal as
+     well as a size.
      Self hosted for the same reason Leaflet is: this map must work with no
      signal, and a Google Fonts request cannot be precached by our worker.
-     Preloaded because font-display:swap would otherwise repaint every
-     instruction on the page a second after it is first read.
-     LATIN SUBSET ONLY, 17 KB each. It covers U+0000-00FF, which is every
-     character Spanish and English need, and it is the difference between 34 KB
-     and 180 KB on the 2-bar Slow 3G link hat 4 is on. -->
-<link rel="preload" href="fonts/AtkinsonHyperlegible-Regular.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/AtkinsonHyperlegible-Bold.woff2" as="font" type="font/woff2" crossorigin>
+     Only the two weights the FIRST PAINT uses are preloaded. 800 draws the
+     instruction on every card, 600 draws every beach name; 400 draws body copy
+     that is below the fold in the dock and inside a sheet that is not open yet,
+     so preloading it would compete for the same connection as the two that are
+     on screen. -->
+<link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  /* INTER, THREE WEIGHTS, SELF-HOSTED, LATIN SUBSET.
+     It replaces Atkinson Hyperlegible, which shipped at 400 and 700 only.
+     Daniel's finding 2026-09-17 was "no clear hierarchy in any of the text
+     areas", and two weights is half of why: with only regular and bold, a name,
+     an instruction and a caption can differ in SIZE alone, and this page's
+     sizes ran 22 / 18 / 15 / 13 / 12, a 1.47x spread from the largest thing on
+     the sheet to the body under it. Nothing could dominate anything.
+     Three weights (400 / 600 / 800) plus the wider scale below give every level
+     two signals instead of one.
+     The latin subset is U+0000 to U+024F, which carries every accent Spanish
+     needs and the inverted marks, so the ES copy renders from our own bytes and
+     never falls back. Still no glyph outside it may be used anywhere on this
+     page: see the ø / ½ / » notes below, which stay true.
+     71 KB across three files against 35 KB across two. That is 36 KB more in
+     the service worker's CRITICAL precache, which is 36 KB somebody waits for
+     on a two-bar signal before the map will save. Accepted by Daniel on
+     2026-09-17 as the price of a readable hierarchy. */
   @font-face{
-    font-family:"Atkinson Hyperlegible"; font-style:normal; font-weight:400;
-    font-display:swap; src:url(fonts/AtkinsonHyperlegible-Regular.woff2) format("woff2");
+    font-family:"Inter"; font-style:normal; font-weight:400;
+    font-display:swap; src:url(fonts/inter-latin-400-normal.woff2) format("woff2");
   }
   @font-face{
-    font-family:"Atkinson Hyperlegible"; font-style:normal; font-weight:700;
-    font-display:swap; src:url(fonts/AtkinsonHyperlegible-Bold.woff2) format("woff2");
+    font-family:"Inter"; font-style:normal; font-weight:600;
+    font-display:swap; src:url(fonts/inter-latin-600-normal.woff2) format("woff2");
+  }
+  @font-face{
+    font-family:"Inter"; font-style:normal; font-weight:800;
+    font-display:swap; src:url(fonts/inter-latin-800-normal.woff2) format("woff2");
   }
   :root{
     /* Two tiers on purpose.
@@ -94,19 +119,31 @@
     /* 8 px grid and a 16 px gutter, used everywhere below rather than eyeballed
        values, so a card, a chip and a sheet all sit on the same rhythm. */
     --gut:16px;
-    /* THE TYPE SCALE. Five sizes, no sixth.
-       22 sheet heading / 18 instruction / 15 names and body / 13 secondary /
-       12 chips, and 12 is the FLOOR. Hat 4's first blocker was that the
-       instruction rendered at 11.5 px while the optional prose rendered at
-       14.5: what you must obey was smaller than what you may skip. Nothing on
-       this page may be smaller than --t-min. */
-    --t-h2:22px; --t-instr:18px; --t-body:15px; --t-2nd:13px; --t-min:12px;
+    /* THE TYPE SCALE. Six sizes, no seventh, and 12 px is still the FLOOR.
+       30 sheet heading / 21 instruction / 17 beach name / 15 body /
+       13 secondary / 12 the floor.
+
+       WHAT CHANGED AND WHY. It was 22 / 18 / 15 / 13 / 12. The heading was
+       1.22x the instruction and 1.47x the body, so the three things a reader
+       has to rank -- where am I, what do I do, why -- arrived almost the same
+       size, and the page had no dominant element at any breakpoint. Steps of
+       1.43 / 1.24 / 1.13 / 1.15 give the top of the scale room to be the top of
+       it without pushing the body below the floor.
+
+       SIZE IS NEVER THE ONLY SIGNAL. Every level also carries a weight and a
+       colour: 800 ink for the instruction, 600 ink for names, 400 ink for body,
+       400 muted for secondary. Hat 4's original blocker stands and is stricter
+       now: what you must obey is the largest AND heaviest thing in its
+       container, and nothing optional may outrank it on either. */
+    --t-h2:30px; --t-instr:21px; --t-name:17px; --t-body:15px;
+    --t-2nd:13px; --t-min:12px;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;
-    font-family:"Atkinson Hyperlegible","Helvetica Neue",-apple-system,
-                BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+                "Helvetica Neue",sans-serif;
     font-size:var(--t-body); line-height:1.3;
+    -webkit-font-smoothing:antialiased;
     color:var(--ink); background:var(--ink)}
   #map{position:absolute;inset:0}
 
@@ -135,16 +172,16 @@
   /* Place names, so the whole-coast view can be read without tapping anything.
      No box and no background: a plate over satellite imagery hides the thing the
      label is pointing at. A shadow does the same work and costs no area. */
-  .lbl{background:none;border:0;box-shadow:none;font-weight:700;
+  .lbl{background:none;border:0;box-shadow:none;font-weight:600;
     letter-spacing:.02em;white-space:nowrap;pointer-events:none;
     text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.7)}
   .lbl.zone{color:#fff;font-size:12.5px}
-  .lbl.place{color:#cfe0ee;font-size:var(--t-min);font-weight:700;letter-spacing:.06em;
+  .lbl.place{color:#cfe0ee;font-size:var(--t-min);font-weight:600;letter-spacing:.06em;
     text-transform:uppercase;opacity:.9}
   .lbl.sea{color:#9fc4e0;font-size:var(--t-min);font-weight:400;letter-spacing:.22em;
     text-transform:uppercase;opacity:.75}
   .leaflet-control-scale-line{background:rgba(11,28,44,.72);border-color:rgba(255,255,255,.5);
-    color:#e8f1f7;font-weight:700;font-size:var(--t-min);padding:3px 7px}
+    color:#e8f1f7;font-weight:600;font-size:var(--t-min);padding:3px 7px}
 
   /* ---------- top bar ---------- */
   .topbar{position:absolute;top:0;left:0;right:0;z-index:1000;
@@ -163,7 +200,7 @@
      controls on the right are the ones a reader needs in a hurry, and the
      tagline is the only thing on this bar that nothing depends on. */
   .brand{pointer-events:auto;text-decoration:none;
-    font-weight:700;letter-spacing:.02em;color:#fff;font-size:var(--t-body);
+    font-weight:600;letter-spacing:.02em;color:#fff;font-size:var(--t-body);
     line-height:1.15;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;
     min-width:0;overflow:hidden;
     padding:4px 0;min-height:44px;display:flex;flex-direction:column;justify-content:center}
@@ -186,7 +223,7 @@
     border:1px solid rgba(255,255,255,.28);border-radius:999px;overflow:hidden;
     backdrop-filter:blur(8px)}
   .lang button{appearance:none;border:0;background:transparent;color:#fff;font:inherit;
-    font-size:var(--t-2nd);font-weight:700;padding:0 14px;min-height:44px;min-width:44px;
+    font-size:var(--t-2nd);font-weight:600;padding:0 14px;min-height:44px;min-width:44px;
     cursor:pointer}
   .lang button[aria-pressed="true"]{background:#fff;color:var(--ink)}
 
@@ -194,11 +231,11 @@
   /* The digits carry a word now. Hat 1 does not know Costa Rica uses 911 rather
      than 112, and a bare red badge beside a language toggle reads as decoration. */
   .sos{pointer-events:auto;display:inline-flex;align-items:center;gap:7px;
-    background:var(--high);color:#fff;text-decoration:none;font-weight:700;
+    background:var(--high);color:#fff;text-decoration:none;font-weight:600;
     font-size:var(--t-2nd);letter-spacing:.02em;
     padding:0 14px;min-height:44px;border-radius:999px;
     box-shadow:0 3px 12px rgba(0,0,0,.4)}
-  .sos b{font-size:var(--t-body);font-weight:700;letter-spacing:.04em}
+  .sos b{font-size:var(--t-body);font-weight:600;letter-spacing:.04em}
   .sos .word{text-transform:uppercase;font-size:var(--t-min);letter-spacing:.06em;
     white-space:nowrap}
   .lang,.sos{flex:0 0 auto}
@@ -221,7 +258,7 @@
     box-shadow:0 3px 12px rgba(0,0,0,.3)}
   .dockrow .btn-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
     background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
-    color:#fff;font:inherit;font-size:var(--t-min);font-weight:700;
+    color:#fff;font:inherit;font-size:var(--t-min);font-weight:600;
     letter-spacing:.02em;border-radius:999px;padding:0 12px;min-height:32px;cursor:pointer}
   .dockrow .txt{flex:1;min-width:0;font-size:var(--t-min);line-height:1.3;font-weight:400;
     background:none;border:0;color:inherit;font-family:inherit;text-align:left;
@@ -230,7 +267,7 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* "2 de 6". Hat 1 and hat 2 both stopped at card two because a scroller with
      both scrollbars hidden does not announce its own length. */
-  .counter{flex:0 0 auto;font-size:var(--t-min);font-weight:700;letter-spacing:.02em;
+  .counter{flex:0 0 auto;font-size:var(--t-min);font-weight:600;letter-spacing:.02em;
     font-variant-numeric:tabular-nums;opacity:.9;padding:0 2px}
   .dockrow .rf{flex:0 0 auto;width:34px;height:32px;border:0;border-radius:8px;
     background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font:inherit;
@@ -247,7 +284,7 @@
      icon, because by then the icon has a meaning. */
   .locate-first{display:none;width:calc(100% - var(--gut) * 2);margin:0 var(--gut) 8px;
     min-height:48px;border-radius:12px;border:0;background:#fff;color:var(--ink);
-    font:inherit;font-size:var(--t-body);font-weight:700;cursor:pointer;
+    font:inherit;font-size:var(--t-body);font-weight:600;cursor:pointer;
     box-shadow:0 3px 14px rgba(0,0,0,.34);align-items:center;justify-content:center;gap:9px}
   .locate-first.show{display:flex}
   .locate-first svg{width:20px;height:20px}
@@ -273,7 +310,8 @@
     border:2px solid transparent;box-shadow:0 3px 14px rgba(0,0,0,.34);cursor:pointer;
     text-align:left;font:inherit;color:var(--ink);display:block}
   .card[aria-current="true"]{border-color:var(--ink)}
-  .card .nm{display:block;font-size:var(--t-body);font-weight:700;line-height:1.2;
+  .card .nm{display:block;font-size:var(--t-name);font-weight:600;line-height:1.2;
+    letter-spacing:-.01em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   /* ---------- pill kind 1 of 2: the status pill ----------
@@ -287,12 +325,28 @@
      The bar takes the -text token, which clears 3:1 on this ground; the SWATCH
      next to it draws the real map stroke in the real map colour, which is its
      documented job. They differ in hue only for moderate, and that is the
-     honest version: one is chrome, the other is a sample. */
-  .pill{display:flex;align-items:center;gap:10px;margin-top:8px;
-    border-left:6px solid var(--tier);background:#f2f5f8;
-    border-radius:3px 12px 12px 3px;padding:10px 12px 10px 10px;
-    font-size:var(--t-instr);font-weight:700;line-height:1.2;
-    letter-spacing:.02em;text-transform:uppercase;color:var(--ink)}
+     honest version: one is chrome, the other is a sample.
+
+     THE TINTED BOX IS GONE. It was `background:#f2f5f8` behind every
+     instruction, on a card that is already a white box on satellite imagery.
+     Daniel's finding 2026-09-17: "I do not like that there is a blue box
+     holding each of the linework types." He is right about more than the
+     colour. A panel inside a panel is a second container drawn around content
+     that was already contained, so the eye sorts boxes before it reads words,
+     and the box around the instruction looked exactly like the box around the
+     caption. What survives is the part that carries meaning: the tier colour as
+     a bar on the left, and the swatch, which is a sample of the real stroke.
+     The instruction now sits on the card's own ground at 21 px / 800.
+
+     THE SOLID LEFT BAR WENT WITH IT, and that is the de-duplication rather than
+     a second deletion. The bar and the swatch were the same colour token saying
+     the same thing 10 px apart; the swatch says it AND carries the weight and
+     the dash, which is the part that survives colour blindness and is the only
+     reason a stroke sample is on a card at all. One tier mark per instruction. */
+  .pill{display:flex;align-items:center;gap:11px;margin-top:7px;
+    background:none;border:0;border-radius:0;padding:0;
+    font-size:var(--t-instr);font-weight:800;line-height:1.15;
+    letter-spacing:-.01em;text-transform:uppercase;color:var(--ink)}
   /* Three, and only three. There were three more, for the void card, a station
      and a neutral title, which is how a component that means "do this" came to
      carry nouns. Those are titleChip() now. */
@@ -306,21 +360,18 @@
      own facts said the post closes at 17:00, so the only instruction on screen
      could not be obeyed. Ink, never red: a closed post is not a hazard tier. */
   .hours{display:block;margin-top:6px;font-size:var(--t-2nd);line-height:1.35;color:var(--ink)}
-  .hours b{font-weight:700}
+  .hours b{font-weight:600}
 
-  /* ---------- pill kind 2 of 2: the provenance chip ----------
-     12 px, which is the floor. Hat 4, finding 2: these shipped at 9.5 px, so the
-     "unreviewed must look unreviewed" doctrine sat at a size he could not
-     resolve and every beach read as reviewed. Outline and neutral, never a
-     hazard colour, so a missing verdict can never be read as a verdict. */
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  /* THE OUTLINE CHIP. It is the only pill kind left besides the instruction,
+     and it is neutral metadata by construction: outline, ink text, never a
+     hazard colour, so a noun can never be read as an order. A rescue station's
+     name, a hazard's noun and "zona marcada, sin definir" all take it, with the
+     map's own mark beside them, which makes the sheet a key for whatever was
+     tapped. Its two-chip sibling, the provenance chip, was deleted on
+     2026-09-17 with the rest of the absence surfaces; see trustLine(). */
   .chip{display:inline-flex;align-items:center;gap:5px;font-size:var(--t-min);
-    font-weight:700;letter-spacing:.01em;padding:3px 9px;border-radius:999px;
+    font-weight:600;letter-spacing:.01em;padding:3px 9px;border-radius:999px;
     border:1px solid;white-space:nowrap;line-height:1.35}
-  .chip.never,.chip.expired{color:var(--gap);background:var(--gap-bg);border-color:var(--gap-line)}
-  .chip.unsurveyed{color:var(--void);background:var(--void-bg);border-color:var(--void-line)}
-  .chip.today{color:#fff;background:var(--today);border-color:var(--today)}
-  .chip .mk{font-size:var(--t-2nd);line-height:1}
   /* THE TITLE CHIP IS THE SAME COMPONENT, ONE SIZE UP, AND THAT IS THE POINT.
      The doctrine allows exactly two pill kinds: the status pill, which is an
      INSTRUCTION, and the outline chip, which is neutral metadata. A rescue
@@ -342,7 +393,7 @@
   .card.void{background:repeating-linear-gradient(135deg,#eef1f4 0 7px,#e3e8ed 7px 14px);
     border:2px dashed var(--void-line);box-shadow:0 3px 14px rgba(0,0,0,.2)}
   .card.void .nm{color:var(--void)}
-  .card.void .vd{display:block;margin-top:8px;font-size:var(--t-body);font-weight:700;
+  .card.void .vd{display:block;margin-top:8px;font-size:var(--t-body);font-weight:600;
     line-height:1.3;color:var(--void)}
 
   /* ---------- locate button ---------- */
@@ -364,16 +415,22 @@
   .fab.on svg{color:#1565c0}
 
   /* ---------- bottom sheet, three stops ----------
-     PEEK is the opening state and it is sized so the name, the instruction and
-     who has reviewed it are all above the fold with nothing to scroll. Hat 1
-     closed the old sheet because the top 40% of it was an apology. HALF is for
-     reading the why and the facts. FULL is for the deferral and the actions.
-     33vh rather than the specified 32: measured on a 390x844 phone, 32vh cuts
-     the provenance line in half and the point of PEEK is that it does not. */
+     PEEK is the opening state and it is sized so that everything a person on
+     the sand has to act on is above the fold with nothing to scroll: the name,
+     the instruction, the one sentence of why, the escape sentence and the whole
+     911 button. Hat 1 closed the old sheet because the top 40% of it was an
+     apology. HALF and FULL are for the trust line and the two secondary actions.
+
+     42vh, up from 33vh on 2026-09-17. 33 was measured against the old sheet,
+     where PEEK had to clear the name, the instruction and the provenance line
+     and the actions were three screens down. The sheet is a sign now: it is
+     SHORTER overall, but the 911 button moved up into the opening view, and at
+     33vh on a 390x844 phone that button was cut through the middle. A control
+     you can see half of is a control you are not sure you can press. */
   .sheet{position:absolute;left:0;right:0;bottom:0;z-index:1200;
     background:var(--paper);border-radius:var(--sheet-r) var(--sheet-r) 0 0;
     box-shadow:0 -6px 28px rgba(0,0,0,.35);
-    height:33vh;
+    height:42vh;
     transform:translateY(102%);
     transition:transform .28s cubic-bezier(.32,.72,0,1),height .28s cubic-bezier(.32,.72,0,1);
     display:flex;flex-direction:column;padding-bottom:var(--safe-pad)}
@@ -392,8 +449,8 @@
      target is not a target. */
   .draghead{flex:0 0 auto;padding-bottom:4px;cursor:grab;touch-action:none}
   .sheet-body{overflow-y:auto;padding:4px var(--gut) 24px;-webkit-overflow-scrolling:touch}
-  .sheet h2{margin:4px 0 2px;font-size:var(--t-h2);line-height:1.2;font-weight:700;
-    padding-right:56px}
+  .sheet h2{margin:4px 0 1px;font-size:var(--t-h2);line-height:1.08;font-weight:800;
+    letter-spacing:-.025em;padding-right:56px}
   /* THE HEADING TAKES FOCUS AND DRAWS NO RING, and those are two decisions.
      Moving focus here is what makes the sheet announce itself: hat 4 tapped a
      card, the panel opened and TalkBack said nothing at all. That is the part
@@ -407,94 +464,76 @@
      global :focus-visible outline, which is the thing hat 4 asked for. */
   .sheet h2[tabindex="-1"]:focus,
   .sheet h2[tabindex="-1"]:focus-visible{outline:none}
-  .sheet .sub{margin:0 0 4px;color:var(--muted);font-size:var(--t-2nd);line-height:1.35}
-  .why{background:#f4f6f8;border-left:4px solid var(--ink);border-radius:0 10px 10px 0;
-    padding:12px 14px;font-size:var(--t-body);line-height:1.45;margin:0 0 16px}
+  .sheet .sub{margin:0 0 14px;color:var(--muted);font-size:var(--t-2nd);line-height:1.35;
+    font-weight:600;letter-spacing:.01em}
 
-  /* ---------- the two axes, rendered so they cannot be confused ----------
-     beaches.ie displays a standing classification and a current reading side by
-     side and labels both, and encodes them differently on purpose. Same here.
-     CHARACTER is the instruction pill and it carries the map stroke. TODAY is a
-     violet-tagged line or block with a name and a timestamp on it, and it never
-     borrows a hazard colour.
+  /* THE WHY LOST ITS BOX TOO, for the same reason the card's instruction did.
+     It was a grey panel with an ink bar, inside a white sheet, above a grey
+     caveat panel with an amber bar, above a grey provenance panel with an amber
+     border. Five panels deep, the reader sorts containers instead of reading
+     sentences. One short sentence in plain ink at body size needs no container
+     to be found: it is directly under the largest words on the sheet. */
+  .why{margin:0 0 14px;font-size:var(--t-body);line-height:1.5;color:var(--ink)}
 
-     THE EMPTY TODAY IS NOW ONE LINE. Hat 1 and hat 5 both stopped at it: the
-     most prominent block on every beach led with "nobody has signed a bulletin
-     today", which is the permanent state, and a grey box shown every single day
-     teaches a reader to skip the one line that would one day carry a real
-     warning. The full block still renders, but only when there is something in
-     it. */
-  .todayline{display:flex;align-items:center;gap:8px;margin:0 0 14px;
-    font-size:var(--t-2nd);line-height:1.35;color:var(--muted)}
-  .today{border:1.5px solid var(--ink);border-radius:12px;padding:10px 13px;margin:0 0 16px}
-  .today .verdict{font-size:var(--t-body);font-weight:700;line-height:1.25;margin:0}
-  .today .stamp{margin:5px 0 0;font-size:var(--t-min);line-height:1.45;color:var(--muted)}
-  .today .rider{margin:7px 0 0;font-size:var(--t-2nd);line-height:1.45}
-  .today.signed{border-color:var(--today);border-width:2px}
-  .today.signed .verdict{color:var(--today)}
-  .today.stale{border-style:dashed}
-  .badge{display:inline-block;font-size:var(--t-min);font-weight:700;letter-spacing:.06em;
-    text-transform:uppercase;color:#fff;background:var(--today);border-radius:5px;
-    padding:2px 7px;flex:0 0 auto}
-  /* The violet tag stays on the collapsed line. Violet is outside the hazard
-     palette by construction, so it can never be read as a tier, and it is what
-     tells a reader that this line belongs to the TODAY axis rather than to the
-     standing character above it. The words next to it carry the absence. */
+  /* THE ESCAPE SENTENCE IS THE SECOND INSTRUCTION ON THE SHEET and it is
+     styled like one: ink, 600, its own rule above it. It is not a fact and it
+     was rendering as the last bullet of a list of facts, which is where a
+     reader who is skimming stops reading. The only sentence here that somebody
+     has to recall in the water gets its own line. */
+  .escape{display:flex;gap:10px;align-items:flex-start;margin:0 0 18px;
+    padding-top:13px;border-top:1px solid rgba(11,28,44,.14);
+    font-size:var(--t-body);line-height:1.45;font-weight:600;color:var(--ink)}
+  .escape .ic{flex:0 0 auto;color:var(--muted);font-weight:800}
+
+  /* ONE line, last, grey, 13 px. Everything this map does not know, in the one
+     place a reader has already got the instruction and is deciding whether to
+     believe it. The review state is bold because it qualifies the sheet above
+     it; the deferral that follows is the rule that outranks the sheet above it,
+     and it is the same sentence it has always been. See trustLine(). */
+  .trust{margin:16px 0 14px;padding-top:13px;border-top:1px solid rgba(11,28,44,.14);
+    font-size:var(--t-2nd);line-height:1.5;color:var(--muted)}
+  .trust b{font-weight:600;color:var(--ink)}
 
   /* An exception that modifies the character, sitting where it can act on it,
      rather than stranded in a facts bullet nothing reads. */
-  .caveat{margin:0 0 12px;padding:10px 12px;font-size:var(--t-2nd);line-height:1.45;
-    border-radius:10px;background:#f4f6f8;border-left:4px solid var(--moderate-text)}
+  .caveat{margin:0 0 14px;padding:0 0 0 12px;font-size:var(--t-body);line-height:1.45;
+    border-left:3px solid var(--moderate-text);color:var(--ink)}
 
   /* The rule that still works when this map is wrong, rendered under every
      level. Deliberately NOT styled like a caveat: a caveat qualifies the verdict
      above it, and this outranks the verdict above it. Solid ink, full border, no
      fill, so it reads as the standing rule rather than as one more exception. */
   .defer{margin:0 0 16px;padding:12px 13px;font-size:var(--t-2nd);line-height:1.45;
-    font-weight:700;border:1.5px solid var(--ink);border-radius:10px;color:var(--ink)}
+    font-weight:600;border:1.5px solid var(--ink);border-radius:10px;color:var(--ink)}
 
   /* Provenance sits directly under the claim it qualifies, not in a footer.
      ONE LINE now, two fields on it. Two stacked rows pushed the why below the
      fold at PEEK; the two claims are still separate and still both named, which
      is what OVSICORI's Autor / Revisado split is for. */
   .prov{margin:0 0 10px;font-size:var(--t-2nd);line-height:1.5;color:var(--muted)}
-  .prov b{font-weight:700;color:var(--ink)}
+  .prov b{font-weight:600;color:var(--ink)}
   .prov .row{display:block}
   .prov.unverified{color:var(--gap);background:var(--gap-bg);border:1px solid var(--gap-line);
     border-radius:10px;padding:9px 12px}
   .prov.unverified b{color:var(--gap)}
 
-  /* Absence in the sheet: the same marks as on the card, stacked, each with its
-     own sentence. Never one banner for three different facts. */
-  .gaplist{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:8px}
-  .gaplist li{display:flex;gap:9px;align-items:flex-start;font-size:var(--t-2nd);
-    line-height:1.45;border-radius:10px;padding:10px 12px;border:1px solid}
-  .gaplist li.never,.gaplist li.expired{color:var(--gap);background:var(--gap-bg);border-color:var(--gap-line)}
-  .gaplist li.unsurveyed{color:var(--void);background:var(--void-bg);border-color:var(--void-line)}
-  .gaplist .mk{flex:0 0 18px;text-align:center;font-weight:700}
-  .gaplist b{display:block;font-weight:700}
-
-  .facts{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
-  .facts li{display:flex;gap:10px;font-size:var(--t-body);line-height:1.45;align-items:flex-start}
-  .facts .ic{flex:0 0 18px;text-align:center;font-size:var(--t-body)}
-  /* The one fact that is an instruction rather than a description. EVERY beach
-     carries it, word for word, not only the four with a named rip: the
-     lower-risk rider already tells the reader that dangerous rip currents are
-     possible near reefs, channels, headlands and river mouths, which is every
-     beach on this coast. Naming the hazard and withholding the escape on the
-     same card is deciding the sentence is decoration.
-     Hat 1: the sentence that could save him sat behind a tap on an arrow he did
-     not know was tappable. */
-  .facts li.escape{font-weight:700;background:#f4f6f8;border-radius:10px;padding:10px 12px}
-
   .actions{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-bottom:8px}
   .btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:48px;
     border-radius:12px;border:1.5px solid rgba(11,28,44,.18);background:#fff;
-    font:inherit;font-size:var(--t-2nd);font-weight:700;color:var(--ink);
+    font:inherit;font-size:var(--t-2nd);font-weight:600;color:var(--ink);
     text-decoration:none;cursor:pointer;text-align:center;line-height:1.2;padding:0 8px}
   .btn.primary{background:var(--high);border-color:var(--high);color:#fff;
     font-size:var(--t-body)}
   .btn.wide{grid-column:1 / -1}
+  /* The 911 button left the actions row on the beach sheet. In a 2-up grid with
+     Cómo llegar and Reportar un error it was one of three equal rectangles, and
+     it is not one of three things: it is the only control here that reaches a
+     person. It is full width, on its own, directly under the escape sentence,
+     which is where a reader who has just been told what to do in a rip current
+     is. The other two stay a 2-up row below the trust line, where they belong,
+     because neither is urgent. */
+  .btn.call{width:100%;margin:0 0 2px;font-size:var(--t-instr);font-weight:800;
+    letter-spacing:.01em;min-height:54px}
   /* Hat 5, finding 10: a safety instrument with no correction channel keeps a
      known error forever, and there was no contact anywhere in 2,291 lines.
      The wordmark link is the other half of the same fix. */
@@ -520,7 +559,7 @@
      8: four numbered circles sat on the coast meaning nothing until tapped,
      while the association's own map has carried a bilingual key in the corner
      all along. */
-  .legend h3{margin:18px 0 8px;font-size:var(--t-2nd);font-weight:700;
+  .legend h3{margin:18px 0 8px;font-size:var(--t-2nd);font-weight:600;
     letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
   .legend h3:first-child{margin-top:4px}
   .legend .row{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;
@@ -538,7 +577,7 @@
      kind of small lie that survives until somebody styles Spanish and gets
      English. The V5 sheet prints Spanish first because its reader is assumed to
      be here; ours knows which language its reader chose. */
-  .legend .cur{display:block;font-size:var(--t-2nd);font-weight:700;line-height:1.3}
+  .legend .cur{display:block;font-size:var(--t-2nd);font-weight:600;line-height:1.3}
   .legend .oth{display:block;font-size:var(--t-min);line-height:1.3;color:var(--muted)}
   /* Two language columns, the reader's first, as the V5 sheet lays them out.
      Stacks below 360 px, where two columns would force the type under the 12 px
@@ -552,7 +591,7 @@
      outline is what holds it over water: #f39c12 against Caribbean blue is
      under the 3:1 non-text bar on its own. */
   .po{display:grid;place-items:center;width:32px;height:32px;
-    background:var(--station);font-weight:700;font-size:var(--t-2nd);color:var(--ink);
+    background:var(--station);font-weight:600;font-size:var(--t-2nd);color:var(--ink);
     clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0% 50%);
     filter:drop-shadow(0 0 1.5px #0b1c2c) drop-shadow(0 2px 5px rgba(0,0,0,.55))}
   /* The collapsed badge. Bigger than one station and carrying "x4" rather than
@@ -580,8 +619,8 @@
     background:#fff;color:var(--ink);border-radius:12px;padding:10px 10px 10px 13px;
     box-shadow:0 4px 20px rgba(0,0,0,.45);font-size:var(--t-2nd);line-height:1.35}
   .update.show{display:flex}
-  .update .msg{flex:1;font-weight:700}
-  .update button{border:0;font:inherit;font-size:var(--t-2nd);font-weight:700;cursor:pointer;
+  .update .msg{flex:1;font-weight:600}
+  .update button{border:0;font:inherit;font-size:var(--t-2nd);font-weight:600;cursor:pointer;
     border-radius:9px;min-height:44px;padding:0 13px}
   .update .go{background:var(--ink);color:#fff}
   .update .no{background:transparent;color:var(--muted);padding:0 8px;min-width:44px}
@@ -614,7 +653,7 @@
       padding-bottom:var(--safe-pad)}
     .railhead{display:block;flex:0 0 auto;padding:16px var(--gut) 12px;
       border-bottom:1px solid #e7ecf1}
-    .railhead .wm{display:block;font-size:var(--t-body);font-weight:700;
+    .railhead .wm{display:block;font-size:var(--t-body);font-weight:600;
       letter-spacing:.04em;color:var(--ink);text-decoration:none}
     .railhead .what{margin:6px 0 0;font-size:var(--t-2nd);line-height:1.4;color:var(--muted)}
     .dockrow{margin:10px var(--gut) 0;background:var(--void-bg);color:var(--ink);
@@ -703,7 +742,7 @@
       <path d="M22 7 L27.4 24 L22 20.6 L16.6 24 Z" fill="#c62828"/>
       <path d="M22 37 L16.6 20 L22 23.4 L27.4 20 Z" fill="#8ea3b6"/>
     </g>
-    <text x="22" y="6.4" text-anchor="middle" font-size="7.5" font-weight="700"
+    <text x="22" y="6.4" text-anchor="middle" font-size="7.5" font-weight="600"
           fill="#0b1c2c" font-family="inherit">N</text>
   </svg>
 </button>
@@ -714,7 +753,7 @@
        there was no title and nothing saying what the thing was. -->
   <div class="railhead">
     <a class="wm" href="https://caribbeanguard.org" target="_blank" rel="noopener">CARIBBEAN GUARD</a>
-    <p class="what" id="rail-what">Qué hacer en cada playa de esta costa, según Caribbean Guard.</p>
+    <p class="what" id="rail-what">Qué hacer en cada playa de esta costa.</p>
   </div>
 
   <div class="dockrow">
@@ -749,30 +788,25 @@
   <div class="strip" id="picker">
     <button class="card" data-id="cg:zone/playa-negra" aria-current="false">
       <span class="nm">Playa Negra</span>
-      <span class="pill low"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#1f9d55" stroke-width="3" stroke-linecap="round" stroke-dasharray="1.2 4.8"/></svg>IGUAL, TEN CUIDADO</span>
-      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
-    </button>
+      <span class="pill low"><svg class="sw" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"><line x1="2" y1="7" x2="32" y2="7" stroke="#178049" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="1.36 5.44"/></svg>IGUAL, TEN CUIDADO</span>
+          </button>
     <button class="card" data-id="cg:zone/salsa-brava" aria-current="false">
       <span class="nm">Salsa Brava</span>
-      <span class="pill high"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#c62828" stroke-width="6.6" stroke-linecap="round"/></svg>NO ENTRES AL AGUA</span>
-      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
-    </button>
+      <span class="pill high"><svg class="sw" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"><line x1="2" y1="7" x2="32" y2="7" stroke="#c62828" stroke-width="5.95" stroke-linecap="round"/></svg>NO ENTRES AL AGUA</span>
+          </button>
     <button class="card" data-id="cg:zone/cocles" aria-current="false">
       <span class="nm">Playa Cocles</span>
-      <span class="pill high"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#c62828" stroke-width="6.6" stroke-linecap="round"/></svg>SOLO CON GUARDAVIDAS</span>
+      <span class="pill high"><svg class="sw" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"><line x1="2" y1="7" x2="32" y2="7" stroke="#c62828" stroke-width="5.95" stroke-linecap="round"/></svg>SOLO CON GUARDAVIDAS</span>
       <span class="hours"><b>Guardavidas 9:00 a 17:00</b></span>
-      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
-    </button>
+          </button>
     <button class="card" data-id="cg:zone/chiquita" aria-current="false">
       <span class="nm">Playa Chiquita</span>
-      <span class="pill moderate"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#f5b942" stroke-width="4.8" stroke-linecap="round" stroke-dasharray="9.6 6"/></svg>REVISA ANTES DE ENTRAR</span>
-      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">½</span>Recorrida en parte</span></span>
-    </button>
+      <span class="pill moderate"><svg class="sw" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"><line x1="2" y1="7" x2="32" y2="7" stroke="#9c5c00" stroke-width="4.67" stroke-linecap="round" stroke-dasharray="9.35 5.84"/></svg>REVISA ANTES DE ENTRAR</span>
+          </button>
     <button class="card" data-id="cg:zone/punta-uva" aria-current="false">
       <span class="nm">Punta Uva</span>
-      <span class="pill low"><svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false"><rect width="30" height="16" rx="4" fill="#24384a"/><line x1="3" y1="8" x2="27" y2="8" stroke="#1f9d55" stroke-width="3" stroke-linecap="round" stroke-dasharray="1.2 4.8"/></svg>IGUAL, TEN CUIDADO</span>
-      <span class="chips"><span class="chip never"><span class="mk" aria-hidden="true">?</span>Sin revisar</span><span class="chip unsurveyed"><span class="mk" aria-hidden="true">ø</span>Sin recorrer</span></span>
-    </button>
+      <span class="pill low"><svg class="sw" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false"><line x1="2" y1="7" x2="32" y2="7" stroke="#178049" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="1.36 5.44"/></svg>IGUAL, TEN CUIDADO</span>
+          </button>
     <button class="card void" data-id="void" aria-current="false">
       <span class="nm">El resto de la costa</span>
       <span class="vd">Sin describir</span>
@@ -932,8 +966,8 @@ const ZONES = [
     character:{
       class:"lower-risk",
       authored:"desk", reviewed:null,
-      why:{es:"Fondo de arena, pendiente suave y poca corriente la mayor parte del año. Es la zona más tranquila de la costa para familias y niños.",
-           en:"Sand bottom, gentle slope and little current most of the year. The calmest stretch on this coast for families and children."},
+      why:{es:"Fondo de arena, pendiente suave y poca corriente. Sin arrecife cerca de la orilla.",
+           en:"Sand bottom, gentle slope and little current. No reef near the shore."},
       /* A third fact here used to send the reader east to a rescue post that
          does not exist. Hat 3, a volunteer guard, blocked on it: the nearest
          station in this map's own data is 4.34 km east at Playa Chiquita, and
@@ -945,17 +979,21 @@ const ZONES = [
              en:["No reef near the shore","Low surf except during December to March swells"]}
     },
     today:null,
-    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
-       used to sit on this line was a 7-to-60-point decimation that cut inland
-       on every convex bend; the traced coastline replaces it and arrives over
-       the network. No short fallback copy is kept: a hazard line in the wrong
-       place is a claim, not a gap.
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here, and it comes from
+       tools/osm_coastline.py. No short fallback copy is kept: a hazard line in
+       the wrong place is a claim, not a gap.
+       THE SPAN CHANGED ON 2026-09-17 and the joints are now exact. The old
+       values came off the satellite trace, which followed the reef, so Cocles
+       overlapped Chiquita by 171 m and Chiquita overlapped Punta Uva by 172 m:
+       two tiers claiming the same water. Each joint sits at the midpoint of the
+       old disagreement, so the five zones tile the coast exactly once. Do not
+       hand-edit one end of a joint; run the tool and take both.
        `span` and `at` are the two things that must NOT wait for a fetch. The
        card has to paint its instruction before Leaflet parses, and the card
        carries the "recorrida o no" chip, which is a longitude comparison; and
        a QR deep link opens a sheet that needs somewhere to fly to and a
        destination for Cómo llegar. Both are derived from the real geometry by
-       tools/export_zones.py, so they cannot drift from what is drawn.
+       tools/osm_coastline.py, so they cannot drift from what is drawn.
 
        Keeping them was put to the orchestrator as a choice against a purer
        data flow, where everything on the card would wait for the fetch, and
@@ -964,7 +1002,7 @@ const ZONES = [
        a sheet with nowhere to fly and a chip that is wrong for the first few
        hundred milliseconds, on the one screen that has to be right in ten
        seconds. Do not "simplify" them away. */
-    span:{w:-82.77094, e:-82.75715}, at:[9.65598,-82.76513],
+    span:{w:-82.77094, e:-82.75703}, at:[9.65598,-82.76513],
     line:[]
   },
   {
@@ -974,24 +1012,28 @@ const ZONES = [
     character:{
       class:"no-swim",
       authored:"desk", reviewed:null,
-      why:{es:"Ola de arrecife que rompe sobre coral vivo en agua muy poco profunda. No es zona de baño. Riesgo de corte y golpe contra el arrecife incluso con mar en calma.",
-           en:"Reef break over live coral in very shallow water. This is not a swimming area. Risk of laceration and impact on the reef even when the sea looks calm."},
+      why:{es:"Ola de arrecife sobre coral vivo, a menos de 1 m bajo la superficie. Corta y golpea aunque el mar se vea en calma.",
+           en:"Reef break over live coral, less than 1 m below the surface. It cuts and it hits, even when the sea looks calm."},
       facts:{es:["Prohibido nadar. Solo surfistas con experiencia","Arrecife a menos de 1 m bajo la superficie","Corriente de resaca en el canal del lado este"],
              en:["No swimming. Experienced surfers only","Reef less than 1 m below the surface","Rip current in the channel on the east side"]}
     },
     today:null,
-    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
-       used to sit on this line was a 7-to-60-point decimation that cut inland
-       on every convex bend; the traced coastline replaces it and arrives over
-       the network. No short fallback copy is kept: a hazard line in the wrong
-       place is a claim, not a gap.
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here, and it comes from
+       tools/osm_coastline.py. No short fallback copy is kept: a hazard line in
+       the wrong place is a claim, not a gap.
+       THE SPAN CHANGED ON 2026-09-17 and the joints are now exact. The old
+       values came off the satellite trace, which followed the reef, so Cocles
+       overlapped Chiquita by 171 m and Chiquita overlapped Punta Uva by 172 m:
+       two tiers claiming the same water. Each joint sits at the midpoint of the
+       old disagreement, so the five zones tile the coast exactly once. Do not
+       hand-edit one end of a joint; run the tool and take both.
        `span` and `at` are the two things that must NOT wait for a fetch. The
        card has to paint its instruction before Leaflet parses, and the card
        carries the "recorrida o no" chip, which is a longitude comparison; and
        a QR deep link opens a sheet that needs somewhere to fly to and a
        destination for Cómo llegar. Both are derived from the real geometry by
-       tools/export_zones.py, so they cannot drift from what is drawn. */
-    span:{w:-82.75691, e:-82.74956}, at:[9.65895,-82.75438],
+       tools/osm_coastline.py, so they cannot drift from what is drawn. */
+    span:{w:-82.75703, e:-82.74925}, at:[9.65895,-82.75438],
     line:[]
   },
   {
@@ -1001,8 +1043,8 @@ const ZONES = [
     character:{
       class:"high-risk",
       authored:"desk", reviewed:null,
-      why:{es:"La playa con más rescates de la costa. Bancos de arena cambiantes generan corrientes de resaca que salen mar adentro sin aviso. Báñate solo frente al puesto de guardavidas.",
-           en:"The beach with the most rescues on this coast. Shifting sandbars create rip currents that pull straight out with no warning. Swim only in front of the lifeguard post."},
+      why:{es:"La playa con más rescates de esta costa. Los bancos de arena cambian y generan corrientes que salen mar adentro sin aviso.",
+           en:"The beach with the most rescues on this coast. Shifting sandbars create currents that pull straight out with no warning."},
       /* Three bullets left this list.
          "Banderas rojas marcan los canales activos" is DELETED. There is no flag
          system at Cocles; the COPY block below has known that since it was
@@ -1023,18 +1065,22 @@ const ZONES = [
     post:{from:9, to:17,
           es:"Guardavidas 9:00 a 17:00", en:"Lifeguards 9:00 to 17:00"},
     today:null,
-    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
-       used to sit on this line was a 7-to-60-point decimation that cut inland
-       on every convex bend; the traced coastline replaces it and arrives over
-       the network. No short fallback copy is kept: a hazard line in the wrong
-       place is a claim, not a gap.
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here, and it comes from
+       tools/osm_coastline.py. No short fallback copy is kept: a hazard line in
+       the wrong place is a claim, not a gap.
+       THE SPAN CHANGED ON 2026-09-17 and the joints are now exact. The old
+       values came off the satellite trace, which followed the reef, so Cocles
+       overlapped Chiquita by 171 m and Chiquita overlapped Punta Uva by 172 m:
+       two tiers claiming the same water. Each joint sits at the midpoint of the
+       old disagreement, so the five zones tile the coast exactly once. Do not
+       hand-edit one end of a joint; run the tool and take both.
        `span` and `at` are the two things that must NOT wait for a fetch. The
        card has to paint its instruction before Leaflet parses, and the card
        carries the "recorrida o no" chip, which is a longitude comparison; and
        a QR deep link opens a sheet that needs somewhere to fly to and a
        destination for Cómo llegar. Both are derived from the real geometry by
-       tools/export_zones.py, so they cannot drift from what is drawn. */
-    span:{w:-82.74893, e:-82.72592}, at:[9.65568,-82.73996],
+       tools/osm_coastline.py, so they cannot drift from what is drawn. */
+    span:{w:-82.74925, e:-82.72670}, at:[9.65568,-82.73996],
     line:[]
   },
   {
@@ -1044,26 +1090,30 @@ const ZONES = [
     character:{
       class:"conditional",
       authored:"desk", reviewed:null,
-      why:{es:"Pequeñas piscinas de arrecife protegidas con marea alta. Con marea baja el coral queda expuesto y el acceso al agua es cortante y resbaloso.",
-           en:"Small protected reef pools at high tide. At low tide the coral is exposed and entering the water is sharp and slippery."},
+      why:{es:"Piscinas de arrecife protegidas con marea alta, cortantes y resbalosas con marea baja.",
+           en:"Sheltered reef pools at high tide, sharp and slippery at low tide."},
       caveats:[{es:"Con marea baja esta playa no es un lugar para entrar al agua. El coral queda expuesto y el fondo corta.",
                 en:"At low tide this is not a place to enter the water. The coral is exposed and the bottom cuts."}],
       facts:{es:["Consulta la tabla de mareas antes de entrar","Usa calzado de agua","Sin guardavidas permanente"],
              en:["Check the tide table before entering","Wear water shoes","No permanent lifeguard"]}
     },
     today:null,
-    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
-       used to sit on this line was a 7-to-60-point decimation that cut inland
-       on every convex bend; the traced coastline replaces it and arrives over
-       the network. No short fallback copy is kept: a hazard line in the wrong
-       place is a claim, not a gap.
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here, and it comes from
+       tools/osm_coastline.py. No short fallback copy is kept: a hazard line in
+       the wrong place is a claim, not a gap.
+       THE SPAN CHANGED ON 2026-09-17 and the joints are now exact. The old
+       values came off the satellite trace, which followed the reef, so Cocles
+       overlapped Chiquita by 171 m and Chiquita overlapped Punta Uva by 172 m:
+       two tiers claiming the same water. Each joint sits at the midpoint of the
+       old disagreement, so the five zones tile the coast exactly once. Do not
+       hand-edit one end of a joint; run the tool and take both.
        `span` and `at` are the two things that must NOT wait for a fetch. The
        card has to paint its instruction before Leaflet parses, and the card
        carries the "recorrida o no" chip, which is a longitude comparison; and
        a QR deep link opens a sheet that needs somewhere to fly to and a
        destination for Cómo llegar. Both are derived from the real geometry by
-       tools/export_zones.py, so they cannot drift from what is drawn. */
-    span:{w:-82.72748, e:-82.70481}, at:[9.64286,-82.71555],
+       tools/osm_coastline.py, so they cannot drift from what is drawn. */
+    span:{w:-82.72670, e:-82.70559}, at:[9.64286,-82.71555],
     line:[]
   },
   {
@@ -1073,8 +1123,8 @@ const ZONES = [
     character:{
       class:"lower-risk",
       authored:"desk", reviewed:null,
-      why:{es:"El arrecife exterior rompe el oleaje antes de llegar a la orilla. Agua tranquila, poca corriente y entrada de arena. Es la parte más resguardada de esta costa.",
-           en:"The outer reef breaks the swell before it reaches the shore. Calm water, little current and a sand entry. The most sheltered part of this coast."},
+      why:{es:"El arrecife exterior rompe el oleaje antes de la orilla. Agua tranquila y entrada de arena.",
+           en:"The outer reef breaks the swell before it reaches the shore. Calm water and a sand entry."},
       /* This exception used to live in a `facts` bullet, where nothing could act
          on it: the beach said SE PUEDE NADAR and the third bullet said there is
          current at the east end. A reef, a channel and a headland are precisely
@@ -1093,18 +1143,22 @@ const ZONES = [
              en:["Calm water nearly year round","Sand entry, no coral at the shoreline"]}
     },
     today:null,
-    /* GEOMETRY LIVES IN data/zones-geometry.json, not here. The array that
-       used to sit on this line was a 7-to-60-point decimation that cut inland
-       on every convex bend; the traced coastline replaces it and arrives over
-       the network. No short fallback copy is kept: a hazard line in the wrong
-       place is a claim, not a gap.
+    /* GEOMETRY LIVES IN data/zones-geometry.json, not here, and it comes from
+       tools/osm_coastline.py. No short fallback copy is kept: a hazard line in
+       the wrong place is a claim, not a gap.
+       THE SPAN CHANGED ON 2026-09-17 and the joints are now exact. The old
+       values came off the satellite trace, which followed the reef, so Cocles
+       overlapped Chiquita by 171 m and Chiquita overlapped Punta Uva by 172 m:
+       two tiers claiming the same water. Each joint sits at the midpoint of the
+       old disagreement, so the five zones tile the coast exactly once. Do not
+       hand-edit one end of a joint; run the tool and take both.
        `span` and `at` are the two things that must NOT wait for a fetch. The
        card has to paint its instruction before Leaflet parses, and the card
        carries the "recorrida o no" chip, which is a longitude comparison; and
        a QR deep link opens a sheet that needs somewhere to fly to and a
        destination for Cómo llegar. Both are derived from the real geometry by
-       tools/export_zones.py, so they cannot drift from what is drawn. */
-    span:{w:-82.70638, e:-82.68726}, at:[9.63866,-82.69468],
+       tools/osm_coastline.py, so they cannot drift from what is drawn. */
+    span:{w:-82.70559, e:-82.68726}, at:[9.63866,-82.69468],
     line:[]
   }
 ];
@@ -1237,14 +1291,25 @@ const T = {
          The English is unchanged: TAKE CARE ANYWAY was never wrong. */
       charLowerRiskRider:"Que el riesgo sea menor no quiere decir que sea seguro. Todavía puede haber corrientes de resaca peligrosas junto a los arrecifes, los canales, las puntas y las bocas de río.",
       defer:"Si hay un guardavidas o una bandera en la playa, eso manda sobre este mapa. Este mapa no ve el mar de hoy.",
+      /* The head of the trust line. See trustLine(). Short on purpose: it opens
+         the last line on the sheet and the sentence after it is the one that
+         has to be read. */
+      trustNever:"Nadie de Caribbean Guard ha revisado esta playa.",
+      trustReviewed:(who,when)=>`Revisada por ${who}, ${when}.`,
+      trustExpired:(who,when)=>`Revisada por ${who} en ${when}, hace más de un año.`,
       axisToday:"Hoy",
       /* today notices */
       todayNoSwim:"Hoy no entres al agua",
       todayCare:"Hoy hay que tener más cuidado de lo normal",
       todayNormal:"Hoy sin novedad",
       todayNormalRider:"Sin novedad no quiere decir seguro. Lo que dice arriba sobre esta playa sigue valiendo.",
-      /* ONE LINE, not a block. See todayBlock(). "Parte" is peninsular; on this
-         coast the word is reporte. */
+      /* NOTHING RENDERS THESE SIX TODAY STRINGS AS OF 2026-09-17. The sheet no
+         longer draws the TODAY axis; todayHalo() still draws it on the map, and
+         it needs no words. They are kept, in both languages, because the axis
+         itself is not cancelled: it is waiting on the bulletin signing surface
+         in the governance list, and a translated vocabulary is the part of it
+         that is already done and correct. "Parte" is peninsular; on this coast
+         the word is reporte. */
       todayNoneLine:"Hoy: sin reporte firmado",
       todaySigned:(who,org,when)=>`Firmado por ${who}, ${org}, ${when}`,
       todayStale:h=>`Este reporte tiene más de ${h} horas. El mar cambia más rápido que eso.`,
@@ -1366,7 +1431,7 @@ const T = {
       legendPlaces:"Ubicaciones",
       /* chrome added by the overhaul */
       sosWord:"Emergencia",
-      railWhat:"Qué hacer en cada playa de esta costa, según Caribbean Guard.",
+      railWhat:"Qué hacer en cada playa de esta costa.",
       locateFirst:"¿En qué playa estoy?",
       counter:(i,n)=>`${i} de ${n}`,
       report:"Reportar un error",
@@ -1386,6 +1451,10 @@ const T = {
       "conditional":"CHECK BEFORE YOU GO IN", "lower-risk":"TAKE CARE ANYWAY",
       charLowerRiskRider:"Lower risk does not mean safe. Life threatening rip currents are still possible near reefs, channels, headlands and river mouths.",
       defer:"If there is a lifeguard or a flag on the beach, that beats this map. This map cannot see today's sea.",
+      /* The head of the trust line. See trustLine(). */
+      trustNever:"Nobody at Caribbean Guard has reviewed this beach.",
+      trustReviewed:(who,when)=>`Reviewed by ${who}, ${when}.`,
+      trustExpired:(who,when)=>`Reviewed by ${who} on ${when}, over a year ago.`,
       axisToday:"Today",
       todayNoSwim:"Stay out of the water today",
       todayCare:"More care than usual today",
@@ -1460,7 +1529,7 @@ const T = {
       legendMe:"Your location",
       legendPlaces:"Locations",
       sosWord:"Emergency",
-      railWhat:"What to do at each beach on this coast, according to Caribbean Guard.",
+      railWhat:"What to do at each beach on this coast.",
       locateFirst:"Which beach am I on?",
       counter:(i,n)=>`${i} of ${n}`,
       report:"Report an error",
@@ -1625,53 +1694,6 @@ function todayHalo(z){
 }
 
 /* ---- the three absences, as data ---- */
-function absences(z){
-  const t = T[lang], out = [];
-  const c = characterState(z);
-  //                 css            mark   card tag           sheet heading + sentence
-  if(c.gap === "never")
-    out.push({css:"never",      mk:"?", tag:t.gapNeverTag,      short:t.gapNeverShort,      long:t.gapNever});
-  if(c.gap === "expired")
-    out.push({css:"expired",    mk:"!", tag:t.gapExpiredTag,    short:t.gapExpiredShort,    long:t.gapExpired});
-  const rel = surveyRelation(z);
-  /* The marks are ø and ½, not ⌀ and ◐, and that is a font decision rather than
-     a taste one. The self-hosted Atkinson Hyperlegible is the latin subset,
-     U+0000 to U+00FF: ⌀ (U+2300) and ◐ (U+25D0) are outside it and would fall
-     back to whatever a cheap Android happens to have, which on a safety card is
-     a tofu box sitting where a meaning should be. Both replacements are in
-     Latin-1 and both still read as what they are: empty, and half. */
-  if(rel === "out")
-    out.push({css:"unsurveyed", mk:"ø", tag:t.gapUnsurveyedTag, short:t.gapUnsurveyedShort, long:t.gapUnsurveyed});
-  if(rel === "partial")
-    out.push({css:"unsurveyed", mk:"½", tag:t.gapPartialTag,    short:t.gapPartialShort,    long:t.gapPartial});
-  return out;
-}
-
-/* One row of chips on the card: a signed bulletin first if there is one, then
-   every absence that applies. One container, so a beach that is both unreviewed
-   and unsurveyed shows two chips side by side rather than two stacked rows.
-   12 px, the floor: at the 9.5 px these used to be, hat 4 could not resolve
-   them at all, so the "unreviewed must look unreviewed" doctrine was invisible
-   and every beach read as reviewed. */
-function cardChips(z){
-  const t = T[lang], s = todayState(z);
-  const chips = [];
-  if(s && !s.stale)
-    chips.push(`<span class="chip today"><span class="mk" aria-hidden="true">•</span>${t.axisToday}</span>`);
-  absences(z).forEach(a=>
-    chips.push(`<span class="chip ${a.css}"><span class="mk" aria-hidden="true">${a.mk}</span>${a.tag}</span>`));
-  return chips.length ? `<span class="chips">${chips.join("")}</span>` : "";
-}
-function gapList(z){
-  const g = absences(z);
-  if(!g.length) return "";
-  return `<ul class="gaplist">${g.map(a=>
-    `<li class="${a.css}">
-       <span class="mk" aria-hidden="true">${a.mk}</span>
-       <span><b>${a.short}</b>${a.long}</span>
-     </li>`).join("")}</ul>`;
-}
-
 /* ---- provenance, two fields, following OVSICORI ----
    Autor and Revisado are different claims and they stay different claims.
    Collapsing them into one is how a machine reading of a published graphic gets
@@ -1703,34 +1725,34 @@ function provenance(rec, inline){
     <span class="row"><b>${t.provReviewed}:</b> ${reviewed}${stale}</span>
   </p>`;
 }
+/* WHAT WAS HERE, AND WHERE IT WENT. 2026-09-17.
 
-/* ---- the today axis ----
-   COLLAPSED TO ONE LINE WHEN NOBODY HAS SIGNED, WHICH IS EVERY DAY SO FAR.
+   Five renderers were deleted rather than left in place unreferenced:
+   absences(), cardChips(), gapList(), factsOf() and todayBlock(). Between them
+   they drew the two provenance chips on every card, the stacked absence boxes
+   and the facts bullet list in the sheet, and the TODAY line. Nothing calls any
+   of them now: the card is name / instruction / hours, and the sheet is a sign
+   plus one trust line.
 
-   It used to render the empty state as the most prominent block on every beach:
-   a dashed box, a badge, a verdict line and a three-line explanation, all of it
-   saying nothing has happened. Hat 1 read "nobody", decided the app knew
-   nothing and closed it before reaching the red instruction underneath. Hat 5
-   put it more sharply from the board's side: a permanent grey box teaches a
-   reader to skip the one line that would one day carry a real warning.
+   THEY ARE DELETED AND NOT KEPT AS DEAD CODE, and that is the point rather than
+   tidiness. This page renders its cards TWICE, once as static HTML for the
+   first paint and once from cardHTML() on a language switch, and the two have
+   to be kept in step by hand. A third rendering path that nothing calls, in the
+   same file, styled the same way, is a trap: the next person to be asked for
+   "the facts under the instruction" edits factsOf(), sees no change, and either
+   gives up or wires it back in with none of the reasoning that took it out.
 
-   So the axis keeps its violet tag and its place under the provenance, and
-   shrinks to "Hoy: sin reporte firmado". The full block still exists and still
-   renders in full, the moment there is anything in it. */
-function todayBlock(z){
-  const t = T[lang], s = todayState(z);
-  if(!s){
-    return `<p class="todayline"><span class="badge">${t.axisToday}</span>${t.todayNoneLine}</p>`;
-  }
-  const label = {"no-swim":t.todayNoSwim, "care":t.todayCare, "normal":t.todayNormal}[s.notice];
-  const rider = s.notice === "normal" ? `<p class="rider">${t.todayNormalRider}</p>` : "";
-  const old   = s.stale ? `<p class="rider">${t.todayStale(TODAY_VALID_HOURS)}</p>` : "";
-  return `<div class="today signed${s.stale ? " stale" : ""}">
-      <p class="verdict"><span class="badge">${t.axisToday}</span>${label}</p>
-      <p class="stamp">${t.todaySigned(s.rec.by, s.rec.org, fmtStamp(s.at))}</p>
-      ${old}${rider}
-    </div>`;
-}
+   The reasoning is not lost. cardHTML() carries why the chips went and the one
+   condition that would bring them back; openZone() carries what left the sheet
+   and why; trustLine() carries what replaced all four absence surfaces. The
+   code is in git at 6be0f66:web/index.html.
+
+   TODAY IS THE ONE TO READ BEFORE REBUILDING. todayState() and todayHalo() are
+   still live, because the halo under a zone stroke still draws a signed
+   bulletin. Only the sheet's rendering of it went. When the bulletin signing
+   surface in the handoff's governance list finally exists, the line it needs
+   has to be designed against the sign the sheet is now, not restored from the
+   block it used to be. */
 
 /* ---- the post's clock ----
    Renders only for a zone that has one. The closed state is appended in ink,
@@ -1757,32 +1779,6 @@ function hoursLine(z){
   const closed = (h < p.from || h >= p.to) ? ` · ${t.postClosed}` : "";
   return `<span class="hours"><b>${p[lang]}</b>${closed}</span>`;
 }
-
-/* ---- ESCAPE ----
-   The instruction that works when everything else on this page is wrong, on
-   EVERY beach, word for word.
-
-   It was on the four beaches with a named rip, and that was wrong for the exact
-   reason the lowest tier exists: charLowerRiskRider already tells the reader, on
-   every lower-risk beach, that dangerous rip currents are still possible near
-   reefs, channels, headlands and river mouths. A page that names the hazard on a
-   beach and then withholds the escape on that same beach has decided the
-   sentence is decoration. Playa Negra is the calmest stretch on this coast and
-   it is still the sea.
-
-   One sentence, five beaches, and the same sentence on the rip arrow sheet. The
-   thing being asked of a frightened swimmer is recall, and recall works on one
-   memorised sentence, not on four paraphrases. */
-function factsOf(z){
-  const list = (z.character.facts[lang] || []).slice()
-    .map(f => `<li><span class="ic" aria-hidden="true">•</span><span>${f}</span></li>`);
-  /* » and not an arrow glyph: U+00BB is inside the latin subset this page
-     self-hosts, U+2192 is not, and a tofu box on the one instruction that
-     matters is worse than a plain mark. */
-  list.push(`<li class="escape"><span class="ic" aria-hidden="true">»</span><span>${T[lang].escapeRip}</span></li>`);
-  return `<ul class="facts">${list.join("")}</ul>`;
-}
-
 /* ---------- map ---------- */
 const BB = L.latLngBounds(IMG_BOUNDS);
 const SAFE = L.latLngBounds(IMG_SAFE);
@@ -2369,6 +2365,9 @@ function drawZones(){
   });
   zonesReady = true;
   restyleZones();
+  /* A QR deep link opens the sheet about 350 ms before this fetch resolves, so
+     the band asked for back then had no line to be drawn from. It does now. */
+  if(bandZone) showBand(bandZone);
 }
 map.on("zoomend", restyleZones);
 
@@ -2518,6 +2517,7 @@ function openSheet(html, render){
 }
 
 function closeSheet(){
+  clearBand();
   if(!sheet.classList.contains("open")) return;
   sheet.classList.remove("open");
   lastRender = null;
@@ -2608,32 +2608,72 @@ function sheetFoot(){
   return `<p class="footlink"><a href="${CG_HOME}" target="_blank" rel="noopener">${t.homeLink}</a></p>`;
 }
 
-/* THE ORDER INSIDE THE SHEET, top to bottom, and every position is argued:
+/* ---- THE TRUST LINE ----
+   ONE line, at the bottom, and it is the only thing on a beach sheet that is
+   not an instruction.
+
+   It replaces four separate blocks: the Autor / Revisado provenance row, the
+   TODAY badge line, the "Sin revisar" box and the "Fuera del recorrido" box.
+   All four said a version of the same thing, nobody has checked this, in four
+   visual languages, and together they took more vertical space on the sheet
+   than the instruction, the reason and the escape sentence combined. Daniel's
+   ruling 2026-09-17: cut the sheet to what a lifeguard sign says, and keep one
+   line carrying the honesty claim.
+
+   IT STILL CARRIES t.defer WORD FOR WORD, and that is not negotiable. That
+   sentence is the one that still works when this map is wrong, which is the
+   reason the map is allowed to be published at all, and tools/check_copy.js
+   fails the build if any sheet renderer drops it.
+
+   The review state is bold and comes FIRST, because "nobody has checked this"
+   qualifies everything above it and a qualifier after the fact is a footnote.
+   When a beach is finally reviewed this line says who and when, in the same
+   position, so the reader learns one place to look rather than two. */
+function trustLine(z){
+  const t = T[lang], c = characterState(z);
+  let head;
+  if(c.gap === "never")        head = t.trustNever;
+  else if(c.gap === "expired") head = t.trustExpired(c.reviewed.by, fmtDate(c.on));
+  else                         head = t.trustReviewed(c.reviewed.by, fmtDate(c.on));
+  return `<p class="trust"><b>${head}</b> ${t.defer}</p>`;
+}
+
+/* THE ORDER INSIDE THE SHEET, top to bottom. It is a lifeguard sign now, and a
+   sign has four parts:
 
      name and sub          where you are
-     INSTRUCTION           what to do. Largest thing on the sheet, above the fold
-                           at PEEK, and no longer sitting below an apology.
-     Autor / Revisado      how much this claim is worth, one line, under the
-                           claim it qualifies rather than in a footer
-     today                 one line while nobody has signed; the full block the
-                           moment somebody has
-     why                   the reasoning, for whoever wants it
-     rider and caveats     the exceptions that modify the instruction
-     facts                 including the escape sentence on every rip beach
-     absences              what nobody has checked
-     DEFERRAL              the rule that outranks everything above it, boxed
-     actions               Cómo llegar · Reportar un error · 911
+     INSTRUCTION           what to do. 21 px / 800, the largest and heaviest
+                           thing on the sheet, above the fold at PEEK
+     hours                 only Cocles has a post, and only while it qualifies
+                           the instruction on screen
+     why                   ONE short sentence. What the sea does here.
+     exceptions            the tide rule at Chiquita, the east channel at Punta
+                           Uva, the lower-risk rider. Kept because each one
+                           CHANGES the instruction on a specific part of a
+                           specific beach; an exception is not a detail.
+     ESCAPE                what to do if a current has you. The only sentence
+                           on this page a frightened swimmer has to recall.
+     911                   the one action worth a full-width button
+     trust line            see above
+     actions               Cómo llegar · Reportar un error
 
-   The three reorderings against the old sheet: today came first and pushed the
-   instruction below the fold; the deferral sat mid-sheet where it read as one
-   more caveat rather than as the thing that beats the map; and the provenance
-   sat under the deferral, three screens from the verdict it qualifies.
+   WHAT LEFT, AND WHY. Daniel's finding 2026-09-17: "There is FAR TOO MUCH
+   INFORMATION. It should be simplified to the deepest possible. Think about
+   lifeguard signs used worldwide and use that type of language."
 
-   A map that says NO ENTRES AL AGUA has to be able to say who decided that and
-   when, and the honest answer today is nobody. Saying so out loud costs some of
-   the artefact's authority, and that is the correct trade: an organisation that
-   admits what it has not checked is more trustworthy than one that implies it
-   has checked everything. */
+   - the `facts` bullet list (two or three per beach). A sign does not carry a
+     bulleted annex. The one fact per beach that changed what a swimmer would
+     do has been folded into the why sentence; the rest described the place
+     rather than instructing anyone.
+   - the Autor / Revisado row, the TODAY line, the absence boxes: one trust
+     line, above.
+   - the boxed deferral: same sentence, same words, no box. It was boxed to
+     stop it reading as one more caveat. With the caveats gone there is nothing
+     left for it to be confused with.
+
+   The escape sentence is UNTOUCHED and still renders on all five beaches,
+   including Playa Negra. Playa Negra is the calmest stretch on this coast and
+   it is still the sea. */
 function openZone(z){
   const render = ()=>{
     const t = T[lang], c = z.character;
@@ -2649,18 +2689,15 @@ function openZone(z){
     <p class="sub">${z.sub[lang]}</p>
     ${statusPill(tierOf(z), t[c.class])}
     ${hoursLine(z)}
-    ${provenance(c, true)}
-    ${todayBlock(z)}
     <p class="why">${c.why[lang]}</p>
     ${rider}${caveats}
-    ${factsOf(z)}
-    ${gapList(z)}
-    <p class="defer">${t.defer}</p>
+    <p class="escape"><span class="ic" aria-hidden="true">»</span>${t.escapeRip}</p>
+    <a class="btn primary call" href="tel:911">${t.call}</a>
+    ${trustLine(z)}
     <div class="actions">
       <a class="btn" target="_blank" rel="noopener"
          href="https://www.google.com/maps/dir/?api=1&destination=${mid}">${t.route}</a>
       <a class="btn" href="${reportHref(t.reportSubject + ": " + z.name.es)}">${t.report}</a>
-      <a class="btn primary wide" href="tel:911">${t.call}</a>
     </div>
     ${sheetFoot()}`;
   };
@@ -2669,6 +2706,13 @@ function openZone(z){
   // Before the geometry lands there is one point to fly to rather than a line.
   flyClear(z.line.length ? L.latLngBounds(z.line).pad(0.55)
                          : L.latLngBounds([z.at]).pad(0.02));
+  /* AFTER flyClear, not before: showBand() reads map.getZoom(), and on a deep
+     link that zoom is still the whole-coast landing view for the length of the
+     flight. flyToBounds fires zoomend when it lands, and the zoomend handler
+     above redraws the band at the zoom it actually arrived at. On a deep link
+     z.line is empty here as well; drawZones() calls this again when the
+     geometry fetch resolves. */
+  showBand(z);
   history.replaceState(null,"","?z=" + localId(z.id));
 }
 
@@ -2696,12 +2740,161 @@ function openVoid(){
   };
   openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
   markCurrent(null);
+  clearBand();
   history.replaceState(null, "", location.pathname);
 }
 
 /* Fly so the subject lands in the strip the sheet is NOT covering. Without this
    Leaflet centres on the full map, the sheet then eats the bottom 60% of the
    screen, and the zone you just asked about ends up pushed off the top edge. */
+/* ---------- THE BEACH EXTENT BAND ----------
+   Daniel, 2026-09-17: "When zooming into the beach after selecting it, draw a
+   boundary showing what the beach area is."
+
+   THE BOUNDARY IS DRAWN ON THE WATER, NOT ON THE LAND, and that is the whole
+   design. The zone line describes water: it is the coastline pushed 25 m out to
+   sea, and the four tiers are all instructions about going IN. A closed polygon
+   around the sand as well would draw a line across somebody's garden and across
+   the road, on imagery accurate to 75 m in the west and 150 m in the east, and
+   a reader takes a hard edge as a survey. Nobody surveyed the back of these
+   beaches, so nothing is drawn there.
+
+   So: the zone line, and the same line pushed BAND_M further seaward, joined
+   into one polygon. Filled at 10% in the tier colour, no stroke on the long
+   sides, because the seaward edge is not a boundary either: the hazard does not
+   stop at 120 m, that is just how far out this beach is still this beach.
+
+   THE ENDS ARE THE PART THAT IS A CLAIM, so the ends get the only strokes: one
+   perpendicular tick at each end, at full tier colour. They mark where Cocles
+   stops and Chiquita starts, which IS a decision somebody made and the one
+   thing a reader needs when the instruction changes between two stretches of
+   the same sand.
+
+   It is drawn under the zone lines and above the tiles (pane "shadowPane"), so
+   it can never dilute the stroke that carries the instruction.
+
+   BAND_M is 120 METRES AND IT STAYS METRES. It does not grow a pixel floor at
+   low zoom, because the band is a claim about how far out this beach is and a
+   band that silently widens to stay visible is a claim that changes with the
+   zoom. About three times the seaward offset; wide enough to read as an area,
+   narrow enough that two neighbouring bands never merge into one wash.
+
+   BAND_MIN_ZOOM IS 13, NOT 14, AND THE PHONE IS WHY. A deep link to Cocles on a
+   390 px phone with the sheet at PEEK fits a 3.1 km beach at z13.75, so a
+   floor of 14 removed the band on the exact device and the exact path this was
+   built for: scan the QR on the sand, and the boundary you were promised is
+   not drawn. At z13 the band is 6.7 px, which the dashed seaward edge and the
+   two end caps still carry. At z12 it is 3.4 px, which is a muddier line and
+   not an area, so that is where it stops. */
+var BAND_M = 120;
+var BAND_MIN_ZOOM = 13;
+let bandLayer = null, bandZone = null;
+
+/* ITS OWN PANE, AT z-index 350, AND NOT ONE OF LEAFLET'S.
+   The band has to sit above the imagery and below the zone stroke, and neither
+   stock pane is that slot. overlayPane (400) is where the strokes are, and a
+   layer added to it after them draws on top, which would put a 16% wash over
+   the one mark on this map that must not be diluted. shadowPane (500) is worse,
+   it is above them by construction. tilePane (200) is below the imagery's own
+   transformed tile containers and a vector renderer put there is moved by them.
+   350 is the gap between tilePane and overlayPane, which is exactly the
+   relationship this band has to both. pointer-events off: the band is a
+   read-only mark and the zone's invisible 44 px hit line must keep the tap. */
+var BAND_PANE = "cgBandPane";
+map.createPane(BAND_PANE);
+map.getPane(BAND_PANE).style.zIndex = 350;
+map.getPane(BAND_PANE).style.pointerEvents = "none";
+
+function seawardEdge(z){
+  // Metres per degree at this coast; the same frame tools/osm_coastline.py uses.
+  const mLat = 111132, mLon = 111320 * Math.cos(9.645 * Math.PI / 180);
+  const pts = z.line.map(p => [p[1] * mLon, p[0] * mLat]);
+  const out = [];
+  for(let i = 0; i < pts.length; i++){
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    // The LEFT normal, which is seaward: the line runs west to east and the
+    // open sea is on its left. tools/osm_coastline.py offsets the same way and
+    // for the same reason; if one of them ever flips, both must.
+    out.push([pts[i][0] - dy / len * BAND_M, pts[i][1] + dx / len * BAND_M]);
+  }
+  return {inner: pts, outer: out,
+          ll: q => [q[1] / mLat, q[0] / mLon]};
+}
+
+function bandPolygon(z){
+  const e = seawardEdge(z);
+  return e.inner.concat(e.outer.slice().reverse()).map(e.ll);
+}
+
+function endTicks(z){
+  const mLat = 111132, mLon = 111320 * Math.cos(9.645 * Math.PI / 180);
+  const pts = z.line.map(p => [p[1] * mLon, p[0] * mLat]);
+  /* THE DIRECTION IS ALWAYS THE FORWARD ONE, a -> b west to east, at BOTH ends.
+     The first version of this took the tangent at the far end from the last
+     point back to the second-to-last, which is the line's direction REVERSED,
+     which flips the left normal, which drew the east tick 120 m inland through
+     the trees. A normal is only seaward relative to a direction of travel; the
+     same mistake in tools/osm_coastline.py would offset the entire coastline
+     into the jungle and still look like a coastline. */
+  const tick = (at, a, b) => {
+    const dx = pts[b][0] - pts[a][0], dy = pts[b][1] - pts[a][1];
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    // From 10 m INSIDE the shore end to the full band width, so the tick crosses
+    // the zone line rather than butting onto it.
+    return [[(pts[at][1] - ny * 10) / mLat, (pts[at][0] - nx * 10) / mLon],
+            [(pts[at][1] + ny * BAND_M) / mLat, (pts[at][0] + nx * BAND_M) / mLon]];
+  };
+  const n = pts.length;
+  return [tick(0, 0, Math.min(1, n - 1)),
+          tick(n - 1, Math.max(0, n - 2), n - 1)];
+}
+
+function clearBand(){
+  if(bandLayer){ bandLayer.remove(); bandLayer = null; }
+  bandZone = null;
+}
+
+function showBand(z){
+  clearBand();
+  if(!z || !z.line.length || map.getZoom() < BAND_MIN_ZOOM) { bandZone = z || null; return; }
+  const col = COLOR[tierOf(z)];
+  const edge = seawardEdge(z);
+  bandLayer = L.layerGroup([
+    L.polygon(bandPolygon(z), {
+      pane:BAND_PANE, stroke:false, fill:true, fillColor:col, fillOpacity:.22,
+      interactive:false
+    }),
+    /* THE SEAWARD EDGE IS DASHED AND THE END CAPS ARE SOLID, and the difference
+       between those two strokes is the whole claim this band makes.
+       The ends are a decision somebody took: Cocles stops here and Chiquita
+       starts, on the same continuous sand, and that is what a reader needs when
+       the instruction changes under their feet. Solid.
+       The seaward edge is not a decision and not a survey. The hazard does not
+       stop 120 m out; that is simply how far out this beach is still this
+       beach. A fill alone was invisible over brown reef imagery at 16%, so the
+       edge has to be drawn, and a dashed edge is the honest way to draw an
+       extent nobody measured. There is no landward edge at all: nothing on this
+       map is entitled to draw a line across somebody's garden. */
+    L.polyline(edge.outer.map(edge.ll), {
+      pane:BAND_PANE, color:col, weight:1.5, opacity:.6, dashArray:"5 6",
+      interactive:false
+    }),
+    ...endTicks(z).map(t => L.polyline(t, {
+      pane:BAND_PANE, color:col, weight:3, opacity:.95, lineCap:"butt",
+      interactive:false
+    }))
+  ]).addTo(map);
+  bandZone = z;
+}
+
+// The band appears and disappears with zoom on its own, because a reader who
+// pinches out past z14 with a sheet open should not be left with a wash they
+// cannot resolve, and one who pinches back in should get it back.
+map.on("zoomend", ()=>{ if(bandZone) showBand(bandZone); });
+
 function flyClear(bounds, opts){
   const open  = sheet.classList.contains("open");
   const headH = document.querySelector(".topbar")?.offsetHeight || 64;
@@ -2862,12 +3055,33 @@ function swatch(tier){
      putting the stroke on the card in the first place.
      The card shows the REFERENCE weight rather than the current zoom's, so the
      legend stays still while the map under it rescales. */
+  /* THE NAVY BOX IS GONE. Every swatch used to be drawn on a
+     <rect fill="#24384a"> so that the stroke could be shown in its literal map
+     colour: on a dark ground #f5b942 amber is legible, and on white it measures
+     about 1.8:1, under the 3:1 a meaningful graphic has to clear. Daniel's
+     finding 2026-09-17, and he named it precisely: "I do not like that there is
+     a blue box holding each of the linework types, this should be eliminated."
+     He is right. Eight navy chips down a white rail, each one a different
+     background from the card it sits on, is a third container layer on a
+     component that already has two, and the thing they contain is 24 px of
+     line.
+
+     SO THE SWATCH CHANGES WHAT IT SAMPLES. It draws the map stroke's WEIGHT and
+     DASH exactly, from the same CGGeom.TIERS table the map draws from, and its
+     colour in the light-ground variant (`--*-text`) rather than the literal map
+     colour. High and low are the same hue either way; only moderate differs,
+     amber to a dark ochre, and that was ALREADY true of the bar beside it. The
+     weight and the dash are the part a deuteranope reads, and they are exact.
+
+     Colours come from the stylesheet rather than from a second copy here, so a
+     token cannot be changed in one place and not the other. */
   const s = CGGeom.TIERS[tier];
-  const w = Math.max(3, s.weight * 0.6);
+  const css = getComputedStyle(document.documentElement);
+  const col = (css.getPropertyValue("--" + tier + "-text") || "").trim() || COLOR[tier];
+  const w = Math.max(3, s.weight * 0.85);
   const gap = s.gapK * w, dash = s.ratio == null ? null : s.ratio * gap;
-  return `<svg class="sw" width="30" height="16" viewBox="0 0 30 16" aria-hidden="true" focusable="false">
-    <rect width="30" height="16" rx="4" fill="#24384a"/>
-    <line x1="3" y1="8" x2="27" y2="8" stroke="${COLOR[tier]}"
+  return `<svg class="sw" width="34" height="14" viewBox="0 0 34 14" aria-hidden="true" focusable="false">
+    <line x1="2" y1="7" x2="32" y2="7" stroke="${col}"
           stroke-width="${w}" stroke-linecap="round"
           ${dash == null ? "" : `stroke-dasharray="${+dash.toFixed(2)} ${+gap.toFixed(2)}"`}/>
   </svg>`;
@@ -2892,16 +3106,30 @@ function titleChip(mark, text){
   return `<span class="chip title">${mark}${text}</span>`;
 }
 
-/* CARD ANATOMY, top to bottom: name, instruction, hours, provenance chips.
-   The instruction is the largest text on it and nothing else may become larger.
-   Keep the static markup in the body in step with this. */
+/* CARD ANATOMY, top to bottom: name, instruction, hours. THREE THINGS.
+
+   THE PROVENANCE CHIPS ARE GONE FROM THE CARD. Every card carried "Sin revisar"
+   and "Sin recorrer", on all five beaches, always, because nothing has been
+   reviewed and only the middle 1.86 km has been surveyed. Two chips repeated
+   five times is ten marks that never differ, and a mark that never differs
+   carries no information: it cannot distinguish one beach from another, which
+   is the only job the left rail has. Daniel's finding 2026-09-17: "Limit
+   redundancies and unnecessary text. Like Not reviewed and Not surveyed. The
+   point of the left side menu is to simply show the beaches on site."
+
+   The claim itself is NOT dropped. It moves to the one place a reader is
+   actually deciding something, the sheet, where it renders once as a sentence
+   instead of ten times as a badge. See trustLine().
+
+   If a beach is ever reviewed and its neighbours are not, this rule inverts:
+   a difference between beaches belongs on the card. Bring the chip back on the
+   day it can be absent from some card. */
 function cardHTML(z){
   const t = T[lang];
   return `<button class="card" data-id="${z.id}" aria-current="false">
       <span class="nm">${z.name[lang]}</span>
       ${statusPill(tierOf(z), t[z.character.class])}
       ${hoursLine(z)}
-      ${cardChips(z)}
     </button>`;
 }
 
