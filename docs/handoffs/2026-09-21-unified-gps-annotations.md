@@ -15,6 +15,8 @@
 
 The document and satellite map showed the same coast in incompatible coordinate systems. One GPS map lets readers compare the document marks with the coast and control their display in one place.
 
+PR #2 is stacked on PR #1 (`feat/ui-overhaul`). It is a code review of the local map work, not a deployment or field-safety release. The unrelated generated `docs/handoffs/2026-09-17-auto.md` working-tree edit is excluded.
+
 ## How to verify
 
 1. Open `http://127.0.0.1:5174/`. There should be one map, with the satellite image behind beach zones and PDF markers.
