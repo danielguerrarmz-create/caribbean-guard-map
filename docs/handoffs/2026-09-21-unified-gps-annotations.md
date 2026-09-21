@@ -9,6 +9,7 @@
 - Adjusted source roads, footpaths and place markers with a smooth local offset using four named OpenStreetMap place controls across the coast, while keeping the four existing GPS station positions fixed. Hazard and equipment annotations retain their earlier station-based fit.
 - Drew all rip arrows through one shared curved-shaft component with a solid arrowhead. Added a little vertical space to every beach entry and removed the duplicate title inside the coastal forecast card.
 - Made the map key a compact pill that expands to the full legend and layer controls. Reorganized the key's spacing and grouped the sea-model time with its Open-Meteo attribution on a second line below the coast-wide scope note.
+- Removed the obsolete, separately reachable document-coordinate viewer and its deploy image from `web/`; source extraction JSON and the projection script remain available for audit and regeneration.
 
 ## Why
 
@@ -28,4 +29,4 @@ The four station controls span only the Chiquita area. Their fit residuals are 1
 
 ## Files touched
 
-`web/index.html`, `web/coastal.css`, `web/geometry.js`, `web/sw.js`, `web/data/full-map-geographic.geojson`, `tools/project_full_annotations.py`, and `docs/design/icon-system-and-source-review.md`.
+`web/index.html`, `web/coastal.css`, `web/geometry.js`, `web/sw.js`, `web/data/full-map-geographic.geojson`, `tools/project_full_annotations.py`, and `docs/design/icon-system-and-source-review.md`. PR cleanup also updates `README.md`, `docs/deploy.md`, `tools/build_map.js`, `tools/extract_full_map.py`, `web/_headers` and `web/vercel.json`, and removes `web/source-map.html`, `web/source-map.js` and `web/data/full-map-background.jpg` from the deploy folder.

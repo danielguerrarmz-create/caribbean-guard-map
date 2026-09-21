@@ -40,17 +40,17 @@ Do not replace this with a Git-only deployment without adding imagery generation
 ## Verify after publishing
 
 1. Confirm Vercel reports Ready and lists the expected production alias.
-2. Check `/`, `/source-map.html`, `/coastal.css`, `/symbols.js`, `/sw.js`, both map JSON files, the source background, logo and representative tiles return successful responses with suitable content types.
-3. Open the production URL at desktop and phone viewport sizes. Check the compact heading, status cards, permanent key, scale and beach selection.
+2. Check `/`, `/coastal.css`, `/symbols.js`, `/sw.js`, the geographic map JSON files, logo and representative tiles return successful responses with suitable content types.
+3. Open the production URL at desktop and phone viewport sizes. Check the compact heading, status cards, collapsible map key, scale and beach selection.
 4. Test `/?z=cocles` and `/?p=est2`. The latter must describe proposed station 3.3 and must not offer directions as if it were operating equipment.
-5. Open the annotated view, toggle layers and return to the beaches. It must state that it uses document coordinates, not GPS or current conditions.
-6. For returning visitors, use the update prompt. On a real phone, let assets finish saving, enable airplane mode, reload the main page and an already-visited annotated page. Document this separately from desktop emulation; do not claim a field offline test from HTTP checks alone.
+5. Expand the key and toggle each annotation layer on the GPS map. Projected positions must be described as approximate, with proposed equipment kept distinct from available equipment.
+6. For returning visitors, use the update prompt. On a real phone, let assets finish saving, enable airplane mode and reload the map. Document this separately from desktop emulation; do not claim a field offline test from HTTP checks alone.
 
 ## Cache behavior
 
-`web/vercel.json` and Cloudflare fallback `web/_headers` carry corresponding response rules. Both HTML documents and the worker revalidate. The service worker uses network-first document requests with per-document offline fallbacks and cache-first assets with background revalidation. Its version must change for a coordinated interface/data release.
+`web/vercel.json` and Cloudflare fallback `web/_headers` carry corresponding response rules. The map document and worker revalidate. The service worker uses network-first document requests with an offline fallback and cache-first assets with background revalidation. Its version must change for a coordinated interface/data release.
 
-Critical assets include the main interface, symbols, fonts and overview tiles. The annotated view and its background are optional cached assets; they may be unavailable if the initial connection ends before they finish downloading. CSS precaching explicitly requests `text/css`, including during Vite development.
+Critical assets include the main interface, symbols, fonts, projected annotation data and overview tiles. CSS precaching explicitly requests `text/css`, including during Vite development.
 
 Tiles and icons have long-lived immutable URLs. If their bytes change, use a new filename/prefix and update references and cache lists. Do not silently replace imagery under old tile URLs.
 

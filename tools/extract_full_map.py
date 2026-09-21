@@ -1,12 +1,8 @@
-"""Extract PDF vectors in source-page coordinates, without inventing GPS positions.
-Keeps all source geometry and proposal distinctions for the annotated-map viewer.
-"""
+"""Extract PDF vectors in source-page coordinates for GPS projection and audit."""
 import sys, json, hashlib, math
 from pathlib import Path
 from collections import Counter
 import pymupdf
-from PIL import Image
-import io
 
 root=Path(__file__).resolve().parents[1]
 source=Path(sys.argv[1]); doc=pymupdf.open(source); page=doc[0]
@@ -67,6 +63,4 @@ data={'source':source.name,'sha256':hashlib.file_digest(source.open('rb'),'sha25
       'features':features,'labels':spans,
       'note':'Draft-source annotations. Station symbols do not confirm staffing or present equipment. Do not use page coordinates as GPS.'}
 (out/'full-map-source.json').write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf8')
-im=Image.open(io.BytesIO(doc.extract_image(page.get_images()[0][0])['image']))
-im.thumbnail((6000,2000)); im.save(out/'full-map-background.jpg',quality=88,optimize=True)
-print(json.dumps({'counts':counts,'duplicate_station_labels':data['duplicate_station_labels'],'features':len(features),'image_size':im.size},indent=2))
+print(json.dumps({'counts':counts,'duplicate_station_labels':data['duplicate_station_labels'],'features':len(features)},indent=2))
