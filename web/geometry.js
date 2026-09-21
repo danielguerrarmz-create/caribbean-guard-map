@@ -313,17 +313,56 @@
     return [pts[0], map.layerPointToLatLng(L.point(a.x + dx * k, a.y + dy * k))];
   }
 
-  // Two short segments rotated onto the bearing of the last leg. Leaflet has no
-  // arrow. NOT named `L` inside here: that shadows Leaflet's own L and the next
-  // line, L.point(...), throws "L.point is not a function".
+  // A compact solid triangle makes the direction legible over both surf and
+  // dark water. The shaft reaches its tip; its outline and the head share ink.
   function headPoints(map, a, b, headLen) {
     var p1 = map.latLngToLayerPoint(a), p2 = map.latLngToLayerPoint(b);
-    var ang = Math.atan2(p2.y - p1.y, p2.x - p1.x), SPREAD = 0.42;
-    var wing = function (d) {
-      return map.layerPointToLatLng(
-        L.point(p2.x - headLen * Math.cos(ang + d), p2.y - headLen * Math.sin(ang + d)));
-    };
-    return [wing(-SPREAD), b, wing(SPREAD)];
+    var ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    var bx = p2.x - headLen * Math.cos(ang), by = p2.y - headLen * Math.sin(ang);
+    var half = headLen * 0.43;
+    return [b,
+      map.layerPointToLatLng(L.point(bx + half * Math.sin(ang), by - half * Math.cos(ang))),
+      map.layerPointToLatLng(L.point(bx - half * Math.sin(ang), by + half * Math.cos(ang)))];
+  }
+
+  // Reduce sampled PDF paths to one gentle, endpoint-preserving quadratic.
+  // This avoids tiny bends from the extraction becoming jagged arrow shafts at
+  // high zoom. All geometry is evaluated in screen space and rebuilt on zoom.
+  function gentleShaft(map, pts, zoom) {
+    var raw = shaftPoints(map, pts, zoom);
+    if (raw.length < 3) return raw;
+    var px = raw.map(function (p) { return map.latLngToLayerPoint(p); });
+    var dist = [0], i;
+    for (i = 1; i < px.length; i++)
+      dist.push(dist[i - 1] + px[i].distanceTo(px[i - 1]));
+    var total = dist[dist.length - 1];
+    if (total < 1) return [raw[0], raw[raw.length - 1]];
+    var half = total / 2, middle = px[Math.floor(px.length / 2)];
+    for (i = 1; i < dist.length; i++) if (dist[i] >= half) {
+      var t = (half - dist[i - 1]) / (dist[i] - dist[i - 1] || 1);
+      middle = L.point(px[i - 1].x + (px[i].x - px[i - 1].x) * t,
+                       px[i - 1].y + (px[i].y - px[i - 1].y) * t);
+      break;
+    }
+    var a = px[0], b = px[px.length - 1];
+    var cx = 2 * middle.x - (a.x + b.x) / 2;
+    var cy = 2 * middle.y - (a.y + b.y) / 2;
+    var straightX = (a.x + b.x) / 2, straightY = (a.y + b.y) / 2;
+    var bend = Math.hypot(cx - straightX, cy - straightY);
+    var cap = Math.min(total * 0.28, 28);
+    if (bend > cap) {
+      cx = straightX + (cx - straightX) * cap / bend;
+      cy = straightY + (cy - straightY) * cap / bend;
+    }
+    var steps = Math.max(8, Math.min(24, Math.ceil(total / 7)));
+    var out = [];
+    for (i = 0; i <= steps; i++) {
+      var u = i / steps, v = 1 - u;
+      out.push(map.layerPointToLatLng(L.point(
+        v*v*a.x + 2*v*u*cx + u*u*b.x,
+        v*v*a.y + 2*v*u*cy + u*u*b.y)));
+    }
+    return out;
   }
 
   /* opts: {color, weight, head, dashArray, outline, outlineWidth, outlineOpacity}
@@ -348,7 +387,7 @@
     var sc = arrowScale(zoom);
     var w = opts.weight == null ? sc.weight : opts.weight;
     var hl = opts.head == null ? sc.head : opts.head;
-    var drawn = shaftPoints(map, latlngs, zoom);
+    var drawn = gentleShaft(map, latlngs, zoom);
     var head = headPoints(map, drawn[drawn.length - 2] || drawn[0],
                           drawn[drawn.length - 1], hl);
     var oc = opts.outline || ARROW_OUTLINE;
@@ -356,9 +395,10 @@
 
     // Outline under, in the same two pieces, so shaft and head each get a rim.
     var shaftOut = poly(drawn, oc, w + 2 * ow, oo, dash);
-    var headOut = poly(head, oc, w + 2 * ow, oo, null);
     var shaft = poly(drawn, colour, w, 1, dash);
-    var headL = poly(head, colour, w, 1, null);
+    var headFill = L.polygon(head, {color: oc, weight: 2 * ow,
+      opacity: oo, fillColor: colour, fillOpacity: 1, interactive: false,
+      lineJoin: "round"}).addTo(g);
 
     g.cgRedraw = function (m, lls, o) {
       o = o || opts;
@@ -366,12 +406,11 @@
       var ww = o.weight == null ? s.weight : o.weight;
       var hh = o.head == null ? s.head : o.head;
       var ow2 = o.outlineWidth == null ? ARROW_OUTLINE_W : o.outlineWidth;
-      var d2 = shaftPoints(m, lls, z);
+      var d2 = gentleShaft(m, lls, z);
       var h2 = headPoints(m, d2[d2.length - 2] || d2[0], d2[d2.length - 1], hh);
       shaftOut.setLatLngs(d2); shaftOut.setStyle({ weight: ww + 2 * ow2 });
-      headOut.setLatLngs(h2); headOut.setStyle({ weight: ww + 2 * ow2 });
       shaft.setLatLngs(d2); shaft.setStyle({ weight: ww });
-      headL.setLatLngs(h2); headL.setStyle({ weight: ww });
+      headFill.setLatLngs(h2); headFill.setStyle({ weight: 2 * ow2 });
     };
     return g;
   }

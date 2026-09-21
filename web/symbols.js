@@ -4,9 +4,9 @@
   const paths={
     swimmer:'<circle cx="14" cy="8" r="2"/><path d="m5 15 5-4 5 3 4-1M3 19q2-2 4 0t4 0t4 0t4 0"/>',
     'no-swim':'<circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/>',
-    'high-risk':'<path d="M6 21V3h13v10H6"/><path d="M6 8h13"/>',
+    'high-risk':'<circle cx="12" cy="5" r="2"/><path d="M8 10h8l2 4H6zM9 14l-2 7m8-7 2 7M5 21h14"/>',
     conditional:'<path d="m12 3 10 18H2Z"/><path d="M12 9v5m0 3v.1"/>',
-    'lower-risk':'<path d="M3 9q3-3 6 0t6 0t6 0M3 15q3-3 6 0t6 0t6 0"/>',
+    'lower-risk':'<path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/>',
     unknown:'<circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/>',
     rescue_station:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m6 6 3 3m6 6 3 3M6 18l3-3m6-6 3-3"/>',
     proposed_rescue_station:'<circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="4"/><path d="m6 6 3 3m6 12 3-3"/>',

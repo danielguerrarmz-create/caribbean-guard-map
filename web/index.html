@@ -991,19 +991,19 @@
   <!-- THE SEA. Hidden until it has something true to say; see loadSea(). It sits
        ABOVE the beach list and outside every beach on purpose, because the model
        it comes from has one cell for this whole coast. -->
-  <details class="forecast" id="forecast">
-    <summary id="forecast-label">Pronóstico de la costa</summary>
+  <section class="forecast" id="forecast" aria-labelledby="forecast-label">
+    <h3 class="forecast-title" id="forecast-label">Pronóstico de la costa</h3>
     <p class="forecast-empty" id="forecast-empty">Pronóstico no disponible.</p>
     <section class="sea" id="sea" hidden></section>
-  </details>
+  </section>
 
   <div class="list-heading"><h3 class="eyebrow rail-eyebrow" id="rail-beaches">Playas</h3><button id="list-toggle" aria-expanded="false" aria-controls="picker">Ver todas</button></div>
   <div class="strip" id="picker">
-    <button class="card" data-id="cg:zone/playa-negra" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9q3-3 6 0t6 0t6 0M3 15q3-3 6 0t6 0t6 0"/></svg></span><span class="beach-copy"><span class="nm">Playa Negra</span><span class="beach-status">IGUAL, TEN CUIDADO</span><span class="patrol">Guardavidas: sin confirmar</span></span></button>
-    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/></svg></span><span class="beach-copy"><span class="nm">Salsa Brava</span><span class="beach-status">NO ENTRES AL AGUA</span><span class="patrol">Guardavidas: sin confirmar</span></span></button>
-    <button class="card" data-id="cg:zone/cocles" aria-current="false"><span class="symbol high-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V3h13v10H6"/><path d="M6 8h13"/></svg></span><span class="beach-copy"><span class="nm">Playa Cocles</span><span class="beach-status">SOLO CON GUARDAVIDAS</span><span class="patrol">Guardavidas · horario 9:00-17:00</span></span></button>
-    <button class="card" data-id="cg:zone/chiquita" aria-current="false"><span class="symbol conditional beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2Z"/><path d="M12 9v5m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Chiquita</span><span class="beach-status">REVISA ANTES DE ENTRAR</span><span class="patrol">Sin guardavidas permanente</span></span></button>
-    <button class="card" data-id="cg:zone/punta-uva" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9q3-3 6 0t6 0t6 0M3 15q3-3 6 0t6 0t6 0"/></svg></span><span class="beach-copy"><span class="nm">Punta Uva</span><span class="beach-status">IGUAL, TEN CUIDADO</span><span class="patrol">Guardavidas: sin confirmar</span></span></button>
+    <button class="card" data-id="cg:zone/playa-negra" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Negra</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
+    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/></svg></span><span class="beach-copy"><span class="nm">Salsa Brava</span><span class="beach-status">NO ENTRES AL AGUA</span></span></button>
+    <button class="card" data-id="cg:zone/cocles" aria-current="false"><span class="symbol high-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 10h8l2 4H6zM9 14l-2 7m8-7 2 7M5 21h14"/></svg></span><span class="beach-copy"><span class="nm">Playa Cocles</span><span class="beach-status">SOLO CON GUARDAVIDAS</span></span></button>
+    <button class="card" data-id="cg:zone/chiquita" aria-current="false"><span class="symbol conditional beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2Z"/><path d="M12 9v5m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Chiquita</span><span class="beach-status">REVISA ANTES DE ENTRAR</span></span></button>
+    <button class="card" data-id="cg:zone/punta-uva" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Punta Uva</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
     <button class="card void" data-id="void" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">El resto de la costa</span><span class="beach-status">Sin describir</span></span></button>
   </div>
 
@@ -1503,7 +1503,13 @@ const T = {
       seaWave:"Ola", seaPeriod:"Periodo", seaFrom:"Viene de", seaTemp:"Agua",
       seaModel:t=>`Modelo, ${t}`,
       seaStale:h=>`Modelo de hace más de ${h} horas.`,
-      seaCredit:"Datos de Open-Meteo.com",
+      seaCredit:"Datos de",
+      weatherTitle:"Tiempo regional", weatherModel:"Modelo regional",
+      weatherUnavailable:"Pronóstico regional no disponible.",
+      weatherAir:"Aire", weatherWind:"Viento", weatherHumidity:"Humedad",
+      weatherScope:"Cerca de Puerto Viejo. No indica si es seguro nadar.",
+      weatherClear:"Despejado", weatherClouds:"Nublado", weatherFog:"Niebla",
+      weatherRain:"Lluvia", weatherStorm:"Tormenta", weatherMixed:"Variable",
       /* Eight points, in Spanish, because a bearing in degrees is not something
          anybody on a beach can use. */
       seaDirs:["N","NE","E","SE","S","SO","O","NO"],
@@ -1677,7 +1683,13 @@ const T = {
       seaWave:"Wave", seaPeriod:"Period", seaFrom:"From", seaTemp:"Water",
       seaModel:t=>`Model, ${t}`,
       seaStale:h=>`Model is more than ${h} hours old.`,
-      seaCredit:"Data by Open-Meteo.com",
+      seaCredit:"Data by",
+      weatherTitle:"Regional weather", weatherModel:"Regional model",
+      weatherUnavailable:"Regional forecast unavailable.",
+      weatherAir:"Air", weatherWind:"Wind", weatherHumidity:"Humidity",
+      weatherScope:"Near Puerto Viejo. Does not indicate swimming safety.",
+      weatherClear:"Clear", weatherClouds:"Cloudy", weatherFog:"Fog",
+      weatherRain:"Rain", weatherStorm:"Storm", weatherMixed:"Variable",
       seaDirs:["N","NE","E","SE","S","SW","W","NW"],
       ebWhatToDo:"What to do",
       ebRip:"Rip currents",
@@ -2947,6 +2959,8 @@ function openZone(z){
     // QR deep link opens this sheet 350 ms after load. Both are the same point.
     const mid = z.at.join(",");
     return `
+    <div class="zone-detail">
+    <div class="zone-top">
     <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
     <p class="sub">${z.sub[lang]}</p>
     <div class="statuscard ${tierOf(z)}">
@@ -2961,8 +2975,10 @@ function openZone(z){
       </div>
     </div>
     ${rider}${caveats}
+    </div>
+    <div class="zone-lower">
     <span class="eyebrow">${t.ebRip}</span>
-    <p class="escape"><span class="ic" aria-hidden="true">»</span>${t.escapeRip}</p>
+    <p class="escape">${t.escapeRip}</p>
     <span class="eyebrow">${t.ebWhoSays}</span>
     ${trustLine(z)}
     <div class="actions">
@@ -2970,9 +2986,13 @@ function openZone(z){
          href="https://www.google.com/maps/dir/?api=1&destination=${mid}">${t.route}</a>
       <a class="btn" href="${reportHref(t.reportSubject + ": " + z.name.es)}">${t.report}</a>
     </div>
-    ${sheetFoot()}`;
+    </div>
+    ${renderWeatherPanel()}
+    ${sheetFoot()}
+    </div>`;
   };
-  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); requestAnimationFrame(fitZoneDetail); });
+  requestAnimationFrame(fitZoneDetail);
   markCurrent(z.id);
   // Before the geometry lands there is one point to fly to rather than a line.
   flyClear(z.line.length ? L.latLngBounds(z.line).pad(0.55)
@@ -3279,19 +3299,43 @@ function openLegend(){
   // A legend is a reading task, not a glance, so it opens past PEEK.
   sheetStop("half");
 }
+const sourceLayerDefs = [
+  ['hazards','rip_current','Resacas y corrientes','Rips and currents'],
+  ['rescue','rescue_station','Equipo de rescate','Rescue equipment'],
+  ['proposals','proposed_rescue_station','Propuestas y sin definir','Proposals and undefined'],
+  ['access','pedestrian','Caminos y accesos','Roads and access'],
+  ['places','location','Ubicaciones','Locations']
+];
+const sourceLayerState = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,true]));
+const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerGroup().addTo(map)]));
+let legendExpanded = false;
 function renderLegendPerm(){
   const el = document.getElementById("legend-perm");
+  if(!el) return;
   el.setAttribute("aria-label", lang === "es" ? "Leyenda" : "Legend");
   const es = lang === 'es';
-  const items = [
-    ['rip_current', es ? 'Resaca' : 'Rip current'],
-    ['strong_current_area', es ? 'Corrientes fuertes' : 'Strong currents'],
-    ['rescue_station', es ? 'Equipo de rescate' : 'Rescue equipment'],
-    ['proposed_rescue_station', es ? 'Equipo propuesto' : 'Proposed equipment'],
-    ['proposed_cg_station', es ? 'Estación CG propuesta' : 'Proposed CG station']
-  ];
-  if(el) el.innerHTML = `<h2>${es ? 'En el mapa' : 'On the map'}</h2><div class="key-grid">${items.map(([k,n])=>`<div>${CGSymbols.badge(k)}<span>${n}</span></div>`).join('')}</div>
-    <div class="coast-key"><span class="coast-samples" aria-hidden="true"><i></i><i></i><i></i></span><span>${es ? 'Color de costa = estado de playa' : 'Coast color = beach status'}</span></div><a class="source-link" href="source-map.html">${es?'Ver mapa completo anotado':'View full annotated map'}</a>`;
+  const guidance = ['no-swim','high-risk','conditional','lower-risk'];
+  const shortGuidance = es
+    ? ['No entrar','Solo con guardavidas','Revisar antes','Ten cuidado']
+    : ['Stay out','Lifeguards only','Check first','Take care'];
+  el.classList.toggle('is-open', legendExpanded);
+  el.innerHTML = `<button type="button" class="key-toggle" aria-controls="legend-content" aria-expanded="${legendExpanded}">
+      <span>${es ? 'En el mapa' : 'On the map'}</span><span class="key-toggle-icon" aria-hidden="true"></span>
+    </button><div class="key-content" id="legend-content" ${legendExpanded?'':'hidden'}>
+    <div class="key-section-label">${es ? 'Guía de playa · línea de costa' : 'Beach guidance · coastline'}</div>
+    <div class="key-grid key-status">${guidance.map((k,i)=>`<div>${CGSymbols.badge(k)}<span class="key-long">${T[lang][k]}</span><span class="key-short">${shortGuidance[i]}</span></div>`).join('')}</div>
+    <div class="key-section-label key-divider">${es?'Anotaciones · elegir capas':'Annotations · choose layers'}</div>
+    <div class="source-layer-grid">${sourceLayerDefs.map(([id,icon,esName,enName])=>`<label>
+      <input type="checkbox" data-source-layer="${id}" ${sourceLayerState[id]?'checked':''}>
+      ${CGSymbols.badge(icon)}<span>${es?esName:enName}</span></label>`).join('')}</div>
+    <div class="key-special"><div>${CGSymbols.badge('strong_current_area')}<span>${es?'Área de corrientes fuertes':'Strong-current area'}</span></div><div>${CGSymbols.badge('proposed_cg_station')}<span>${es?'Estación CG propuesta':'Proposed CG station'}</span></div></div>
+    <p class="source-note">${es?'Posiciones aproximadas; no navegar con estas marcas. Acerca para ver todas las flechas, caminos y lugares. Las propuestas no están disponibles.':'Approximate positions; do not navigate by these marks. Zoom in for all arrows, roads and places. Proposed equipment is not available.'}</p></div>`;
+  el.querySelector('.key-toggle').onclick = () => { legendExpanded = !legendExpanded; renderLegendPerm(); };
+  el.querySelectorAll('[data-source-layer]').forEach(input=>input.onchange=()=>{
+    sourceLayerState[input.dataset.sourceLayer]=input.checked;
+    const layer=sourceLayers[input.dataset.sourceLayer];
+    input.checked?layer.addTo(map):map.removeLayer(layer);
+  });
 }
 document.getElementById("legend-open").onclick = openLegend;
 
@@ -3382,11 +3426,6 @@ function titleChip(mark, text){
    If a beach is ever reviewed and its neighbours are not, this rule inverts:
    a difference between beaches belongs on the card. Bring the chip back on the
    day it can be absent from some card. */
-function patrolLine(z){
-  if(z.post) return lang === "es" ? "Guardavidas · horario 9:00-17:00" : "Lifeguards · scheduled 9:00-17:00";
-  if(z.id === "cg:zone/chiquita") return lang === "es" ? "Sin guardavidas permanente" : "No permanent lifeguard";
-  return lang === "es" ? "Guardavidas: sin confirmar" : "Lifeguards: not confirmed";
-}
 function cardHTML(z){
   const t = T[lang];
   return `<button class="card" data-id="${z.id}" aria-current="false">
@@ -3394,7 +3433,6 @@ function cardHTML(z){
       <span class="beach-copy">
       <span class="nm">${z.name[lang]}</span>
       <span class="beach-status">${t[z.character.class]}</span>
-      <span class="patrol">${CGSymbols.svg('high-risk')}${patrolLine(z)}</span>
       </span>
     </button>`;
 }
@@ -3690,6 +3728,7 @@ document.getElementById("btn-en").onclick=()=>setLang("en");
    and the sheet has no date on it.
    ============================================================ */
 const ANNOT = {rips:[], stations:[], areas:[]};
+let legacyRipLayer;
 
 /* Arrow weight, head size and the minimum drawn shaft are a function of zoom,
    and all three moved to geometry.js along with the thing that matters more:
@@ -3705,6 +3744,7 @@ const ANNOT = {rips:[], stations:[], areas:[]};
 
 function drawAnnotations(gj){
   const layer = L.layerGroup().addTo(map);
+  legacyRipLayer = L.layerGroup().addTo(layer);
   gj.features.forEach(f=>{
     // rescue_station is handled by joinStations(), not here: those markers are
     // already on screen from POSTS before this fetch resolves, and drawing them
@@ -3712,13 +3752,13 @@ function drawAnnotations(gj){
     const k = f.properties.kind, g = f.geometry;
     if(k === "rip_current"){
       const pts = g.coordinates.map(c=>[c[1], c[0]]);
-      const arrow = CGGeom.outlinedArrow(map, pts, {}).addTo(layer);
+      const arrow = CGGeom.outlinedArrow(map, pts, {}).addTo(legacyRipLayer);
       // Our own hit line, on the TRUE position rather than the drawn one: at
       // the overview a 40 m rip is shorter than its own arrowhead and the shaft
       // is stretched to stay legible, but the tap target belongs where the
       // hazard is.
       L.polyline(pts,{color:"#000",weight:30,opacity:0})
-        .addTo(layer).on("click", ()=>openAnnot("rip", f));
+        .addTo(legacyRipLayer).on("click", ()=>openAnnot("rip", f));
       ANNOT.rips.push({f, pts, arrow});
     }
     else if(k === "strong_current_area"){
@@ -3776,10 +3816,104 @@ function openAnnot(kind, f){
   openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
 }
 
+/* The newer full PDF is registered provisionally from four shared equipment
+   markers. It is drawn on this GPS map only; there is no second map view. */
+const projectedArrows = [];
+const projectedDetail = [];
+let projectedLoaded = false;
+const projectedNames = {
+  rip_current:['Corriente de resaca','Rip current'],
+  rescue_station:['Equipo de rescate','Rescue equipment'],
+  proposed_rescue_station:['Equipo propuesto','Proposed equipment'],
+  proposed_cg_station:['Estación CG propuesta','Proposed CG station'],
+  unclassified_facility:['Símbolo sin definir','Undefined symbol'],
+  main_road:['Carretera principal','Main road'],
+  side_road:['Camino lateral','Side road'],
+  pedestrian:['Sendero peatonal','Footpath'],
+  location:['Referencia','Place']
+};
+function sourceEsc(value){
+  return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+}
+function sourcePopup(f){
+  const es=lang==='es', p=f.properties, names=projectedNames[p.kind]||['Anotación','Annotation'];
+  const proposed=p.kind.startsWith('proposed');
+  const note=proposed
+    ? (es?'Propuesto en el documento; no es equipo disponible.':'Proposed in the document; not available equipment.')
+    : p.kind==='unclassified_facility'
+    ? (es?'La leyenda original no define este símbolo. No indica un servicio disponible.':'The source legend does not define this symbol. It does not indicate an available service.')
+    : (es?'Ubicación aproximada del documento; no confirma condiciones actuales, acceso ni disponibilidad de equipo.':'Approximate document location; does not confirm current conditions, access or equipment availability.');
+  return `<strong>${sourceEsc(names[es?0:1])}${p.number?' '+sourceEsc(p.number):''}</strong>${p.name?`<br>${sourceEsc(p.name)}`:''}<br>${note}<br><small>08102026_FULL MAP DRAFT.pdf · ${es?'registro GPS provisional':'provisional GPS alignment'}</small>`;
+}
+function drawProjectedAnnotations(gj){
+  const categories={rip_current:'hazards',rescue_station:'rescue',
+    proposed_rescue_station:'proposals',proposed_cg_station:'proposals',unclassified_facility:'proposals',
+    main_road:'access',side_road:'access',pedestrian:'access',location:'places'};
+  for(const f of gj.features){
+    const kind=f.properties.kind, group=sourceLayers[categories[kind]];
+    if(!group)continue;
+    const g=f.geometry;
+    if(kind==='rip_current'){
+      const pts=g.coordinates.map(([lon,lat])=>[lat,lon]);
+      const arrow=CGGeom.outlinedArrow(map,pts,{}).addTo(group);
+      const hit=L.polyline(pts,{color:'#000',weight:20,opacity:0}).addTo(group).bindPopup(()=>sourcePopup(f));
+      projectedArrows.push({arrow,pts,hit});
+    }else if(g.type==='LineString'){
+      const pts=g.coordinates.map(([lon,lat])=>[lat,lon]);
+      const main=kind==='main_road',foot=kind==='pedestrian';
+      const line=L.polyline(pts,{color:main?'#5abce3':'#c9e9ef',weight:main?3:1.5,
+        opacity:main?.75:.55,dashArray:foot?'4 5':null}).addTo(group);
+      line.bindPopup(()=>sourcePopup(f));
+      projectedDetail.push({layer:line,kind});
+    }else{
+      const symbol=kind==='location'?'location':kind==='unclassified_facility'?'unknown':kind;
+      const [lon,lat]=g.coordinates;
+      const marker=L.marker([lat,lon],{title:projectedNames[kind]?.[lang==='es'?0:1]||'Annotation',
+        icon:L.divIcon({className:'projected-marker '+(kind==='location'?'projected-place':''),
+          iconSize:[30,30],iconAnchor:[15,15],html:CGSymbols.badge(symbol)+(f.properties.number?`<span class="projected-number">${sourceEsc(f.properties.number)}</span>`:'')})
+      }).addTo(group).bindPopup(()=>sourcePopup(f));
+      if(kind==='location')projectedDetail.push({layer:marker,kind});
+    }
+  }
+  map.on('zoomend',()=>{
+    const show=map.getZoom()>=15;
+    document.body.classList.toggle('map-overview',!show);
+    const used=[];
+    projectedArrows.forEach(({arrow,pts,hit})=>{
+      const center=map.latLngToContainerPoint(pts[Math.floor(pts.length/2)]);
+      const visible=show||used.every(p=>p.distanceTo(center)>32);
+      if(visible){
+        used.push(center);
+        if(!sourceLayers.hazards.hasLayer(arrow))arrow.addTo(sourceLayers.hazards);
+        if(!sourceLayers.hazards.hasLayer(hit))hit.addTo(sourceLayers.hazards);
+        arrow.cgRedraw(map,pts,{});
+      }else{
+        sourceLayers.hazards.removeLayer(arrow);
+        sourceLayers.hazards.removeLayer(hit);
+      }
+    });
+    projectedDetail.forEach(({layer,kind})=>{
+      if(kind==='location'){
+        const node=layer.getElement();if(node)node.style.display=show?'':'none';
+      }else layer.setStyle({opacity:show?.55:0});
+    });
+  });
+  map.fire('zoomend');
+}
+fetch('data/full-map-geographic.geojson')
+  .then(r=>r.ok?r.json():Promise.reject(r.status))
+  .then(gj=>{
+    drawProjectedAnnotations(gj);
+    projectedLoaded = true;
+    if(legacyRipLayer){legacyRipLayer.clearLayers();ANNOT.rips.length=0;}
+  })
+  .catch(error=>console.warn('Full document annotations unavailable',error));
+
 fetch("data/cg-hazards.geojson")
   .then(r=>r.ok ? r.json() : Promise.reject(r.status))
   .then(gj=>{
     drawAnnotations(gj);
+    if(projectedLoaded && legacyRipLayer){legacyRipLayer.clearLayers();ANNOT.rips.length=0;}
     joinStations(gj);
     /* Recompute the surveyed window from what actually loaded, so the extent the
        absence marks describe can never drift from the extent that is drawn.
@@ -3928,6 +4062,71 @@ const SEA_STALE_H = 3;
 const seaEl = document.getElementById("sea");
 let seaData = null;
 
+/* One land-weather model point for the region. Open-Meteo currently resolves
+   all five beach coordinates to the same default grid cell, so repeating the
+   request per beach would imply precision the model does not have. This panel
+   is weather context only; it never changes the swimming instruction. */
+const WEATHER_URL = "https://api.open-meteo.com/v1/forecast" +
+  "?latitude=9.65&longitude=-82.74" +
+  "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code" +
+  "&cell_selection=nearest&timezone=America%2FCosta_Rica" +
+  "&timeformat=unixtime&forecast_days=1";
+const WEATHER_STALE_H = 3;
+let weatherData = null;
+
+function weatherCondition(code){
+  const t = T[lang];
+  if(code === 0) return t.weatherClear;
+  if(code >= 1 && code <= 3) return t.weatherClouds;
+  if(code === 45 || code === 48) return t.weatherFog;
+  if(code >= 95) return t.weatherStorm;
+  if((code >= 51 && code <= 82)) return t.weatherRain;
+  return t.weatherMixed;
+}
+function renderWeatherPanel(){
+  const t = T[lang], c = weatherData;
+  const valid = c && Number.isFinite(c.time) &&
+    [c.temperature_2m,c.relative_humidity_2m,c.wind_speed_10m].every(Number.isFinite) &&
+    Math.abs(Date.now() / 1000 - c.time) <= WEATHER_STALE_H * 3600;
+  const at = valid ? new Date(c.time * 1000).toLocaleTimeString(
+    lang === "es" ? "es-CR" : "en-GB",
+    {timeZone:"America/Costa_Rica",hour:"2-digit",minute:"2-digit"}) : "";
+  const metric = (label, value) => `<div><span>${label}</span><strong>${value}</strong></div>`;
+  return `<section class="sheet-weather" aria-label="${t.weatherTitle}">
+    <div class="weather-head"><span class="eyebrow">${t.weatherTitle}</span>
+      <span class="weather-time">${valid ? `${t.weatherModel} · ${at} CR` : t.weatherModel}</span></div>
+    ${valid ? `<div class="weather-metrics">
+      ${metric(t.weatherAir, Math.round(c.temperature_2m) + "°C")}
+      ${metric(t.weatherWind, Math.round(c.wind_speed_10m) + " km/h")}
+      ${metric(t.weatherHumidity, Math.round(c.relative_humidity_2m) + "%")}
+    </div><p class="weather-foot">${weatherCondition(c.weather_code)} · ${t.weatherScope}
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></p>`
+    : `<p class="weather-empty">${t.weatherUnavailable}</p>`}
+  </section>`;
+}
+function refreshWeatherPanel(){
+  const panel = sheetBody.querySelector(".sheet-weather");
+  if(panel){ panel.outerHTML = renderWeatherPanel(); requestAnimationFrame(fitZoneDetail); }
+}
+function fitZoneDetail(){
+  const detail = sheetBody.querySelector('.zone-detail');
+  if(!detail) return;
+  detail.classList.remove('compact-weather','weather-hidden');
+  if(window.innerWidth < 820 || window.innerHeight <= 760) return;
+  if(detail.scrollHeight > detail.clientHeight + 2) detail.classList.add('compact-weather');
+  if(detail.scrollHeight > detail.clientHeight + 2) detail.classList.add('weather-hidden');
+}
+window.addEventListener('resize', ()=>requestAnimationFrame(fitZoneDetail));
+fetch(WEATHER_URL, {cache:"no-store"})
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(d => {
+    const c = d && d.current;
+    if(!c || c.temperature_2m == null) throw new Error("no weather values");
+    weatherData = c;
+    refreshWeatherPanel();
+  })
+  .catch(err => console.warn("[cg] regional weather did not load:", err));
+
 function seaDir(deg){
   const d = T[lang].seaDirs;
   return d[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
@@ -3972,18 +4171,15 @@ function renderSea(){
   seaEl.className = "sea" + (stale ? " stale" : "");
   seaEl.hidden = false;
   seaEl.innerHTML = `
-    <div class="head">
-      <span class="eyebrow">${t.seaTitle}</span>
-      <span class="stamp">${t.seaModel(hhmm)}</span>
-    </div>
     <div class="cols" style="--from:${Math.round(((c.wave_direction % 360) + 360) % 360)}deg">
       ${col("wave",   c.wave_height.toFixed(1) + " m", t.seaWave)}
       ${col("period", Math.round(c.wave_period) + " s", t.seaPeriod)}
       ${col("from",   seaDir(c.wave_direction), t.seaFrom)}
       ${col("temp",   Math.round(c.sea_surface_temperature) + "°C", t.seaTemp)}
     </div>
-    <p class="foot">${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaAll}
-      <a href="https://open-meteo.com/" target="_blank" rel="noopener">${t.seaCredit}</a></p>`;
+    <div class="foot"><div>${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaAll}</div>
+      <div>${t.seaCredit} <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>
+      <span class="stamp"> · ${t.seaModel(hhmm)}</span></div></div>`;
 }
 
 /* NETWORK-FIRST WITH A CACHED FALLBACK, and no precache entry.

@@ -1,6 +1,6 @@
 /* Caribbean Guard coastal identity. Safety colors and map geometry are unchanged.
    Layout: one panel on desktop; a scrollable list / detail sheet on mobile. */
-:root{--ink:#132f3c;--paper:#fffefa;--muted:#536974;--ocean:#126780;--line:#dce3e3;--sand:#f4f3ec;--panel:380px;--header:80px;--sheet-r:18px}
+:root{--ink:#132f3c;--paper:#fffefa;--muted:#536974;--ocean:#126780;--line:#dce3e3;--sand:#f4f3ec;--panel:390px;--header:80px;--sheet-r:18px}
 body{background:var(--ink)}
 button,a,summary{touch-action:manipulation}
 .topbar{height:var(--header);padding:8px 24px;background:var(--paper);gap:16px;z-index:1300;border-color:var(--line)}
@@ -41,30 +41,54 @@ button,a,summary{touch-action:manipulation}
 .dockrow .txt{color:var(--muted);text-decoration-color:#94a6ad;font-size:12px;text-align:left;min-height:44px}
 .dockrow .rf{background:transparent;color:var(--ink);height:44px;width:44px}
 .counter,.legend-perm,.locate-first{display:none!important}
-.forecast{order:4;flex:none;border-top:1px solid var(--line);padding:0 24px;background:var(--paper);max-height:32vh;overflow:auto}
-.forecast summary{min-height:48px;padding:15px 0;font-size:13px;color:var(--muted);font-weight:600;cursor:pointer}
+.forecast{order:4;flex:none;border-top:1px solid var(--line);padding:10px 16px 0;background:var(--paper);max-height:32vh;overflow:auto}
+.forecast-title{margin:0 0 8px;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .forecast-empty{font-size:13px;color:var(--muted);margin:0 0 16px}
 .forecast:has(.sea:not([hidden])) .forecast-empty{display:none}
-.forecast .sea{margin:0 0 16px;padding:14px;background:#eef3f3;color:var(--ink);border:0;border-radius:8px}
+.forecast .sea{margin:0 0 10px;padding:10px;background:#eef3f3;color:var(--ink);border:0;border-radius:8px}
 .forecast .sea .head,.forecast .sea .stamp,.forecast .sea .eyebrow,.forecast .sea .lbl,.forecast .sea .foot,.forecast .sea .foot a,.forecast .sea .val{color:var(--muted)}
 .forecast .sea .val{color:var(--ink)}
 .forecast .sea .lbl{text-shadow:none;white-space:normal}
-.forecast .sea .tile{background:#dce8e9;color:var(--ocean)}
+.forecast .sea .tile{background:#dce8e9;color:var(--ocean);border-radius:50%}
+.forecast .sea .cols{margin:0 0 8px}
+.forecast .sea .foot{margin:0;line-height:1.4}
+.forecast .sea .foot>div+div{margin-top:3px}
+.forecast .sea .stamp{font-size:inherit;font-weight:400;white-space:normal}
 .leaflet-marker-icon.lbl.sea{background:transparent;padding:0;margin:0;border-radius:0}
-.fab,.compass{box-shadow:0 2px 8px #0002;border-radius:8px;width:44px;height:44px}
+.fab,.compass{box-shadow:0 2px 8px #0002;border-radius:50%;width:44px;height:44px}
 .fab:focus-visible,.compass:focus-visible,.dockrow :focus-visible{outline-color:var(--ocean)}
-.sheet{background:var(--paper);box-shadow:0 -4px 24px #0002}
-.sheet-body{padding:16px 24px 28px}
-.sheet h2{font-size:30px;font-weight:600;letter-spacing:-.045em;line-height:1.1}
+/* Detail rhythm: 20px side inset, 12px between sections, 8px within a component. */
+.sheet{--detail-inset:20px;--detail-gap:12px;--detail-tight:8px;background:var(--paper);box-shadow:0 -4px 24px #0002}
+.sheet-body{padding:16px var(--detail-inset) 24px}
+.sheet h2{font-size:27px;font-weight:600;letter-spacing:-.045em;line-height:1.1}
 .sheet .sub{font-weight:400;line-height:1.5;margin:8px 0 20px}
-.sheet .close{box-shadow:none;top:10px;right:12px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink)}
-.statuscard{background:var(--ink);border-radius:10px;padding:18px;border-left-width:4px}
-.statuscard .tile{display:none}
-.statuscard .instr{font-size:23px;line-height:1.2;margin-top:8px}
-.statuscard .why{font-size:15px}
-.sos911{background:transparent;border:0;border-top:1px solid #ffffff35;border-radius:0;padding:14px 0 0;margin-top:16px}
-.sos911 .lead{text-transform:none;letter-spacing:0;font-weight:400;font-size:13px}
-.sos911 .dial{background:transparent;border:1px solid #ffffff80;border-radius:6px;min-height:44px;font-size:17px}
+.sheet .close{box-shadow:none;top:10px;right:28px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink)}
+.statuscard{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:10px;row-gap:4px;align-items:center;background:#2d6781;border-radius:10px;padding:16px;border-left:0}
+.statuscard>.tile{grid-column:1;grid-row:1 / span 3;margin:0;width:44px;height:44px;align-self:start}
+.statuscard>.eyebrow{grid-column:2;grid-row:1;margin:0}
+.statuscard .instr{grid-column:2;grid-row:2;font-size:18px;line-height:1.23;margin:0}
+.statuscard .why,.statuscard .sos911{grid-column:1 / -1}
+.statuscard .hours{grid-column:2;grid-row:3;margin:0;font-size:13px;line-height:1.35}
+.statuscard .why{font-size:14px;line-height:1.48;margin:12px 0 0}
+.statuscard>.tile .symbol{width:44px;height:44px}
+.statuscard>.tile svg{width:28px;height:28px}
+.sheet .escape{display:block;line-height:1.5}
+.zone-detail{display:flex;flex-direction:column;min-height:100%}
+.zone-top,.zone-lower{flex:none}
+.sheet-weather{border:1px solid var(--line);border-radius:10px;background:#f4f8f9;padding:12px;margin:14px 0;color:var(--ink)}
+.weather-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.weather-head .eyebrow{margin:0}
+.weather-time{font-size:11px;color:var(--muted);white-space:nowrap}
+.weather-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.weather-metrics>div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.weather-metrics span{font-size:11px;color:var(--muted)}
+.weather-metrics strong{font-size:17px;line-height:1.2;font-weight:700;white-space:nowrap}
+.weather-foot,.weather-empty{font-size:11px;line-height:1.4;color:var(--muted);margin:10px 0 0}
+.weather-foot a{color:var(--ocean)}
+.caveat{border-left:0;padding-left:0}
+.sos911{background:transparent;border:0;border-top:1px solid #ffffff35;border-radius:0;padding:var(--detail-tight) 0 0;margin-top:var(--detail-gap)}
+.sos911 .lead{text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;margin-bottom:var(--detail-tight)}
+.sos911 .dial{background:transparent;border:1px solid #ffffff80;border-radius:999px;min-height:44px;font-size:16px}
 .sheet .trust{font-size:13px;line-height:1.6}
 .sheet .actions{gap:8px}
 .sheet .btn{border-radius:6px;min-height:44px}
@@ -132,7 +156,7 @@ button,a,summary{touch-action:manipulation}
 .railhead h1{font-size:22px;letter-spacing:-.03em;margin:0 0 7px}
 .railhead .what{font-size:13px}
 .list-heading{padding-top:0}
-.symbol{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border-radius:9px;background:#edf1f2;color:#47616c}
+.symbol{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border-radius:50%;background:#edf1f2;color:#47616c}
 .symbol svg{width:23px;height:23px;display:block}
 .symbol.no-swim{background:#bf2935;color:white}
 .symbol.high-risk{background:#a8313b;color:white}
@@ -142,31 +166,55 @@ button,a,summary{touch-action:manipulation}
 .symbol.proposed_rescue_station{background:#fff8e9;color:#875700;border:1.5px dashed #b5802f}
 .symbol.proposed_cg_station{background:#fff;color:#52646b;border:1.5px dashed #71838b}
 .symbol.rip_current,.symbol.strong_current_area{background:#fff0ef;color:#bb2333}
-.card{display:flex;align-items:center;gap:14px;padding:15px 24px 15px 8px}
-.card .beach-symbol{width:52px;height:56px;border-radius:12px}
-.card .beach-symbol svg{width:34px;height:34px}
+.card{display:flex;align-items:center;gap:10px;padding:11px 24px 11px 8px;min-height:63px}
+.card .beach-symbol{width:42px;height:42px;border-radius:50%}
+.card .beach-symbol svg{width:28px;height:28px}
 .beach-copy{display:block;min-width:0}
-.beach-status{display:block;font-size:13px;font-weight:600;line-height:1.45;margin-top:4px;color:var(--ink)}
-.patrol{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:12px;line-height:1.35;color:var(--muted)}
-.patrol svg{width:13px;height:13px;flex:none}
+.beach-status{display:block;font-size:12px;font-weight:600;line-height:1.3;margin-top:3px;color:var(--ink)}
+.card .nm{font-size:14px}
 .card:after{right:8px;top:50%}
-.card.void .beach-symbol{height:42px;width:52px;background:transparent}
-.statuscard>.tile{display:grid;background:transparent;width:48px;height:48px;margin-bottom:12px}
-.statuscard>.tile .symbol{width:48px;height:48px}
-.statuscard>.tile svg{width:30px;height:30px}
+.card.void .beach-symbol{height:42px;width:42px;background:transparent}
+.statuscard>.tile{display:grid;background:transparent}
 .dockrow #legend-open{display:none}
-.map-key{position:absolute;z-index:1000;top:calc(var(--header) + 16px);right:16px;width:260px;background:var(--paper);padding:14px;border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 12px #102d3b18}
-.map-key h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin:0 0 12px;font-weight:600}
-.key-grid{display:grid;grid-template-columns:1fr;gap:9px}
+.map-key{position:absolute;z-index:1000;top:calc(var(--header) + 16px);right:16px;width:auto;background:var(--paper);padding:0;border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 12px #102d3b18}
+.map-key .key-toggle{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%;min-height:42px;padding:10px 15px;background:transparent;border:0;border-radius:12px;color:var(--ink);font-family:inherit;font-size:12px;font-weight:700;line-height:1.3;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.map-key .key-toggle:hover{background:#f1f6f6}
+.map-key .key-toggle:focus-visible{outline:2px solid var(--ocean);outline-offset:-3px}
+.key-toggle-icon{width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .18s}
+.map-key.is-open .key-toggle-icon{transform:rotate(225deg)}
+.map-key.is-open .key-toggle{border-bottom:1px solid var(--line);border-radius:12px 12px 0 0}
+.map-key .key-content{padding:15px 17px 14px}
+.source-note{font-size:11px;line-height:1.45;color:var(--muted);margin:11px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+.source-layer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+.source-layer-grid label{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;line-height:1.3;cursor:pointer}
+.source-layer-grid input{accent-color:var(--ocean);flex:none;width:16px;height:16px;margin:0}
+.source-layer-grid .symbol{width:25px;height:25px}
+.source-layer-grid .symbol svg{width:18px;height:18px}
+.key-special{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+.key-special>div{display:flex;align-items:center;gap:7px;min-width:0}
+.key-special .symbol{width:21px;height:21px;flex:none}
+.key-special .symbol svg{width:16px;height:16px}
+.projected-marker{background:transparent;border:0}
+.projected-marker .symbol{width:30px;height:30px;border-radius:50%;box-shadow:0 1px 5px #102d3b70;border:1px solid white}
+.projected-marker .symbol svg{width:21px;height:21px}
+.projected-number{position:absolute;top:-8px;right:-9px;min-width:18px;height:18px;padding:1px 3px;border-radius:9px;background:#132f3c;color:white;text-align:center;font:700 10px/16px Arial,sans-serif;box-shadow:0 0 0 1px white}
+.projected-place .symbol{width:20px;height:20px;margin:5px;background:#f6f0d6;color:#284f54;opacity:.9}
+.projected-place .symbol svg{width:14px;height:14px}
+body.map-overview .projected-marker:not(.projected-place) .symbol{width:22px;height:22px;margin:4px}
+body.map-overview .projected-marker:not(.projected-place) .symbol svg{width:16px;height:16px}
+body.map-overview .projected-number{display:none}
+.key-section-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.key-short{display:none}
+.key-divider{border-top:1px solid var(--line);padding-top:13px;margin-top:14px}
+.key-grid{display:grid;grid-template-columns:1fr;gap:11px}
 .key-grid>div{display:flex;align-items:center;gap:9px;font-size:12px;line-height:1.3}
-.key-grid .symbol{width:29px;height:29px;border-radius:7px}
+.key-grid .symbol{width:29px;height:29px;border-radius:50%}
 .key-grid .symbol svg{width:21px;height:21px}
 .coast-key{border-top:1px solid var(--line);padding-top:10px;margin-top:12px;display:flex;gap:9px;align-items:center;font-size:12px;line-height:1.35;color:var(--muted)}
 .coast-samples{display:flex;gap:3px;flex:none}
 .coast-samples i{display:block;width:9px;height:20px;border-radius:3px;background:#c62828}
 .coast-samples i:nth-child(2){background:#f5b942}.coast-samples i:nth-child(3){background:#1f9d55}
-.map-key .source-link{display:block;color:var(--ocean);font-size:12px;font-weight:600;margin-top:12px;min-height:28px;padding-top:6px}
-.station-marker{position:relative;display:grid;place-items:center;width:40px;height:40px;background:var(--paper);border:2px solid white;border-radius:12px;box-shadow:0 1px 6px #0006}
+.station-marker{position:relative;display:grid;place-items:center;width:40px;height:40px;background:var(--paper);border:2px solid white;border-radius:50%;box-shadow:0 1px 6px #0006}
 .station-marker .symbol{width:36px;height:36px}
 .station-marker .number{position:absolute;top:-7px;right:-9px;min-width:22px;padding:2px 4px;border-radius:5px;background:var(--ink);color:white;font-size:11px;line-height:16px;text-align:center;font-weight:600}
 .station-marker.planned{border:1px dashed #9b742c}
@@ -174,18 +222,73 @@ button,a,summary{touch-action:manipulation}
 .leaflet-control-scale-line{position:relative;box-sizing:border-box;height:26px;padding:0 0 10px!important;background:transparent!important;border:0!important;color:#132f3c!important;text-shadow:none!important;font-size:12px!important;text-align:right;min-width:40px}
 .leaflet-control-scale-line:after{content:'';position:absolute;bottom:0;left:0;right:0;height:7px;border:1px solid #132f3c;background:linear-gradient(90deg,#132f3c 0 25%,#fff 25% 50%,#132f3c 50% 75%,#fff 75%)}
 .selection-open .leaflet-bottom.leaflet-left{display:block}
-@media(min-width:820px){.sheet{z-index:1200}.map-key{max-height:calc(100dvh - var(--header) - 150px);overflow:auto}}
+@media(min-width:820px){
+ .sheet{z-index:1200}
+ .sheet-body{flex:1;min-height:0;overflow-y:hidden;scrollbar-gutter:auto;padding-top:20px;padding-bottom:20px}
+ .zone-detail{height:100%}
+ .zone-detail .sheet-weather{order:2}
+ .zone-detail .zone-lower{order:3;margin-top:auto}
+ .zone-detail>.footlink{order:4;margin-top:8px;text-align:center}
+ .zone-detail.compact-weather .sheet-weather{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;padding:8px 10px;margin:10px 0}
+ .zone-detail.compact-weather .weather-head{display:block;flex:none}
+ .zone-detail.compact-weather .weather-time{display:none}
+ .zone-detail.compact-weather .weather-metrics{display:flex;gap:9px;margin:0}
+ .zone-detail.compact-weather .weather-metrics>div{display:block;white-space:nowrap}
+ .zone-detail.compact-weather .weather-metrics span{display:none}
+ .zone-detail.compact-weather .weather-metrics strong{font-size:12px}
+ .zone-detail.compact-weather .weather-foot{flex-basis:100%;margin:0;font-size:10px}
+ .zone-detail.weather-hidden .sheet-weather{display:none}
+ .sheet .sub{margin:4px 0 var(--detail-gap)}
+ .sheet .statuscard{margin-bottom:var(--detail-gap)}
+ .sheet .caveat{margin-bottom:var(--detail-gap);font-size:14px;line-height:1.4}
+ .sheet .escape{margin-bottom:var(--detail-gap)}
+ .sheet .trust{margin-bottom:var(--detail-gap);line-height:1.45}
+ .sheet .actions{margin-bottom:var(--detail-tight)}
+ .sheet .btn{min-height:40px}
+ .sheet .footlink{margin-top:4px}
+ .fab{bottom:24px;right:24px}
+ .compass{bottom:24px;right:76px}
+ .map-key{display:block;max-height:none;overflow:visible}
+ .map-key.is-open{width:min(570px,calc(100vw - var(--panel) - 32px))}
+ .key-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px}
+ .key-status{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .source-layer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .coast-key{margin-top:10px;padding-top:10px}
+}
+@media(min-width:820px) and (min-height:800px){
+ .forecast{display:flex;flex-direction:column;justify-content:center;min-height:220px;padding-bottom:10px}
+}
+@media(min-width:820px) and (max-height:760px){
+ .sheet-body{padding-top:16px;padding-bottom:16px}
+ .sheet .sub{margin-bottom:6px}
+ .sheet .statuscard{padding:10px;margin-bottom:4px}
+ .sheet .statuscard .why{margin-top:8px}
+ .sheet .statuscard .sos911{display:flex;align-items:center;gap:10px;margin-top:8px}
+ .sheet .statuscard .sos911 .lead{flex:1;margin:0;letter-spacing:0;line-height:1.25}
+ .sheet .statuscard .sos911 .dial{flex:none;width:116px}
+ .sheet .caveat{margin-bottom:4px;line-height:1.35}
+ .sheet .escape{margin-bottom:4px}
+ .sheet .trust{margin-bottom:4px;line-height:1.35}
+ .sheet .actions{margin-bottom:4px}
+ .sheet .footlink{margin-top:0}
+ .zone-detail .sheet-weather{display:none}
+}
+@media(min-width:820px) and (max-width:1100px){.key-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:819px){
  .railhead{padding:15px 20px 3px}.railhead h1{font-size:20px;margin:0 0 5px}.railhead .what{display:block;font-size:12px}
- .card{padding:12px 22px 12px 6px;gap:11px}.card .beach-symbol{width:44px;height:52px}.card .beach-symbol svg{width:30px;height:30px}
+ .card{padding:11px 22px 11px 6px;gap:11px}.card .beach-symbol{width:42px;height:42px}.card .beach-symbol svg{width:28px;height:28px}
  .beach-status{font-size:12px}.patrol{font-size:12px;margin-top:5px}
- .map-key{top:calc(var(--header) + 8px);left:10px;right:10px;width:auto;padding:9px 10px;border-radius:9px}
- .map-key h2{margin-bottom:7px;font-size:12px}
+ .map-key{top:calc(var(--header) + 8px);left:auto;right:10px;width:auto;border-radius:9px}
+ .map-key.is-open{left:10px;right:10px;width:auto}
+ .map-key .key-content{padding:11px 12px}
+ .key-short{display:inline}.key-long{display:none}
  .key-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
- .key-grid>div{gap:5px;font-size:12px;align-items:flex-start}
+ .key-status{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .key-grid>div{gap:5px;font-size:11px;align-items:center}
  .key-grid .symbol{width:24px;height:24px}.key-grid .symbol svg{width:19px;height:19px}
+ .key-divider{margin-top:7px;padding-top:7px}
  .coast-key{margin-top:7px;padding-top:7px;font-size:12px}.coast-samples i{height:12px;width:6px}
- .map-key .source-link{margin-top:5px;min-height:24px;padding:0}
+ .selection-open .map-key{display:none}
  .selection-open .leaflet-bottom.leaflet-left{bottom:calc(56dvh + 4px)}
  .leaflet-control-scale{margin-bottom:4px!important}
 }
