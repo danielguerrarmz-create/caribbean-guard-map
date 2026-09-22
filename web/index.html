@@ -2747,9 +2747,10 @@ let lastRender = null;    // () => void, replays the open sheet in the new langu
 let lastFocus = null;     // what to give focus back to on close
 let sheetTimer = null;
 
-function sheetStop(stop){
+function sheetStop(stop, fromDrag = false){
   sheet.dataset.stop = stop;
-  sheet.style.height = "";
+  if(fromDrag) requestAnimationFrame(()=>{ sheet.style.height = ""; });
+  else sheet.style.height = "";
   const expanded = stop !== "peek";
   const handle = document.getElementById("sheet-expand");
   handle.setAttribute("aria-expanded", expanded);
@@ -2794,7 +2795,7 @@ function closeSheet(){
     sheet.hidden = true;
     sheet.setAttribute("inert", "");
     sheet.style.height = "";
-  }, 300);
+  }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 340);
   const returnTo = lastFocus && document.contains(lastFocus) ? lastFocus
     : document.querySelector('.card[aria-current="true"]') || document.querySelector('.card');
   if(returnTo) returnTo.focus({preventScroll:true});
@@ -2811,7 +2812,7 @@ document.getElementById("sheet-expand").onclick = ()=>{
   sheetStop(sheet.dataset.stop === "peek" ? "full" : "peek");
 };
 let dockStop = "rest";
-function setDockStop(stop){
+function setDockStop(stop, fromDrag = false){
   if(desktop()) return;
   dockStop = stop;
   document.body.classList.toggle("dock-min", stop === "min");
@@ -2824,7 +2825,8 @@ function setDockStop(stop){
     : (stop === "min" ? "Open beach panel" : stop === "full" ? "Lower beach panel" : "Collapse beach panel"));
   document.getElementById("list-toggle").setAttribute("aria-expanded", stop === "full");
   updateCoastalLabels();
-  measureDock();
+  if(fromDrag) requestAnimationFrame(()=>{ document.getElementById("dock").style.height = ""; });
+  else measureDock(false);
 }
 document.getElementById("list-toggle").onclick = ()=>setDockStop(dockStop === "full" ? "rest" : "full");
 let suppressDockHandleClick = false;
@@ -2834,24 +2836,51 @@ document.getElementById("dock-handle").onclick = ()=>{
 };
 (function(){
   const handle = document.getElementById("dock-handle");
-  let startY = 0, moved = 0, dragging = false;
+  const panel = document.getElementById("dock");
+  let startY = 0, startH = 0, moved = 0, dragging = false, pointerId = null, frame = 0;
+  let lastY = 0, lastTime = 0, velocity = 0;
+  const limits = ()=>({min:54, rest:window.innerHeight * (window.matchMedia("(max-width:380px) and (max-height:650px)").matches ? .5 : .4), full:window.innerHeight - document.querySelector(".topbar").offsetHeight});
   handle.addEventListener("pointerdown", e=>{
-    if(desktop()) return;
-    startY = e.clientY; moved = 0; dragging = true;
+    if(desktop() || (e.pointerType === "mouse" && e.button !== 0)) return;
+    startY = lastY = e.clientY; lastTime = e.timeStamp; startH = panel.getBoundingClientRect().height;
+    moved = velocity = 0; dragging = true; pointerId = e.pointerId;
+    panel.style.height = startH + "px";
+    panel.classList.add("dragging");
     try{ handle.setPointerCapture(e.pointerId); }catch(_){}
   });
-  handle.addEventListener("pointermove", e=>{ if(dragging) moved = e.clientY - startY; });
-  function end(){
-    if(!dragging) return;
-    dragging = false;
-    if(Math.abs(moved) < 35) return;
+  handle.addEventListener("pointermove", e=>{
+    if(!dragging || e.pointerId !== pointerId) return;
+    moved = e.clientY - startY;
+    const dt = e.timeStamp - lastTime;
+    if(dt > 0) velocity = (e.clientY - lastY) / dt;
+    lastY = e.clientY; lastTime = e.timeStamp;
+    if(Math.abs(moved) > 6 && document.body.classList.contains("dock-min")) document.body.classList.remove("dock-min");
+    const {min,full} = limits();
+    const h = Math.max(min, Math.min(full, startH - moved));
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(()=>{ panel.style.height = h + "px"; measureDock(false); });
+  });
+  function end(e){
+    if(!dragging || e.pointerId !== pointerId) return;
+    dragging = false; pointerId = null;
+    cancelAnimationFrame(frame);
+    panel.classList.remove("dragging");
+    if(e.type === "pointercancel"){
+      setDockStop(dockStop, true);
+      return;
+    }
+    if(Math.abs(moved) < 8){ panel.style.height = ""; return; }
     suppressDockHandleClick = true;
     setTimeout(()=>{ suppressDockHandleClick = false; }, 0);
-    if(moved < 0) setDockStop(dockStop === "min" ? "rest" : "full");
-    else setDockStop(dockStop === "full" ? "rest" : "min");
+    const stops = limits();
+    const h = Math.max(stops.min, Math.min(stops.full, startH - moved));
+    const projected = Math.max(stops.min, Math.min(stops.full, h - velocity * 120));
+    const best = Object.keys(stops).reduce((a,b)=>Math.abs(stops[b]-projected) < Math.abs(stops[a]-projected) ? b : a);
+    setDockStop(best, true);
   }
   handle.addEventListener("pointerup", end);
   handle.addEventListener("pointercancel", end);
+  if(window.ResizeObserver) new ResizeObserver(()=>measureDock(false)).observe(panel);
 })();
 document.addEventListener("keydown", e=>{
   if(e.key === "Escape" && sheet.classList.contains("open")) closeSheet();
@@ -2864,32 +2893,35 @@ document.addEventListener("keydown", e=>{
    sheet and scrolling its contents are not in conflict. */
 (function(){
   const head = document.getElementById("sheet-expand");
-  let startY = 0, startH = 0, dragging = false, moved = 0;
+  let startY = 0, startH = 0, dragging = false, moved = 0, pointerId = null, frame = 0;
 
-  function begin(e, fromBody){
-    if(desktop()) return;
-    if(fromBody && sheetBody.scrollTop > 0) return;
+  function begin(e){
+    if(desktop() || (e.pointerType === "mouse" && e.button !== 0)) return;
     startY = e.clientY;
     startH = sheet.getBoundingClientRect().height;
-    dragging = true; moved = 0;
+    dragging = true; moved = 0; pointerId = e.pointerId;
     sheet.classList.add("dragging");
     try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
   }
   function move(e){
-    if(!dragging) return;
+    if(!dragging || e.pointerId !== pointerId) return;
     moved = e.clientY - startY;
     const max = window.innerHeight;
     const h = Math.max(0, Math.min(max, startH - moved));
-    sheet.style.height = h + "px";
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(()=>{ sheet.style.height = h + "px"; });
   }
-  function end(){
-    if(!dragging) return;
+  function end(e){
+    if(!dragging || e.pointerId !== pointerId) return;
     dragging = false;
+    pointerId = null;
+    cancelAnimationFrame(frame);
     sheet.classList.remove("dragging");
     const vh = window.innerHeight;
-    const h = sheet.getBoundingClientRect().height;
-    sheet.style.height = "";
-    if(Math.abs(moved) > 8) suppressSheetHandleClick = true;
+    const h = Math.max(0, Math.min(vh, startH - moved));
+    if(e.type === "pointercancel"){ sheetStop(sheet.dataset.stop, true); return; }
+    if(Math.abs(moved) < 8){ sheet.style.height = ""; return; }
+    suppressSheetHandleClick = true;
     if(suppressSheetHandleClick) setTimeout(()=>{ suppressSheetHandleClick = false; }, 0);
     // Below 60% of PEEK the gesture was a dismissal, not a resize.
     if(h < vh * 0.33 * 0.6){ closeSheet(); return; }
@@ -2897,11 +2929,10 @@ document.addEventListener("keydown", e=>{
       full: vh - document.querySelector(".topbar").offsetHeight};
     let best = "peek", bestD = Infinity;
     STOPS.forEach(k=>{ const d = Math.abs(targets[k] - h); if(d < bestD){ bestD = d; best = k; } });
-    sheetStop(best);
+    sheetStop(best, true);
   }
 
-  head.addEventListener("pointerdown", e=>begin(e, false));
-  sheetBody.addEventListener("pointerdown", e=>begin(e, true));
+  head.addEventListener("pointerdown", begin);
   window.addEventListener("pointermove", move, {passive:true});
   window.addEventListener("pointerup", end);
   window.addEventListener("pointercancel", end);
@@ -3353,9 +3384,13 @@ const sourceLayerDefs = [
 const sourceLayerState = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,true]));
 const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerGroup().addTo(map)]));
 let legendExpanded = false;
+let legendClosingTimer = null;
 function renderLegendPerm(){
+  clearTimeout(legendClosingTimer);
   const el = document.getElementById("legend-perm");
   if(!el) return;
+  const restoreToggleFocus = document.activeElement?.classList?.contains('key-toggle') && el.contains(document.activeElement);
+  el.classList.remove('is-closing');
   const mobileLegend = legendExpanded && !desktop();
   document.body.classList.toggle('legend-mode', mobileLegend);
   const dockEl = document.getElementById('dock');
@@ -3374,7 +3409,13 @@ function renderLegendPerm(){
     <details class="key-data"><summary>${es?'Fuentes y precisión':'Sources and accuracy'}</summary>
       <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
     </details></div>`;
-  el.querySelector('.key-toggle').onclick = () => { legendExpanded = !legendExpanded; renderLegendPerm(); };
+  el.querySelector('.key-toggle').onclick = () => {
+    if(legendExpanded && !desktop() && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+      el.classList.add('is-closing');
+      legendClosingTimer = setTimeout(()=>{ el.classList.remove('is-closing'); legendExpanded = false; renderLegendPerm(); }, 220);
+    }else{ legendExpanded = !legendExpanded; renderLegendPerm(); }
+  };
+  if(restoreToggleFocus) el.querySelector('.key-toggle').focus({preventScroll:true});
   el.querySelectorAll('[data-source-layer]').forEach(input=>input.onchange=()=>{
     sourceLayerState[input.dataset.sourceLayer]=input.checked;
     const layer=sourceLayers[input.dataset.sourceLayer];
