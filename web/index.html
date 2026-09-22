@@ -1001,10 +1001,12 @@
   <div class="list-heading"><h3 class="eyebrow rail-eyebrow" id="rail-beaches">Playas</h3><button id="list-toggle" aria-expanded="false" aria-controls="picker">Ver todas</button></div>
   <div class="strip" id="picker">
     <button class="card" data-id="cg:zone/playa-negra" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Negra</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
-    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/></svg></span><span class="beach-copy"><span class="nm">Salsa Brava</span><span class="beach-status">NO ENTRES AL AGUA</span></span></button>
+    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/></svg></span><span class="beach-copy"><span class="nm">Puerto Viejo</span><span class="beach-status">NO ENTRES AL AGUA</span></span></button>
     <button class="card" data-id="cg:zone/cocles" aria-current="false"><span class="symbol high-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 10h8l2 4H6zM9 14l-2 7m8-7 2 7M5 21h14"/></svg></span><span class="beach-copy"><span class="nm">Playa Cocles</span><span class="beach-status">SOLO CON GUARDAVIDAS</span></span></button>
     <button class="card" data-id="cg:zone/chiquita" aria-current="false"><span class="symbol conditional beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2Z"/><path d="M12 9v5m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Chiquita</span><span class="beach-status">REVISA ANTES DE ENTRAR</span></span></button>
     <button class="card" data-id="cg:zone/punta-uva" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Punta Uva</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
+    <button class="card unassessed" data-id="cg:beach/playa-grande" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Grande</span><span class="beach-status">SIN EVALUAR</span></span></button>
+    <button class="card unassessed" data-id="cg:beach/manzanillo" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Manzanillo</span><span class="beach-status">SIN EVALUAR</span></span></button>
     <button class="card void" data-id="void" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">El resto de la costa</span><span class="beach-status">Sin describir</span></span></button>
   </div>
 
@@ -1203,8 +1205,8 @@ const ZONES = [
   },
   {
     id:"cg:zone/salsa-brava",
-    name:{es:"Salsa Brava", en:"Salsa Brava"},
-    sub:{es:"Puerto Viejo centro", en:"Puerto Viejo town"},
+    name:{es:"Puerto Viejo", en:"Puerto Viejo"},
+    sub:{es:"Sector Salsa Brava", en:"Salsa Brava section"},
     character:{
       class:"no-swim",
       authored:"desk", reviewed:null,
@@ -1357,6 +1359,16 @@ const ZONES = [
     span:{w:-82.70559, e:-82.68726}, at:[9.63866,-82.69468],
     line:[]
   }
+];
+
+/* These are named beach locations, not assessed safety zones. Playa Grande is
+   the Caribbean beach west of Manzanillo, not the Pacific beach in Guanacaste.
+   Neither point creates a coloured coast segment or inherits a nearby verdict. */
+const UNASSESSED_BEACHES = [
+  {id:"cg:beach/playa-grande", name:"Playa Grande", at:[9.6362389,-82.6783389],
+   source:"Museo Nacional de Costa Rica, Pecio Manzanillo"},
+  {id:"cg:beach/manzanillo", name:"Manzanillo", at:[9.6339158,-82.6571847],
+   source:"OpenStreetMap way/37606802, Playa Manzanillo"}
 ];
 
 /* Rescue stations: the copy is authored here, the POSITION is not.
@@ -1574,8 +1586,11 @@ const T = {
       /* the coast this map does not describe, as a card in the picker */
       voidName:"El resto de la costa",
       voidStatus:"Sin describir",
-      voidWhy:(total,zoned,surveyed)=>`Este mapa cubre ${total} km de costa. Cinco playas están descritas, y suman unos ${zoned} km. El mapa anotado de Caribbean Guard, del que salen las corrientes marcadas, cubre ${surveyed} km. El resto no está descrito ni recorrido por nadie.`,
+      voidWhy:(total,zoned,surveyed)=>`Este mapa cubre ${total} km de costa. Hay indicaciones para cinco tramos, que suman unos ${zoned} km. Playa Grande y Manzanillo aparecen como lugares, sin evaluación de seguridad. El mapa anotado de Caribbean Guard cubre ${surveyed} km. El resto de la costa sigue sin describir.`,
       voidRule:"Que no haya nada dibujado en un tramo no quiere decir que ese tramo sea seguro. Quiere decir que nadie lo ha mirado.",
+      unassessedStatus:"Sin evaluar",
+      unassessedWhy:"Aún no hay indicaciones de seguridad para nadar en esta playa.",
+      unassessedLocation:"El punto es aproximado; no indica una entrada segura.",
       /* stations */
       station:"Estación de Rescate",
       stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo recorrido. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
@@ -1728,8 +1743,11 @@ const T = {
       gapPartial:"Only part of this beach falls inside the stretch Caribbean Guard surveyed. Outside that stretch nothing is marked because nobody marked it.",
       voidName:"The rest of the coast",
       voidStatus:"Not described",
-      voidWhy:(total,zoned,surveyed)=>`This map covers ${total} km of coast. Five beaches are described and they add up to about ${zoned} km. Caribbean Guard's annotated map, which is where the marked rip currents come from, covers ${surveyed} km. The rest is described and surveyed by nobody.`,
+      voidWhy:(total,zoned,surveyed)=>`This map covers ${total} km of coast. Five stretches have guidance, totaling about ${zoned} km. Playa Grande and Manzanillo are shown as places without a safety assessment. Caribbean Guard's annotated map covers ${surveyed} km. The remaining coast is not described.`,
       voidRule:"A stretch with nothing drawn on it is not a stretch that is safe. It is a stretch nobody has looked at.",
+      unassessedStatus:"Not assessed",
+      unassessedWhy:"No beach-specific swimming guidance has been reviewed here.",
+      unassessedLocation:"This map point is approximate; it does not show a safe entry.",
       station:"Rescue Station",
       stationScope:"These are the four stations that appear inside the surveyed stretch. Caribbean Guard mentions nine along the whole coast. We do not know where the others are, so do not count on these being all of them.",
       stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
@@ -2332,7 +2350,7 @@ function label(ll, text, cls){
 
 const PLACES = [
   {ll: [9.65670, -82.75450], t: "Puerto Viejo"},
-  {ll: [9.64050, -82.65900], t: "Manzanillo"}
+  {ll: [9.63167, -82.65721], t: "Manzanillo"}
 ];
 const SEA = {ll: [9.67400, -82.72000], t: "Mar Caribe"};
 
@@ -2341,6 +2359,7 @@ const SEA = {ll: [9.67400, -82.72000], t: "Mar Caribe"};
 // a datum on the record rather than a slice of z.line, so the names are on the
 // picture before the traced geometry arrives.
 const zoneLabels = ZONES.map(z => label(z.at, z.name.es, "zone"));
+const unassessedLabels = UNASSESSED_BEACHES.map(b => label(b.at, b.name, "zone"));
 // NOT `placeLabels`. CGGeom exports a FUNCTION of that name and this const
 // would shadow it at exactly the point restyleLabels() wants to call it.
 const placeMarks = PLACES.map(p => label(p.ll, p.t, "place"));
@@ -2399,7 +2418,7 @@ function stationBoxes(){
 function hideLabelsUnderStations(){
   const boxes = stationBoxes();
   if(!boxes.length) return;
-  [...zoneLabels, ...placeMarks, seaLabel].forEach(m=>{
+  [...zoneLabels, ...unassessedLabels, ...placeMarks, seaLabel].forEach(m=>{
     const e = m.getElement();
     if(!e || e.style.display === "none") return;
     const r = e.getBoundingClientRect();
@@ -2432,7 +2451,9 @@ function restyleLabels(){
   applyStationVisibility();
   CGGeom.placeLabels(map, [
     ...zoneLabels.map(m  => ({marker:m, priority:10, visible:zones})),
-    ...placeMarks.map(m  => ({marker:m, priority:1,  visible:places})),
+    ...unassessedLabels.map(m => ({marker:m, priority:9, visible:zones})),
+    ...placeMarks.map((m,i) => ({marker:m, priority:1,
+      visible:places && !(zones && (PLACES[i].t === "Puerto Viejo" || PLACES[i].t === "Manzanillo"))})),
     {marker:seaLabel, priority:5, visible:sea}
   ]);
   hideLabelsUnderStations();
@@ -3112,6 +3133,28 @@ function openVoid(){
   history.replaceState(null, "", location.pathname);
 }
 
+function openUnassessedBeach(beach){
+  const render = ()=>{
+    const t = T[lang];
+    return `
+    <h2 id="sheet-title" tabindex="-1">${beach.name}</h2>
+    <p class="sub">${t.unassessedStatus}</p>
+    <p class="why">${t.unassessedWhy}</p>
+    <p class="caveat">${t.unassessedLocation}</p>
+    <p class="defer">${t.defer}</p>
+    <div class="actions">
+      <a class="btn" href="${reportHref(t.reportSubject + ": " + beach.name)}">${t.report}</a>
+      <a class="btn primary" href="tel:911">${t.call}</a>
+    </div>
+    ${sheetFoot()}`;
+  };
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  markCurrent(beach.id);
+  clearBand();
+  flyClear(L.latLngBounds([beach.at]).pad(0.004), {maxZoom:15});
+  history.replaceState(null, "", "?b=" + localId(beach.id));
+}
+
 /* Fly so the subject lands in the strip the sheet is NOT covering. Without this
    Leaflet centres on the full map, the sheet then eats the bottom 60% of the
    screen, and the zone you just asked about ends up pushed off the top edge. */
@@ -3381,6 +3424,7 @@ const sourceLayerDefs = [
   ['access','pedestrian','Caminos y senderos','Roads and paths'],
   ['places','location','Lugares','Places']
 ];
+
 const sourceLayerState = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,true]));
 const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerGroup().addTo(map)]));
 let legendExpanded = false;
@@ -3528,7 +3572,12 @@ function buildPicker(){
   // Character on the card, because the character is what the map stroke says and
   // the card is the legend for the stroke. A signed bulletin adds a chip; it
   // never replaces the character label.
-  const cards = ZONES.map(cardHTML).join("");
+  const cards = ZONES.map(cardHTML).join("") + UNASSESSED_BEACHES.map(b=>`
+    <button class="card unassessed" data-id="${b.id}" aria-current="false">
+      ${CGSymbols.badge('unknown', 'beach-symbol')}
+      <span class="beach-copy"><span class="nm">${b.name}</span>
+      <span class="beach-status">${t.unassessedStatus}</span></span>
+    </button>`).join("");
   /* The absence, listed as a peer of the presences, and a DIFFERENT SPECIES of
      card: dashed, hatched, and carrying no status pill at all. Hat 1 skimmed
      straight past the most defensible thing on the page because it had the same
@@ -3544,9 +3593,10 @@ function buildPicker(){
   document.getElementById("picker").innerHTML = cards + voidCard;
   document.querySelectorAll(".card").forEach(c=>{
     c.setAttribute("aria-current", c.dataset.id === selected);
-    c.onclick = c.dataset.id === "void"
-      ? openVoid
-      : ()=>openZone(ZONES.find(z=>z.id === c.dataset.id));
+    c.onclick = c.dataset.id === "void" ? openVoid
+      : c.dataset.id.startsWith("cg:beach/")
+        ? ()=>openUnassessedBeach(UNASSESSED_BEACHES.find(b=>b.id === c.dataset.id))
+        : ()=>openZone(ZONES.find(z=>z.id === c.dataset.id));
   });
   renderCounter();
   // after layout, not during it: offsetHeight read in the same frame as the
@@ -4495,10 +4545,12 @@ renderSaved();
   window.addEventListener("resize", ()=>{ renderLocate(); });
   const q=new URLSearchParams(location.search);
   const z=ZONES.find(x=>localId(x.id)===q.get("z"));
+  const b=UNASSESSED_BEACHES.find(x=>localId(x.id)===q.get("b"));
   const p=POSTS.find(x=>localId(x.id)===q.get("p"));
   /* Open from the full-coast view rather than jumping straight in. The fly is
      what tells someone who just scanned a QR code where on the coast they are. */
   if(z){ setTimeout(()=>openZone(z),350); }
+  else if(b){ setTimeout(()=>openUnassessedBeach(b),350); }
   else if(p){ setTimeout(()=>openPost(p),350); }
 
   /* The install nudge, which is what "Guarde esta página" was reaching for. It
