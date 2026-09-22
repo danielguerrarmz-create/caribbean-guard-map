@@ -40,7 +40,9 @@ Useful entry points:
 | `web/data/cg-hazards.geojson` | Existing geographic hazards with supported source corrections |
 | `web/data/full-map-source.json` | Extracted PDF features, labels, source fingerprint and page coordinates |
 | `web/data/full-map-geographic.geojson` | Provisional GPS placement of document annotations |
+| `web/data/osm-roads.geojson` | Geographic roads and paths from OpenStreetMap |
 | `tools/project_full_annotations.py` | Reproducible page-to-GPS projection |
+| `tools/fetch_osm_roads.py` | Explicit OpenStreetMap road-data refresh |
 | `web/geometry.js`, `web/data/zones-geometry.json` | Beach geometry and shoreline stroke rules |
 | `web/sw.js` | Offline cache and update handling |
 | `web/vendor/`, `web/fonts/` | Self-hosted Leaflet and Inter |
@@ -51,9 +53,9 @@ Useful entry points:
 
 The geographic map retains the earlier annotation coordinates. The complete user-supplied `08102026_FULL MAP DRAFT.pdf` supports renumbering four stations to 3.2, 3.3, 3.5 and 3.6; station 3.3 is proposed. It also identifies the shaded bay as an area of strong currents. Equipment symbols do not establish staffing or current availability.
 
-The source extraction contains 320 vectors/symbols, including 59 rip-current paths, 11 existing and 18 proposed rescue-equipment symbols. These counts are document features, not field-verified services. Two station symbols share number 4.1, and four facility symbols remain undefined.
+The source extraction contains 314 vectors/symbols, including 53 headed rip-current paths, 11 existing and 18 proposed rescue-equipment symbols. These counts are document features, not field-verified services. Two station symbols share number 4.1, and four facility symbols remain undefined.
 
-The GPS map shows 315 additional document features with provisional positions. Four nearby station numbers anchor the initial transform; roads and places also use four named OpenStreetMap location controls spread across the coast. This is not independent positional accuracy, and the displayed marks must not be used for navigation or rescue dispatch. See the [source review](docs/design/icon-system-and-source-review.md) before changing geographic data. `needs_confirmation: true` must remain until an accountable review supports changing it.
+The GPS map shows 153 document hazards, equipment and place features with provisional positions. Four nearby station numbers anchor the initial transform, while places also use four named OpenStreetMap location controls spread across the coast. Roads and paths come directly from a bounded OpenStreetMap geographic extract rather than the document projection. This is not proof of public access, condition or passability, and the provisional document marks must not be used for navigation or rescue dispatch. See the [source review](docs/design/icon-system-and-source-review.md) before changing geographic data. `needs_confirmation: true` must remain until an accountable review supports changing it.
 
 ## Regenerate the full-map extraction
 
@@ -72,3 +74,5 @@ The first command regenerates page-space JSON. The second applies the documented
 Deploy the existing Vercel project from `web/` using the team scope in [the deployment guide](docs/deploy.md). Git push alone does not upload the ignored imagery. The original logo is unchanged.
 
 Keep guidance, review status and proposal status explicit. Never convert lower-risk guidance into a claim that today's water is safe. Browser viewport checks do not replace field review, real-device offline testing, accessibility testing or imagery-rights review.
+
+\n

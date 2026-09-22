@@ -27,13 +27,32 @@ def points(d):
                 t=j/12
                 result.append([(1-t)**3*a[k]+3*(1-t)**2*t*b[k]+3*(1-t)*t*t*c[k]+t**3*e[k] for k in range(2)])
     return [p for i,p in enumerate(result) if i==0 or p!=result[i-1]]
+drawings=page.get_drawings()
+# The PDF stores each dashed rip shaft and its filled triangular head as
+# separate drawings. Some other red dashed marks have no head, and a few
+# shafts run backward in PDF path order. Match the head before classifying or
+# orienting a current; a 15-page-unit tolerance is smaller than the 30-unit
+# head itself and avoids matching nearby arrows.
+heads=[]
+for drawing in drawings:
+    box=drawing['rect']
+    if near(drawing['fill'],red) and box.width<45 and box.height<45:
+        heads.append(center(list(box)))
 features=[]
-for d in page.get_drawings():
+for d in drawings:
     r=list(d['rect']); x,y=center(r)
     if y<430 and x>10900: continue # legend samples are not map features
     col,fill,typ=d['color'],d['fill'],d['type']
     kind=None; coords=None
-    if near(col,red) and typ=='s': kind='rip_current'; coords=points(d)
+    if near(col,red) and typ=='s':
+        candidate=points(d)
+        if candidate and heads:
+            nearest=min((math.dist(endpoint,head),side)
+                        for side,endpoint in enumerate((candidate[0],candidate[-1]))
+                        for head in heads)
+            if nearest[0]<15:
+                kind='rip_current'
+                coords=candidate[::-1] if nearest[1]==0 else candidate
     elif near(fill,orange) and typ=='f': kind='rescue_station'
     elif near(col,orange) and typ=='fs': kind='proposed_rescue_station'
     elif near(col,red) and near(fill,(1,1,1)): kind='proposed_cg_station'

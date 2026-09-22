@@ -1,0 +1,65 @@
+﻿pdf_marker_id,pdf_label,display_label,longitude,latitude,placement,source_url,review_note
+pdf:location/339,1 minuto,Unidentified place,-82.7243583,9.6421477,estimated_from_nearby_places,,Generic or truncated PDF label; identity unresolved
+pdf:location/341,Lanna Ben,Lanna Ben,-82.7237046,9.642958,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/343,Calle,Unidentified place,-82.7305994,9.6447765,estimated_from_nearby_places,,Generic or truncated PDF label; identity unresolved
+pdf:location/345,Playa 506,Playa 506,-82.7363438,9.6499184,osm_named_place,https://www.openstreetmap.org/node/4401290093,OSM mapped point or feature center; not a field survey
+pdf:location/347,Tasty Waves,Tasty Waves Cantina,-82.7406628,9.6534909,osm_named_place,https://www.openstreetmap.org/node/2791783328,OSM mapped point or feature center; not a field survey
+pdf:location/349,Volleyball,Volleyball,-82.7383122,9.6524374,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/351,Beach Break,Beach Break,-82.7384829,9.6514391,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/353,Sol del Caribe,Sol del Caribe,-82.7372912,9.6505666,osm_named_place,https://www.openstreetmap.org/way/395458630,OSM mapped point or feature center; not a field survey
+pdf:location/355,Rocking J’s,Rocking J's,-82.7460948,9.6580667,osm_named_place,https://www.openstreetmap.org/way/395458625,OSM mapped point or feature center; not a field survey
+pdf:location/357,Salsa Brava,Salsa Brava,-82.750791,9.6590205,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/359,Isla Cocles,Isla Cocles,-82.7383733,9.6560334,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/361,Agapi Hostel,Agapi Hostel,-82.743317,9.656809,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/363,Super Cocles,Súper Cocles,-82.7342104,9.6448173,osm_named_place,https://www.openstreetmap.org/node/9438497898,OSM mapped point or feature center; not a field survey
+pdf:location/365,Rio Cocles,Rio Cocles,-82.734402,9.6471827,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/367,Le Cameleon Hotel,Le Cameleon Boutique Hotel,-82.7284542,9.6441813,osm_named_place,https://www.openstreetmap.org/node/3982525284,OSM mapped point or feature center; not a field survey
+pdf:location/372,El Refugio,El Refugio Grill,-82.6847392,9.6344184,osm_named_place,https://www.openstreetmap.org/node/3882257988,OSM mapped point or feature center; not a field survey
+pdf:location/374,Faith Glamping,Faith Glamping,-82.6719969,9.6315489,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/376,Almonds & Corals,Hotel Almendros & Corales,-82.6728697,9.6314715,osm_named_place,https://www.openstreetmap.org/node/3982523619,OSM mapped point or feature center; not a field survey
+pdf:location/378,Exotico Beach,Exōtico Beach Hotel,-82.6672431,9.6289696,osm_named_place,https://www.openstreetmap.org/node/13918490001,OSM mapped point or feature center; not a field survey
+pdf:location/380,Congo Bongo,Congo Bongo,-82.6639564,9.6307495,osm_named_place,https://www.openstreetmap.org/node/9380579407,OSM mapped point or feature center; not a field survey
+pdf:location/382,El Barco,El Barco,-82.6641824,9.632297,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/384,Cool & Calm,Cool & Calm Cafe & Ristorante,-82.6613025,9.6302141,osm_named_place,https://www.openstreetmap.org/node/7622611557,OSM mapped point or feature center; not a field survey
+pdf:location/386,Colores Seafront,Colores Hotel real location,-82.6595157,9.631849,osm_named_place,https://www.openstreetmap.org/node/7270810885,OSM mapped point or feature center; not a field survey
+pdf:location/388,Maxi’s,Cabinas Maxi’s,-82.6577014,9.6326302,osm_named_place,https://www.openstreetmap.org/node/9241658417,OSM mapped point or feature center; not a field survey
+pdf:location/390,Soccer Field,Soccer Field,-82.6555055,9.6335056,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/392,El Pampa,El Pampa,-82.7659506,9.6552549,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/394,Perla,Hotel Perla Negra Beachfront,-82.7718941,9.6575633,osm_named_place,https://www.openstreetmap.org/node/3982524309,OSM mapped point or feature center; not a field survey
+pdf:location/396,Banana Azul,Hotel Banana Azul,-82.7735177,9.6585684,osm_named_place,https://www.openstreetmap.org/way/500512351,OSM mapped point or feature center; not a field survey
+pdf:location/398,Brewing,Playa negra brewing,-82.7585949,9.653791,osm_named_place,https://www.openstreetmap.org/node/6813175185,OSM mapped point or feature center; not a field survey
+pdf:location/400,Flor de,Flor de,-82.75633,9.6546437,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/402,El Barco,El Barco con Arbol,-82.7564642,9.655762,osm_named_place,https://www.openstreetmap.org/relation/20248839,OSM mapped point or feature center; not a field survey
+pdf:location/404,Villas Pina,Villas Pina,-82.7760182,9.6574378,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/406,Centro,Unidentified place,-82.7620091,9.6538835,estimated_from_nearby_places,,Generic or truncated PDF label; identity unresolved
+pdf:location/408,Centro,Unidentified place,-82.762009,9.6538851,estimated_from_nearby_places,,Coincident duplicate of 406; hidden in UI
+pdf:location/409,Dragonﬂy,Dragonﬂy,-82.7020046,9.6370152,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/411,aWà Beach,aWà Beach,-82.6995762,9.6370144,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/413,Selvin,Selvin,-82.6996206,9.6363048,osm_named_place,https://www.openstreetmap.org/way/458862711,OSM mapped point or feature center; not a field survey
+pdf:location/415,Casa Viva,Casa Viva,-82.6972224,9.6358087,osm_named_place,https://www.openstreetmap.org/node/1363728650,OSM mapped point or feature center; not a field survey
+pdf:location/417,Pachos Place,Pachos Place,-82.692677,9.6373863,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/419,Eden Beach,Eden Beach,-82.6920906,9.6370818,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/421,Bungalows,Bungalows,-82.6914808,9.6361073,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/423,,Unidentified place,-82.6925424,9.6397513,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/424,Punta Arricife,Punta Arricife,-82.6860184,9.6421409,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/426,Olguita's Place,Olguita's Place,-82.6857974,9.6412581,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/428,Dive Shop,Dive Shop,-82.6878101,9.6405103,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/435,Tree House,Tree House,-82.7064143,9.6371386,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/439,Rincon Porteno,El Rincon Porteño,-82.7232322,9.6431403,osm_named_place,https://www.openstreetmap.org/node/5670822421,OSM mapped point or feature center; not a field survey
+pdf:location/441,Villas del Caribe,Villas del Caribe Beach,-82.7223067,9.6437337,osm_named_place,https://www.openstreetmap.org/way/458862618,OSM mapped point or feature center; not a field survey
+pdf:location/443,La Caracola,La Caracola,-82.7198548,9.6445959,osm_named_place,https://www.openstreetmap.org/way/1077486939,OSM mapped point or feature center; not a field survey
+pdf:location/445,Chiquita Escondida,Chiquita Escondida,-82.7175605,9.6427084,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/447,Casa Tica,Casa Tica,-82.7110791,9.6405297,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/449,Villa MAGOA,Villa MAGOA,-82.7097808,9.6400796,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/451,Bilbo,Bilbo,-82.7090242,9.6396135,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/453,Tree House Lodge,Tree House Lodge,-82.7078186,9.6378865,osm_named_place,https://www.openstreetmap.org/node/3982527859,OSM mapped point or feature center; not a field survey
+pdf:location/455,Century 21,Century 21,-82.7231597,9.6427065,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/457,Lanna Ben,Lanna Ben,-82.7245575,9.6427718,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/459,Jaguar Rescue Center,Jaguar Rescue Center,-82.7233277,9.6421153,osm_named_place,https://www.openstreetmap.org/node/4376741477,OSM mapped point or feature center; not a field survey
+pdf:location/461,Hotel Aguas Claras,Hotel Aguas Claras,-82.720446,9.6428901,osm_named_place,https://www.openstreetmap.org/node/12442373311,OSM mapped point or feature center; not a field survey
+pdf:location/463,Casa Paparazzi,Casa Paparazzi,-82.716013,9.6408159,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/466,Apartamentos,Unidentified place,-82.7094228,9.6374641,estimated_from_nearby_places,,Generic or truncated PDF label; identity unresolved
+pdf:location/468,Bilbo,Bilbo,-82.7092496,9.6389939,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
+pdf:location/470,3 minutos,Unidentified place,-82.7105433,9.6381225,estimated_from_nearby_places,,Generic or truncated PDF label; identity unresolved
+pdf:location/472,Hotel,Unidentified place,-82.7130672,9.6388102,estimated_from_nearby_places,,Generic or truncated PDF label; identity unresolved
+pdf:location/474,Residencial Sara,Residencial Sara,-82.7149693,9.6396225,estimated_from_nearby_places,,Estimated from PDF page and nearby fixed place controls
