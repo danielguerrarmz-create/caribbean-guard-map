@@ -47,7 +47,23 @@ Image.MAX_IMAGE_PIXELS = None
 ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / "tools"
 HAZARDS = json.loads((ROOT / "web" / "data" / "cg-hazards.geojson").read_text())
-COAST = json.loads((HERE / "coastline.json").read_text())["zones"]
+# THE SHEETS AND THE MAP READ THE SAME FILE. 2026-09-17.
+#
+# This was `coastline.json`, the contour traced out of the satellite mosaic's
+# water mask, which on this reef coast followed the reef and not the beach: the
+# Salsa Brava line came out 2,303 m long against a 1,294 m beach. The map moved
+# to the OpenStreetMap coastline the same day and this did not, which left the
+# printed sheet and the slippy map disagreeing about where the water is, in
+# opposite directions, on the same stretch of sand.
+#
+# That is the exact failure the morning's work set out to prevent, so there is
+# now ONE file and no second copy to drift: whatever tools/osm_coastline.py
+# writes for the map is what gets printed. It is keyed by the full zone id
+# because index.html is, and the ids are read out of index.html rather than
+# constructed; SHEETS below is keyed by the short name, so it is re-keyed here
+# and nowhere else.
+_GEOM = json.loads((ROOT / "web" / "data" / "zones-geometry.json").read_text())
+COAST = {zid.split("/", 1)[1]: pts for zid, pts in _GEOM["zones"].items()}
 # OUTSIDE web/. The sheets are a deliverable for Caribbean Guard, not an asset of
 # the map, and web/ is the folder a deployer drags into Cloudflare Pages whole.
 # Left in there, four unsigned draft sheets carrying a SIN FIRMAR band would be
