@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/mapa",
+      "destination": "https://web-five-beta-p7wt9cgwmf.vercel.app/",
+      "permanent": false
+    },
+    {
+      "source": "/mapa/",
+      "destination": "https://web-five-beta-p7wt9cgwmf.vercel.app/",
+      "permanent": false
+    }
+  ]
+}

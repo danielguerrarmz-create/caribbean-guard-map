@@ -1,4 +1,21 @@
 import { defineConfig } from "vite";
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+
+const siteRoot = fileURLToPath(new URL("./site/", import.meta.url));
+const pages = [
+  "index.html",
+  "mapa/index.html",
+  "playa-organizada/index.html",
+  "clubes/index.html",
+  "involucrate/index.html",
+  "donar/index.html",
+  "nosotros/index.html",
+  "nosotros/historia/index.html",
+  "nosotros/equipo/index.html",
+  "nosotros/vision/index.html",
+  "nosotros/proyectos/index.html",
+];
 
 export default defineConfig({
   // site/ is the website. The safety map is copied into site/mapa/app/ by
@@ -19,7 +36,10 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
-    assetsInlineLimit: 0   // never inline the imagery; the load strategy depends
+    assetsInlineLimit: 0,  // never inline the imagery; the load strategy depends
                            // on base.webp staying a separate deferred request
+    rollupOptions: {
+      input: Object.fromEntries(pages.map((page) => [page, resolve(siteRoot, page)])),
+    },
   }
 });

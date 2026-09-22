@@ -1,5 +1,9 @@
 # Deploying the safety map
 
+## Website and map are separate Vercel projects
+
+The organization website at `https://caribbean-guard-map-6sqm.vercel.app/` is the root-repository Vite project. Its `/mapa/` route redirects to the safety map project at `https://web-five-beta-p7wt9cgwmf.vercel.app/`. Deploying the website does not publish map changes or its ignored satellite tiles. Deploy the website from the repository root and the map from `web/` when both have changed. Verify the website route and the map's worker version after both releases.
+
 ## Existing target
 
 The map is a static Vercel project. Deploy **`web/`**, not the repository root or the separate `site/` website.
