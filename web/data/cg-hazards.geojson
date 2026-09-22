@@ -5,7 +5,12 @@
   "extracted_by": "tools/extract_annotations.py",
   "georeference_residual_m": 1.2142308950424194,
   "station_layer": "Rescue stations are the ONE feature class with a second record elsewhere: POSTS in web/index.html carries their names, hours and equipment copy, which a machine reading a graphic cannot produce. The GEOMETRY HERE IS AUTHORITATIVE and the map joins on `id`; the coordinates in POSTS are a fallback used only when this fetch fails, and the map logs a warning if the two disagree. Move a station here, not there.",
-  "warning": "Machine-read off a published graphic. Every feature must be confirmed and dated by Caribbean Guard before it is shown to the public as safety guidance."
+  "warning": "Machine-read off a published graphic. Every feature must be confirmed and dated by Caribbean Guard before it is shown to the public as safety guidance.",
+  "full_map_reconciliation": {
+   "source": "08102026_FULL MAP DRAFT.pdf, page 1 (user supplied)",
+   "geographic_positions_changed": false,
+   "note": "Four stations matched visually by access roads, bay and headland context. The new PDF supplies numbers and proposal status. The shaded bay is explicitly labeled strong currents. Remaining PDF features are retained in full-map-source.json in page coordinates; they are not registered GPS hazards."
+  }
  },
  "features": [
   {
@@ -324,12 +329,15 @@
     ]
    },
    "properties": {
-    "kind": "shaded_area_meaning_unknown",
+    "kind": "strong_current_area",
     "area_m2": 23441,
     "note": "Red shaded polygon with no legend entry. Could be a hazard zone or a designated safe swimming zone. MUST NOT be rendered with a status until confirmed.",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "authored": "sheet",
-    "reviewed": null
+    "reviewed": null,
+    "classification_source": "08102026_FULL MAP DRAFT.pdf, page 1 (user supplied)",
+    "source_label": "Area de Fuertes Corrientes / Area of Strong Currents",
+    "needs_confirmation": true
    }
   },
   {
@@ -346,7 +354,12 @@
     "kind": "rescue_station",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "authored": "sheet",
-    "reviewed": null
+    "reviewed": null,
+    "source_number": "3.2",
+    "proposed": false,
+    "status": "shown_existing",
+    "classification_source": "08102026_FULL MAP DRAFT.pdf, page 1 (user supplied)",
+    "needs_confirmation": true
    }
   },
   {
@@ -363,7 +376,12 @@
     "kind": "rescue_station",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "authored": "sheet",
-    "reviewed": null
+    "reviewed": null,
+    "source_number": "3.3",
+    "proposed": true,
+    "status": "proposed",
+    "classification_source": "08102026_FULL MAP DRAFT.pdf, page 1 (user supplied)",
+    "needs_confirmation": true
    }
   },
   {
@@ -380,7 +398,12 @@
     "kind": "rescue_station",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "authored": "sheet",
-    "reviewed": null
+    "reviewed": null,
+    "source_number": "3.5",
+    "proposed": false,
+    "status": "shown_existing",
+    "classification_source": "08102026_FULL MAP DRAFT.pdf, page 1 (user supplied)",
+    "needs_confirmation": true
    }
   },
   {
@@ -397,7 +420,12 @@
     "kind": "rescue_station",
     "source": "https://www.caribbeanguard.org/programa-playa-organizada (Annotated Base Map V5.png)",
     "authored": "sheet",
-    "reviewed": null
+    "reviewed": null,
+    "source_number": "3.6",
+    "proposed": false,
+    "status": "shown_existing",
+    "classification_source": "08102026_FULL MAP DRAFT.pdf, page 1 (user supplied)",
+    "needs_confirmation": true
    }
   }
  ]

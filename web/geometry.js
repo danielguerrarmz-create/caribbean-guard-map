@@ -283,11 +283,10 @@
      water it happens to be over, which changes from sand to reef to open sea
      along one beach.
 
-     The outline is drawn with the same dashArray. Round caps extend both strokes
-     by half their weight, and the wider one extends further, so the dashes stay
-     covered end to end without a second pattern to keep in step. */
+     The outline follows the same solid shaft, avoiding broken-looking arrows
+     where several document marks sit close together. */
   var ARROW_OUTLINE = "#0b1c2c";
-  var ARROW_OUTLINE_W = 1.5;
+  var ARROW_OUTLINE_W = 1.0;
   var ARROW_OUTLINE_OPACITY = 0.85;
 
   /* A rip is 30 to 100 m long, which is a couple of pixels at the whole-coast
@@ -295,7 +294,7 @@
      nine of them read as noise. Both scale with zoom, clamped at each end. */
   function arrowScale(zoom) {
     var t = Math.max(0, Math.min(1, (zoom - 12) / 5));
-    return { weight: 2.5 + t * 4.5, head: 6 + t * 14, shaftMin: 20 - t * 16 };
+    return { weight: 1.7 + t * 1.3, head: 9 + t * 9, shaftMin: 20 - t * 16 };
   }
 
   /* At the overview a 40 m rip is shorter than its own arrowhead, so the drawn
@@ -313,17 +312,75 @@
     return [pts[0], map.layerPointToLatLng(L.point(a.x + dx * k, a.y + dy * k))];
   }
 
-  // Two short segments rotated onto the bearing of the last leg. Leaflet has no
-  // arrow. NOT named `L` inside here: that shadows Leaflet's own L and the next
-  // line, L.point(...), throws "L.point is not a function".
+  // A compact open chevron reads as direction without the visual mass of a
+  // filled triangle. The shaft ends at the chevron tip.
   function headPoints(map, a, b, headLen) {
     var p1 = map.latLngToLayerPoint(a), p2 = map.latLngToLayerPoint(b);
-    var ang = Math.atan2(p2.y - p1.y, p2.x - p1.x), SPREAD = 0.42;
-    var wing = function (d) {
-      return map.layerPointToLatLng(
-        L.point(p2.x - headLen * Math.cos(ang + d), p2.y - headLen * Math.sin(ang + d)));
-    };
-    return [wing(-SPREAD), b, wing(SPREAD)];
+    var ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    var bx = p2.x - headLen * Math.cos(ang), by = p2.y - headLen * Math.sin(ang);
+    var half = headLen * 0.58;
+    return [map.layerPointToLatLng(L.point(bx + half * Math.sin(ang), by - half * Math.cos(ang))),
+      b,
+      map.layerPointToLatLng(L.point(bx - half * Math.sin(ang), by + half * Math.cos(ang)))];
+  }
+
+  // Fit a restrained cubic to quarter points of the PDF stroke. Its controls
+  // stay one-third and two-thirds along the chord, so noisy PDF samples cannot
+  // make loops or hooks. Only the lateral offsets shape the curve, and both
+  // source endpoints remain fixed to preserve the GPS shoreline registration.
+  function gentleShaft(map, pts, zoom) {
+    var raw = shaftPoints(map, pts, zoom);
+    if (raw.length < 3) return raw;
+    var px = raw.map(function (p) { return map.latLngToLayerPoint(p); });
+    var dist = [0], i;
+    for (i = 1; i < px.length; i++)
+      dist.push(dist[i - 1] + px[i].distanceTo(px[i - 1]));
+    var total = dist[dist.length - 1];
+    if (total < 1) return [raw[0], raw[raw.length - 1]];
+    var a = px[0], b = px[px.length - 1];
+    var dx = b.x - a.x, dy = b.y - a.y, chord = Math.hypot(dx, dy);
+    if (chord < 1) return [raw[0], raw[raw.length - 1]];
+    function along(fraction) {
+      var target = total * fraction;
+      for (var j = 1; j < dist.length; j++) if (dist[j] >= target) {
+        var t = (target - dist[j - 1]) / (dist[j] - dist[j - 1] || 1);
+        return L.point(px[j - 1].x + (px[j].x - px[j - 1].x) * t,
+                       px[j - 1].y + (px[j].y - px[j - 1].y) * t);
+      }
+      return b;
+    }
+    var nx = -dy / chord, ny = dx / chord;
+    var cap = Math.min(chord * .20, 24);
+    function control(fraction, baseFraction) {
+      var source = along(fraction);
+      var baseline = L.point(a.x + dx * fraction, a.y + dy * fraction);
+      var lateral = Math.max(-cap, Math.min(cap,
+        ((source.x - baseline.x) * nx + (source.y - baseline.y) * ny) * 1.35));
+      return L.point(a.x + dx * baseFraction + nx * lateral,
+                     a.y + dy * baseFraction + ny * lateral);
+    }
+    var c1 = control(.25, 1 / 3), c2 = control(.75, 2 / 3);
+    // Even a straight PDF segment needs a modest visual arc at beach zoom;
+    // limit it to a few screen pixels, well inside the source registration
+    // uncertainty. Curved source segments keep their authored bend instead.
+    var bend1 = (c1.x - a.x - dx / 3) * nx + (c1.y - a.y - dy / 3) * ny;
+    var bend2 = (c2.x - a.x - 2 * dx / 3) * nx +
+                (c2.y - a.y - 2 * dy / 3) * ny;
+    if (Math.max(Math.abs(bend1), Math.abs(bend2)) < 2) {
+      var side = Math.round((raw[0].lat + raw[0].lng) * 100000) % 2 ? 1 : -1;
+      var bow = side * Math.min(6, Math.max(2.5, chord * .055));
+      c1 = L.point(c1.x + nx * bow, c1.y + ny * bow);
+      c2 = L.point(c2.x + nx * bow, c2.y + ny * bow);
+    }
+    var steps = Math.max(10, Math.min(32, Math.ceil(total / 6)));
+    var out = [];
+    for (i = 0; i <= steps; i++) {
+      var u = i / steps, v = 1 - u;
+      out.push(map.layerPointToLatLng(L.point(
+        v*v*v*a.x + 3*v*v*u*c1.x + 3*v*u*u*c2.x + u*u*u*b.x,
+        v*v*v*a.y + 3*v*v*u*c1.y + 3*v*u*u*c2.y + u*u*u*b.y)));
+    }
+    return out;
   }
 
   /* opts: {color, weight, head, dashArray, outline, outlineWidth, outlineOpacity}
@@ -335,12 +392,13 @@
     var g = L.layerGroup();
     var ow = opts.outlineWidth == null ? ARROW_OUTLINE_W : opts.outlineWidth;
     var colour = opts.color || "#e53935";
-    var dash = opts.dashArray === undefined ? "9 6" : opts.dashArray;
+    var dash = opts.dashArray === undefined ? null : opts.dashArray;
 
-    function poly(pts, c, w, op, d) {
+    function poly(pts, c, w, op, d, klass) {
       return L.polyline(pts, {
         color: c, weight: w, opacity: op, dashArray: d || null,
-        lineCap: "round", lineJoin: "round", interactive: false
+        lineCap: "round", lineJoin: "round", interactive: false,
+        className: klass || ''
       }).addTo(g);
     }
 
@@ -348,17 +406,19 @@
     var sc = arrowScale(zoom);
     var w = opts.weight == null ? sc.weight : opts.weight;
     var hl = opts.head == null ? sc.head : opts.head;
-    var drawn = shaftPoints(map, latlngs, zoom);
+    var drawn = gentleShaft(map, latlngs, zoom);
     var head = headPoints(map, drawn[drawn.length - 2] || drawn[0],
                           drawn[drawn.length - 1], hl);
     var oc = opts.outline || ARROW_OUTLINE;
     var oo = opts.outlineOpacity == null ? ARROW_OUTLINE_OPACITY : opts.outlineOpacity;
 
-    // Outline under, in the same two pieces, so shaft and head each get a rim.
-    var shaftOut = poly(drawn, oc, w + 2 * ow, oo, dash);
-    var headOut = poly(head, oc, w + 2 * ow, oo, null);
-    var shaft = poly(drawn, colour, w, 1, dash);
-    var headL = poly(head, colour, w, 1, null);
+    // One fine outline makes the mark legible over dark reef and pale surf.
+    var phase = Math.abs(Math.round((latlngs[0][0] + latlngs[0][1]) * 100000)) % 4;
+    var pulse = 'cg-current-pulse cg-current-phase-' + phase;
+    var shaftOut = poly(drawn, oc, w + 2 * ow, oo, dash, pulse);
+    var shaft = poly(drawn, colour, w, 1, dash, pulse);
+    var headOut = poly(head, oc, w + 2 * ow, oo, null, pulse);
+    var headLine = poly(head, colour, w, 1, null, pulse);
 
     g.cgRedraw = function (m, lls, o) {
       o = o || opts;
@@ -366,12 +426,12 @@
       var ww = o.weight == null ? s.weight : o.weight;
       var hh = o.head == null ? s.head : o.head;
       var ow2 = o.outlineWidth == null ? ARROW_OUTLINE_W : o.outlineWidth;
-      var d2 = shaftPoints(m, lls, z);
+      var d2 = gentleShaft(m, lls, z);
       var h2 = headPoints(m, d2[d2.length - 2] || d2[0], d2[d2.length - 1], hh);
       shaftOut.setLatLngs(d2); shaftOut.setStyle({ weight: ww + 2 * ow2 });
-      headOut.setLatLngs(h2); headOut.setStyle({ weight: ww + 2 * ow2 });
       shaft.setLatLngs(d2); shaft.setStyle({ weight: ww });
-      headL.setLatLngs(h2); headL.setStyle({ weight: ww });
+      headOut.setLatLngs(h2); headOut.setStyle({ weight: ww + 2 * ow2 });
+      headLine.setLatLngs(h2); headLine.setStyle({ weight: ww });
     };
     return g;
   }

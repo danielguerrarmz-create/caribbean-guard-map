@@ -64,3 +64,4 @@ out/
 # command first, because deploying without it yields a map with no imagery and
 # no warning. Keep those two facts in step.
 web/tiles/
+dist-map/
