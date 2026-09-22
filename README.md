@@ -4,7 +4,7 @@ A bilingual, mobile-first beach guide for Puerto Viejo to Manzanillo, Costa Rica
 
 ## Start here
 
-- [Current release and verification](docs/handoffs/2026-09-17-coastal-interface-release.md)
+- [Current release and verification](docs/handoffs/2026-09-22-map-production-release.md)
 - [Deployment and rollback](docs/deploy.md)
 - [Interface audit and brand system](docs/design/coastal-interface-audit.md)
 - [Icon vocabulary and full-map source review](docs/design/icon-system-and-source-review.md)

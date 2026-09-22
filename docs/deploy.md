@@ -12,7 +12,7 @@ The map is a static Vercel project. Deploy **`web/`**, not the repository root o
 - Project ID: `prj_it5kQJM4XVWkmDu3NjEzGOfCcRc3`
 - Team scope: `team_XOr1KdFeEvqhDcHZMsmeoLA6`
 - Existing production alias: https://web-five-beta-p7wt9cgwmf.vercel.app
-- Current deployment record: [release handoff](handoffs/2026-09-17-coastal-interface-release.md)
+- Current deployment record: [22 September map release](handoffs/2026-09-22-map-production-release.md)
 
 The local `web/.vercel/project.json` may still contain the historical name `web`; its project ID is authoritative. Do not create another project to resolve the stale name. `.vercel/` is ignored and must not be committed.
 
