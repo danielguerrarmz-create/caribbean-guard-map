@@ -3121,7 +3121,13 @@ const sheetPanel = createPanel(sheet, {
 function sheetStop(stop, fromGesture = false){
   if(stop === "half") stop = "full";      // one reading stop; the legend asks for it
   sheet.dataset.stop = stop;
-  sheet.classList.toggle("is-partial", !desktop() && sheetPanel.isPartial(stop));
+  const partial = !desktop() && sheetPanel.isPartial(stop);
+  sheet.classList.toggle("is-partial", partial);
+  /* THE TITLE MUST NEVER BE SCROLLED AWAY (Daniel, 2026-09-23). Scroll the text
+     at the top stop, drag the handle down, and the body kept its scroll: below
+     the top stop scrolling is locked, so the beach name stayed out of reach.
+     Any partial stop now brings the content back to its top as it settles. */
+  if(partial && sheetBody.scrollTop > 0) sheetBody.scrollTo({top:0, behavior: reducedMotion.matches ? "auto" : "smooth"});
   const expanded = stop !== "peek";
   const handle = document.getElementById("sheet-expand");
   handle.setAttribute("aria-expanded", expanded);
@@ -3292,6 +3298,10 @@ function setDockStop(stop, fromGesture = false){
   document.body.classList.toggle("dock-full", stop === "full");
   document.body.classList.toggle("list-expanded", stop === "full");
   dockEl.classList.toggle("is-partial", dockPanel.isPartial(stop));
+  // Same rule for the beach list: below the top stop it cannot scroll, so it
+  // returns to its first beach rather than stranding the reader mid-list.
+  const strip = document.getElementById("picker");
+  if(dockPanel.isPartial(stop) && strip.scrollTop > 0) strip.scrollTo({top:0, behavior: reducedMotion.matches ? "auto" : "smooth"});
   document.getElementById("dock-handle").setAttribute("aria-expanded", stop !== "min");
   document.getElementById("list-toggle").setAttribute("aria-expanded", stop === "full");
   updateCoastalLabels();
