@@ -22,3 +22,9 @@ Not verified: a real iPhone or Android device, VoiceOver/TalkBack.
 - The map's Vercel project must have Root Directory `web`; if it builds from the repo root it will now build the website.
 - Drive-hosted images on the website did not render in the automation browser (they load via curl). Upstream concern, not changed here.
 - Faint tile seams are visible on desktop imagery at some zooms; pre-existing.
+
+## Previews (23 September, after review)
+
+- Map preview (public): https://caribbean-guard-eu39nomtt-danielguerrarmz-create11.vercel.app, worker `cg-map-v30`, deployed from `web/`.
+- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-d17zok1z9-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
+- Production aliases untouched.
