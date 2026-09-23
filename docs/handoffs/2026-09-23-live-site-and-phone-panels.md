@@ -25,10 +25,14 @@ Not verified: a real iPhone or Android device, VoiceOver/TalkBack.
 
 ## Previews (23 September, after review)
 
-- Map preview (public): https://caribbean-guard-9r0xd3zal-danielguerrarmz-create11.vercel.app, worker `cg-map-v31`, deployed from `web/`.
-- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-b1a25rpr6-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
+- Map preview (public): https://caribbean-guard-io3yv6uh3-danielguerrarmz-create11.vercel.app, worker `cg-map-v33`, deployed from `web/`.
+- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-534c7x9dx-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
 - Production aliases untouched.
 
 ## Phone review round (23 September)
 
 Daniel's seven items, all applied in `98d0aef`: equipment marks set on the beach (OSM along-coast correction plus a 15 m shoreline setback, `tools/project_full_annotations.py`), one panel at a time on mobile, Leyenda/Legend, Spanish default with remembered EN, forecast card rhythm and one-line footer, tighter brand pill, Poppins Bold as the heaviest weight.
+
+## Rips, beach areas, stations (23 September, second round)
+
+`45d381b`, `63f5098`. Rips are a channel plus seaward-flowing streaks (~23 px/s, linear, own pane, paused under motion and reduced-motion), 40 m offshore with 25 m minimum clearance. Beach bands show at z14+ and open on tap; names relocate to clear every pin. Stations use the logo's lifebuoy. 911 verified as Costa Rica's unified line. Playa Grande and Manzanillo have no band: no boundary exists for them yet.
