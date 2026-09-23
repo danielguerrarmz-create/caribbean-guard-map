@@ -600,3 +600,18 @@ html,body{overflow:clip}
    still say which way. */
 .leaflet-dragging .cg-rip-flow,.leaflet-zoom-anim .cg-rip-flow,.map-overview .cg-rip-flow{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){.cg-rip-flow{animation:none}}
+
+/* 2026-09-23 round three. The closed legend is a twin of the ES/EN pill:
+   same width, height, corner, edge and shadow, label centred, no chevron. */
+@media(max-width:819px){
+ .map-key:not(.is-open){width:var(--lang-w,auto);border-radius:6px;border:1px solid #d9e4e8;box-shadow:0 2px 12px #071b2850;background:#ffffffed}
+ .map-key:not(.is-open) .key-toggle{justify-content:center;min-height:44px;padding:0 10px;border-radius:6px;font-size:13px;font-weight:600}
+}
+.key-toggle-icon{display:none}
+.key-section+.key-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.key-section .key-section-label{margin:0 0 8px}
+.symbol.place-badge,.projected-place .symbol{background:#f6f3ea;color:#284f54}
+/* Beach sheets no longer carry a subtitle line (Daniel, 2026-09-23); the
+   name sits directly over the instruction. */
+.sheet h2+.statuscard,.sheet h2+.why{margin-top:16px}
+.key-close{display:grid;place-items:center;width:32px;height:32px;margin:-6px -6px -6px 0;border-radius:50%;border:1px solid var(--line);font-size:20px;font-weight:400;line-height:1;color:var(--ink)}

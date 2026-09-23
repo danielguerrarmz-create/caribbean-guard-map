@@ -31,6 +31,7 @@ ROAD_KINDS = {"main_road", "side_road", "pedestrian"}
 # place layer. Safety marks retain their separate station-based registration.
 MATCHES = ROOT / "tools/data/place-matches.json"
 OSM_PLACES = ROOT / "tools/data/osm-place-candidates.json"
+CATEGORIES = ROOT / "tools/data/place-categories.json"
 METRES_PER_DEGREE = np.array([M_PER_DEG_LON, M_PER_DEG_LAT])
 
 
@@ -127,6 +128,7 @@ def main():
         return [[round(float(lon), 7), round(float(lat), 7)]
                 for lon, lat in shifted / METRES_PER_DEGREE], round(distance, 1)
 
+    categories = json.loads(CATEGORIES.read_text(encoding="utf8"))["places"]
     features = []
     for f in source["features"]:
         kind = f["kind"]
@@ -158,6 +160,11 @@ def main():
                                         "osm_name": matched["name"] if matched else None,
                                         "source_url": matched["url"] if matched else None,
                                         "needs_confirmation": not bool(matched)}})
+        if kind == "location":
+            cat = categories.get(f["id"].split("/")[-1], {"category": "other", "name": None})
+            props = features[-1]["properties"]
+            props["category"] = cat["category"]
+            props["display_name"] = cat["name"] or (matched["name"] if matched else f.get("name")) or "Sin nombre"
 
     output = {"type": "FeatureCollection", "properties": {
         "source": source["source"], "source_sha256": source["sha256"],

@@ -15,6 +15,13 @@
     rip_current:'<path d="M3 19q2-1.6 4 0t4 0t4 0t4 0t4 0M12 15V4m-4 4 4-4 4 4"/>',
     strong_current_area:'<path d="M12 3 21 20H3Z"/><path d="M7 16q2-1.6 4 0t4 0t2 0M12 8v4"/>',
     location:'<path d="M18.5 10c0 4.5-6.5 10.5-6.5 10.5S5.5 14.5 5.5 10a6.5 6.5 0 1 1 13 0Z"/><circle cx="12" cy="10" r="2"/>',
+    /* Place categories (2026-09-23). Shape carries the category; colour stays
+       neutral so no place ever borrows a hazard tier's red, amber or green. */
+    place_stay:'<path d="M3 19V6M3 15h18v4M21 15v-2.5A3.5 3.5 0 0 0 17.5 9H11v6"/><circle cx="7" cy="11.5" r="2"/>',
+    place_eat:'<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17.5 21V3c-2.2 1.2-3.5 3.5-3.5 7v3h3.5"/>',
+    place_shop:'<path d="M5 8h14l-1.2 12.5H6.2Z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/>',
+    place_landmark:'<path d="M6 21V3.5M6 4.5h11l-2.5 4 2.5 4H6"/>',
+    place_other:'<path d="M18.5 10c0 4.5-6.5 10.5-6.5 10.5S5.5 14.5 5.5 10a6.5 6.5 0 1 1 13 0Z"/><circle cx="12" cy="10" r="2"/>',
     main_road:'<path d="M2 12h20" stroke-width="4"/>',
     side_road:'<path d="M2 9h20M2 15h20"/>',
     pedestrian:'<path d="M2 12h20" stroke-dasharray="3 3"/>',

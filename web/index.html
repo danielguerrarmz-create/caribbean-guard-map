@@ -3295,6 +3295,9 @@ document.querySelector(".railhead").addEventListener("click", ()=>{
 /* Lay both panels out for the current viewport. Runs at load, on resize and on
    rotation, and on the way across the 820 px line in either direction. */
 function layoutPanels(){
+  // The legend pill matches the language pill above it, edge for edge.
+  const langEl = document.getElementById("lang-group");
+  if(langEl && langEl.offsetWidth) document.documentElement.style.setProperty("--lang-w", langEl.offsetWidth + "px");
   if(desktop()){
     [dockEl, sheet].forEach(n => { n.style.transform = ""; n.style.height = ""; });
     placeControls(0, true);
@@ -3422,7 +3425,6 @@ function openZone(z){
     <div class="zone-detail">
     <div class="zone-top">
     <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
-    <p class="sub">${z.sub[lang]}</p>
     <div class="statuscard ${tierOf(z)}">
       <span class="tile" aria-hidden="true">${CGSymbols.badge(c.class)}</span>
       <span class="eyebrow">${t.ebWhatToDo}</span>
@@ -3500,7 +3502,6 @@ function openUnassessedBeach(beach){
     const t = T[lang];
     return `
     <h2 id="sheet-title" tabindex="-1">${beach.name}</h2>
-    <p class="sub">${t.unassessedStatus}</p>
     <p class="why">${t.unassessedWhy}</p>
     <p class="caveat">${t.unassessedLocation}</p>
     <p class="defer">${t.defer}</p>
@@ -3583,21 +3584,44 @@ map.createPane(BAND_PANE);
 map.getPane(BAND_PANE).style.zIndex = 350;
 map.getPane(BAND_PANE).style.pointerEvents = "none";
 
+/* SEAMLESS JOINTS (Daniel, 2026-09-23). Each band used to take its normal from
+   its own neighbouring points only, so at a joint the west band's last normal
+   and the east band's first normal pointed different ways and the two areas
+   overlapped in a wedge. Now the normal at every point is taken over a window
+   of points that runs ACROSS the joint into the neighbouring beach, so both
+   bands compute the identical edge there and meet on one line. The window also
+   smooths the offset where the coast turns tightly. */
+const NORMAL_WINDOW = 3;
+function bandNeighbours(z){
+  const same = (p, q) => Math.abs(p[0]-q[0]) < 1e-6 && Math.abs(p[1]-q[1]) < 1e-6;
+  const all = [...ZONES, ...UNASSESSED_BEACHES].filter(o => o !== z && o.line && o.line.length);
+  const first = z.line[0], last = z.line[z.line.length - 1];
+  return {
+    west: all.find(o => same(o.line[o.line.length - 1], first)),
+    east: all.find(o => same(o.line[0], last))
+  };
+}
 function seawardEdge(z){
   // Metres per degree at this coast; the same frame tools/osm_coastline.py uses.
   const mLat = 111132, mLon = 111320 * Math.cos(9.645 * Math.PI / 180);
-  const pts = z.line.map(p => [p[1] * mLon, p[0] * mLat]);
+  const toM = p => [p[1] * mLon, p[0] * mLat];
+  const nb = bandNeighbours(z);
+  const before = nb.west ? nb.west.line.slice(-1 - NORMAL_WINDOW, -1) : [];
+  const after = nb.east ? nb.east.line.slice(1, 1 + NORMAL_WINDOW) : [];
+  const ext = [...before, ...z.line, ...after].map(toM);
+  const off = before.length;
   const inner = [], out = [];
-  for(let i = 0; i < pts.length; i++){
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+  for(let j = 0; j < z.line.length; j++){
+    const i = j + off;
+    const a = ext[Math.max(0, i - NORMAL_WINDOW)], b = ext[Math.min(ext.length - 1, i + NORMAL_WINDOW)];
     const dx = b[0] - a[0], dy = b[1] - a[1];
     const len = Math.hypot(dx, dy) || 1;
     // The LEFT normal, which is seaward: the line runs west to east and the
     // open sea is on its left. tools/osm_coastline.py offsets the same way and
     // for the same reason; if one of them ever flips, both must.
-    inner.push([pts[i][0] - dy / len * BAND_INNER_M,
-                pts[i][1] + dx / len * BAND_INNER_M]);
-    out.push([pts[i][0] - dy / len * BAND_M, pts[i][1] + dx / len * BAND_M]);
+    const p = ext[i];
+    inner.push([p[0] - dy / len * BAND_INNER_M, p[1] + dx / len * BAND_INNER_M]);
+    out.push([p[0] - dy / len * BAND_M, p[1] + dx / len * BAND_M]);
   }
   return {inner, outer: out,
           ll: q => [q[1] / mLat, q[0] / mLon]};
@@ -3608,27 +3632,11 @@ function bandPolygon(z){
   return e.inner.concat(e.outer.slice().reverse()).map(e.ll);
 }
 
+/* The end caps ARE the band's own end edges now, so a cap and the neighbour's
+   band edge are the same line rather than two lines at two angles. */
 function endTicks(z){
-  const mLat = 111132, mLon = 111320 * Math.cos(9.645 * Math.PI / 180);
-  const pts = z.line.map(p => [p[1] * mLon, p[0] * mLat]);
-  /* THE DIRECTION IS ALWAYS THE FORWARD ONE, a -> b west to east, at BOTH ends.
-     The first version of this took the tangent at the far end from the last
-     point back to the second-to-last, which is the line's direction REVERSED,
-     which flips the left normal, which drew the east tick 120 m inland through
-     the trees. A normal is only seaward relative to a direction of travel; the
-     same mistake in tools/osm_coastline.py would offset the entire coastline
-     into the jungle and still look like a coastline. */
-  const tick = (at, a, b) => {
-    const dx = pts[b][0] - pts[a][0], dy = pts[b][1] - pts[a][1];
-    const len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len, ny = dx / len;
-    // From the mapped shoreline to the illustrative offshore extent.
-    return [[(pts[at][1] + ny * BAND_INNER_M) / mLat, (pts[at][0] + nx * BAND_INNER_M) / mLon],
-            [(pts[at][1] + ny * BAND_M) / mLat, (pts[at][0] + nx * BAND_M) / mLon]];
-  };
-  const n = pts.length;
-  return [tick(0, 0, Math.min(1, n - 1)),
-          tick(n - 1, Math.max(0, n - 2), n - 1)];
+  const e = seawardEdge(z), n = e.inner.length;
+  return [[e.inner[0], e.outer[0]].map(e.ll), [e.inner[n - 1], e.outer[n - 1]].map(e.ll)];
 }
 
 /* PROVISIONAL AREAS ARE GREY (Daniel, 2026-09-23). Playa Grande and
@@ -3703,8 +3711,6 @@ function drawAmbientBands(){
       .on("click", () => openBeach(z)).addTo(ambientBands);
     L.polyline(edge.outer.map(edge.ll), {pane:BAND_PANE, color:col, weight:1,
       opacity:.35, dashArray:"5 7", interactive:false}).addTo(ambientBands);
-    endTicks(z).forEach(t => L.polyline(t, {pane:BAND_PANE, color:col, weight:1.5,
-      opacity:.55, lineCap:"butt", dashArray: prov ? "4 4" : null, interactive:false}).addTo(ambientBands));
   });
 }
 map.on("zoomend moveend", drawAmbientBands);
@@ -3821,18 +3827,28 @@ function openLegend(){
   // A legend is a reading task, not a glance, so it opens past PEEK.
   sheetStop("half");
 }
+/* THE LEGEND IS THREE SECTIONS (2026-09-23): what keeps you safe, where
+   things are, and how to get there. Places are split by category so a reader
+   can find a hotel or a supermarket, or switch them all off to see the water. */
+const PLACE_CATEGORIES = ['stay','eat','shop','landmark','other'];
 const sourceLayerDefs = [
-  ['hazards','rip_current','Corrientes de resaca','Rip currents'],
-  ['rescue','rescue_station','Equipo de rescate','Rescue equipment'],
-  ['proposals','proposed_rescue_station','Propuestas / sin identificar','Proposed / unknown'],
-  ['access','pedestrian','Caminos y senderos','Roads and paths'],
-  ['places','location','Lugares','Places']
+  ['hazards','rip_current','Corrientes de resaca','Rip currents','safety'],
+  ['rescue','rescue_station','Equipo de rescate','Rescue equipment','safety'],
+  ['proposals','proposed_rescue_station','Propuestas / sin identificar','Proposed / unknown','safety'],
+  ['places_stay','place_stay','Hospedaje','Places to stay','places'],
+  ['places_eat','place_eat','Comer y beber','Food and drink','places'],
+  ['places_shop','place_shop','Tiendas y servicios','Shops and services','places'],
+  ['places_landmark','place_landmark','Referencias','Landmarks','places'],
+  ['places_other','place_other','Otros lugares','Other places','places'],
+  ['access','pedestrian','Caminos y senderos','Roads and paths','access']
 ];
+const LEGEND_SECTIONS = [['safety','Seguridad','Safety'],['places','Lugares','Places'],['access','Cómo llegar','Getting there']];
 
 const sourceLayerState = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,true]));
 const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerGroup().addTo(map)]));
 let legendExpanded = false;
 let legendClosingTimer = null;
+let legendParked = false;
 function renderLegendPerm(){
   clearTimeout(legendClosingTimer);
   const el = document.getElementById("legend-perm");
@@ -3841,6 +3857,15 @@ function renderLegendPerm(){
   el.classList.remove('is-closing');
   const mobileLegend = legendExpanded && !desktop();
   document.body.classList.toggle('legend-mode', mobileLegend);
+  /* ONE PANEL AT A TIME, the legend included (Daniel, 2026-09-23): the beach
+     panel is parked below the screen while the legend is up, not merely
+     hidden, and comes back to its own stop when the legend closes. */
+  if(mobileLegend && !legendParked){
+    legendParked = true; dockPanel.stopAnim(); dockPanel.render(dockPanel.full);
+  }else if(!mobileLegend && legendParked){
+    legendParked = false;
+    if(!sheet.classList.contains('open')) dockPanel.animateTo(dockStop, 0, () => placeControls(dockPanel.visible(), true));
+  }
   const dockEl = document.getElementById('dock');
   if(mobileLegend) dockEl.setAttribute('inert', '');
   else if(!document.getElementById('sheet')?.classList.contains('open')) dockEl.removeAttribute('inert');
@@ -3848,11 +3873,13 @@ function renderLegendPerm(){
   const es = lang === 'es';
   el.classList.toggle('is-open', legendExpanded);
   el.innerHTML = `<button type="button" class="key-toggle" aria-controls="legend-content" aria-expanded="${legendExpanded}">
-      <span>${es ? 'Leyenda' : 'Legend'}</span><span class="key-toggle-icon" aria-hidden="true"></span>
+      <span>${es ? 'Leyenda' : 'Legend'}</span>${legendExpanded ? `<span class="key-close" aria-hidden="true">&times;</span>` : ''}
     </button><div class="key-content" id="legend-content" ${legendExpanded?'':'hidden'}>
-    <div class="source-layer-grid">${sourceLayerDefs.map(([id,icon,esName,enName])=>`<label>
+    ${LEGEND_SECTIONS.map(([sec,esSec,enSec])=>`<section class="key-section">
+      <h3 class="key-section-label">${es?esSec:enSec}</h3>
+      <div class="source-layer-grid">${sourceLayerDefs.filter(d=>d[4]===sec).map(([id,icon,esName,enName])=>`<label>
       <input type="checkbox" data-source-layer="${id}" ${sourceLayerState[id]?'checked':''}>
-      ${CGSymbols.badge(icon)}<span>${es?esName:enName}</span></label>`).join('')}</div>
+      ${CGSymbols.badge(icon, id.startsWith('places_')?'place-badge':'')}<span>${es?esName:enName}</span></label>`).join('')}</div></section>`).join('')}
     <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Los símbolos punteados son propuestas. Las corrientes en movimiento marcan resaca según el mapa de Caribbean Guard; su dirección no está medida.':'Zoom in for detail. Dashed symbols are proposed. Moving currents mark rips from the Caribbean Guard map; their direction is not measured.'}</p>
     <details class="key-data"><summary>${es?'Fuentes y precisión':'Sources and accuracy'}</summary>
       <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
@@ -4396,6 +4423,7 @@ function sourceEsc(value){
   return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 }
 function sourcePlaceLabel(p,es){
+  if(p.display_name && p.display_name !== 'Sin nombre') return p.display_name;
   const generic=/^(1 minuto|3 minutos|Calle|Centro|Apartamentos|Hotel)$/i.test(p.name||'');
   const mappedName=/real location/i.test(p.osm_name||'')?'':p.osm_name;
   return mappedName||(!generic&&p.name)||(es?'Lugar sin identificar':'Unidentified place');
@@ -4408,7 +4436,9 @@ function sourcePopup(f){
     const note=p.registration==='osm_named_place'
       ? (es?'Ubicación en OpenStreetMap':'OpenStreetMap location')
       : (es?'Posición estimada del documento':'Estimated document position');
-    return `<strong>${sourceEsc(label)}</strong><br><small>${note}</small>`;
+    const def=sourceLayerDefs.find(d=>d[0]==='places_'+(p.category||'other'));
+    const cat=def?(es?def[2]:def[3]):'';
+    return `<strong>${sourceEsc(label)}</strong><br><small>${cat?sourceEsc(cat)+' · ':''}${note}</small>`;
   }
   const note=proposed ? (es?'Propuesto, no disponible':'Proposed, not available')
     : p.kind==='unclassified_facility' ? (es?'Servicio no identificado':'Service unknown')
@@ -4418,9 +4448,10 @@ function sourcePopup(f){
 function drawProjectedAnnotations(gj){
   const categories={rip_current:'hazards',rescue_station:'rescue',
     proposed_rescue_station:'proposals',proposed_cg_station:'proposals',unclassified_facility:'proposals',
-    location:'places'};
+    location:'places_other'};
   for(const f of gj.features){
-    const kind=f.properties.kind, group=sourceLayers[categories[kind]];
+    const kind=f.properties.kind;
+    const group=sourceLayers[kind==='location' ? 'places_'+(f.properties.category||'other') : categories[kind]];
     if(!group)continue;
     if(f.id==='pdf:location/408')continue; // Coincident duplicate of source mark 406.
     const g=f.geometry;
@@ -4430,7 +4461,7 @@ function drawProjectedAnnotations(gj){
       const hit=L.polyline(pts,{color:'#000',weight:20,opacity:0}).addTo(group).bindPopup(()=>sourcePopup(f));
       projectedArrows.push({arrow,pts,hit});
     }else{
-      const symbol=kind==='location'?'location':kind==='unclassified_facility'?'unknown':kind;
+      const symbol=kind==='location'?'place_'+(f.properties.category||'other'):kind==='unclassified_facility'?'unknown':kind;
       const [lon,lat]=g.coordinates;
       const markerTitle=kind==='location'
         ? sourcePlaceLabel(f.properties,lang==='es')

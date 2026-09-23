@@ -1,0 +1,257 @@
+{
+ "_": "Place categories for the full-map location marks. Matched places follow their OSM tags (tourism=hotel/hostel/guest_house -> stay, amenity=restaurant/bar -> eat, shop -> shop); unmatched ones are judged by name, and anything unclear is 'other'. Display names fix truncations and typos from the sheet. 2026-09-23.",
+ "places": {
+  "339": {
+   "category": "other",
+   "name": "1 minuto a pie"
+  },
+  "341": {
+   "category": "other",
+   "name": "Lanna Ben"
+  },
+  "343": {
+   "category": "other",
+   "name": "Calle"
+  },
+  "345": {
+   "category": "stay",
+   "name": null
+  },
+  "347": {
+   "category": "eat",
+   "name": null
+  },
+  "349": {
+   "category": "landmark",
+   "name": "Cancha de voleibol"
+  },
+  "351": {
+   "category": "landmark",
+   "name": "Beach Break"
+  },
+  "353": {
+   "category": "stay",
+   "name": null
+  },
+  "355": {
+   "category": "stay",
+   "name": null
+  },
+  "357": {
+   "category": "landmark",
+   "name": "Salsa Brava"
+  },
+  "359": {
+   "category": "landmark",
+   "name": "Isla Cocles"
+  },
+  "361": {
+   "category": "stay",
+   "name": "Agapi Hostel"
+  },
+  "363": {
+   "category": "shop",
+   "name": null
+  },
+  "365": {
+   "category": "landmark",
+   "name": "Río Cocles"
+  },
+  "367": {
+   "category": "stay",
+   "name": null
+  },
+  "372": {
+   "category": "eat",
+   "name": null
+  },
+  "374": {
+   "category": "stay",
+   "name": "Faith Glamping"
+  },
+  "376": {
+   "category": "stay",
+   "name": null
+  },
+  "378": {
+   "category": "stay",
+   "name": null
+  },
+  "380": {
+   "category": "stay",
+   "name": null
+  },
+  "382": {
+   "category": "other",
+   "name": "El Barco"
+  },
+  "384": {
+   "category": "eat",
+   "name": null
+  },
+  "386": {
+   "category": "stay",
+   "name": "Colores Hotel"
+  },
+  "388": {
+   "category": "stay",
+   "name": null
+  },
+  "390": {
+   "category": "landmark",
+   "name": "Cancha de fútbol"
+  },
+  "392": {
+   "category": "other",
+   "name": "El Pampa"
+  },
+  "394": {
+   "category": "stay",
+   "name": null
+  },
+  "396": {
+   "category": "stay",
+   "name": null
+  },
+  "398": {
+   "category": "eat",
+   "name": "Playa Negra Brewing"
+  },
+  "400": {
+   "category": "other",
+   "name": "Flor de…"
+  },
+  "402": {
+   "category": "other",
+   "name": null
+  },
+  "404": {
+   "category": "stay",
+   "name": "Villas Piña"
+  },
+  "406": {
+   "category": "landmark",
+   "name": "Centro"
+  },
+  "409": {
+   "category": "other",
+   "name": "Dragonfly"
+  },
+  "411": {
+   "category": "other",
+   "name": "aWà Beach"
+  },
+  "413": {
+   "category": "eat",
+   "name": null
+  },
+  "415": {
+   "category": "stay",
+   "name": null
+  },
+  "417": {
+   "category": "other",
+   "name": "Pacho's Place"
+  },
+  "419": {
+   "category": "other",
+   "name": "Eden Beach"
+  },
+  "421": {
+   "category": "stay",
+   "name": "Bungalows"
+  },
+  "423": {
+   "category": "other",
+   "name": "Sin nombre"
+  },
+  "424": {
+   "category": "landmark",
+   "name": "Punta Arrecife"
+  },
+  "426": {
+   "category": "other",
+   "name": "Olguita's Place"
+  },
+  "428": {
+   "category": "shop",
+   "name": "Dive Shop"
+  },
+  "435": {
+   "category": "stay",
+   "name": "Tree House"
+  },
+  "439": {
+   "category": "eat",
+   "name": null
+  },
+  "441": {
+   "category": "stay",
+   "name": null
+  },
+  "443": {
+   "category": "stay",
+   "name": null
+  },
+  "445": {
+   "category": "other",
+   "name": "Chiquita Escondida"
+  },
+  "447": {
+   "category": "other",
+   "name": "Casa Tica"
+  },
+  "449": {
+   "category": "stay",
+   "name": "Villa Magoa"
+  },
+  "451": {
+   "category": "other",
+   "name": "Bilbo"
+  },
+  "453": {
+   "category": "stay",
+   "name": null
+  },
+  "455": {
+   "category": "shop",
+   "name": "Century 21"
+  },
+  "457": {
+   "category": "other",
+   "name": "Lanna Ben"
+  },
+  "459": {
+   "category": "landmark",
+   "name": null
+  },
+  "461": {
+   "category": "stay",
+   "name": null
+  },
+  "463": {
+   "category": "other",
+   "name": "Casa Paparazzi"
+  },
+  "466": {
+   "category": "stay",
+   "name": "Apartamentos"
+  },
+  "468": {
+   "category": "other",
+   "name": "Bilbo"
+  },
+  "470": {
+   "category": "other",
+   "name": "3 minutos a pie"
+  },
+  "472": {
+   "category": "stay",
+   "name": "Hotel"
+  },
+  "474": {
+   "category": "other",
+   "name": "Residencial Sara"
+  }
+ }
+}
