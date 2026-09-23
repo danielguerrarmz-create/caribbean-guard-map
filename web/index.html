@@ -2425,13 +2425,18 @@ const STATION_CLUSTER_ZOOM = 15;
 function stationsClustered(){ return map.getZoom() < STATION_CLUSTER_ZOOM; }
 function applyStationVisibility(){
   if(!stationsReady) return;
+  /* EVERY CONFIRMED STATION SHOWS AT EVERY ZOOM (Daniel, 2026-09-23). The x4
+     badge hid real equipment behind a count at the whole-coast view, the view
+     most people see first. Confirmed stations now always show, drawn small
+     and without numbers at the overview; only PROPOSED ones wait for zoom. */
   const clustered = stationsClustered();
-  Object.values(postMarkers).forEach(m=>{
+  Object.entries(postMarkers).forEach(([id, m])=>{
     const e = m.getElement();
-    if(e) e.style.display = clustered ? "none" : "";
+    const p = POSTS.find(x => x.id === id);
+    if(e) e.style.display = clustered && p && p.proposed ? "none" : "";
   });
   const ce = clusterMarker && clusterMarker.getElement();
-  if(ce) ce.style.display = clustered ? "" : "none";
+  if(ce) ce.style.display = "none";
 }
 
 /* The station marks are OBSTACLES to the labels and never the other way round.
@@ -2535,11 +2540,14 @@ function placeBeachLabels(){
     }
     e.style.display = "none"; e.cgMoved = true;
   });
+  // Map controls float over the map too; nothing is written under them.
+  const chromeBoxes = [...document.querySelectorAll(".map-key,.topbar .brand,.topbar .sos,.topbar .lang,.fab,.compass")]
+    .map(e => e.getBoundingClientRect()).filter(r => r.width);
   [...placeMarks, seaLabel].forEach(m => {
     const e = m.getElement();
     if(!e || e.style.display === "none") return;
     const r = e.getBoundingClientRect();
-    if(placed.some(b => hit(r, b))) e.style.display = "none";
+    if(placed.some(b => hit(r, b)) || chromeBoxes.some(b => hit(r, b))) e.style.display = "none";
   });
 }
 map.on("zoomend", restyleLabels);
@@ -3267,7 +3275,14 @@ function closeSheet(opts = {}){
     dockEl.removeAttribute("inert");
     placeControls(sheetPanel.visible(), false);
     sheetPanel.animateTo("closed", opts.velocity || 0, finish);
-    dockPanel.animateTo(dockStop, 0, () => placeControls(dockPanel.visible(), true));
+    /* LEAVING A BEACH SHOWS THE MAP (Daniel, 2026-09-23). The list used to
+       spring back to wherever it had been, often its middle stop, so a swipe
+       meant "show me the map" and got a panel instead. It now returns at its
+       lowest stop, a strip ready to be pulled up, and the camera stays on the
+       beach the reader was looking at. */
+    setDockStop("min", true);
+    dockPanel.stop = "min";
+    dockPanel.animateTo("min", 0, () => placeControls(dockPanel.visible(), true));
   }else{
     sheetClosing = false;
     sheet.classList.remove("open");
@@ -3283,7 +3298,7 @@ function closeSheet(opts = {}){
   if(returnTo) returnTo.focus({preventScroll:true});
   lastFocus = null;
   markCurrent(null);
-  fitCoast();
+  if(desktop()) fitCoast();
 }
 
 document.getElementById("sheet-close").onclick = () => closeSheet();
@@ -4658,7 +4673,7 @@ function drawProjectedAnnotations(gj){
       }
     });
     projectedDetail.forEach(({layer,kind})=>{
-      const visible=kind==='location'?zoom>=15.5:zoom>=14;
+      const visible=kind==='location'?zoom>=15.5:kind==='rescue_station'?true:zoom>=14;
       const node=layer.getElement();if(node)node.style.display=visible?'':'none';
     });
   });

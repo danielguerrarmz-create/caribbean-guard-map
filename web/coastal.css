@@ -649,3 +649,7 @@ html,body{overflow:clip}
  .sheet .close{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0}
  .sheet h2{padding-right:0}
 }
+/* Confirmed stations at the whole-coast view: small, no number, still tappable. */
+body.map-overview .station-marker{transform:scale(.62)}
+body.map-overview .station-marker .number{display:none}
+body.map-overview .projected-marker .symbol.rescue_station{box-shadow:0 1px 4px #102d3b90}
