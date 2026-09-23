@@ -3,4 +3,4 @@
 // Override per environment with NEXT_PUBLIC_MAP_URL, e.g. http://127.0.0.1:5174/
 // while running the map locally.
 export const MAP_URL =
-  process.env.NEXT_PUBLIC_MAP_URL ?? "https://web-five-beta-p7wt9cgwmf.vercel.app/";
+  process.env.NEXT_PUBLIC_MAP_URL || "https://web-five-beta-p7wt9cgwmf.vercel.app/";

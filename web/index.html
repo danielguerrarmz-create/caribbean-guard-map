@@ -2814,6 +2814,9 @@ function createPanel(el, o){
   P.visible = () => Math.max(0, P.full - P.y);
   P.render = y => {
     P.y = y;
+    // A close that was still sliding when the window crossed 820 px must not
+    // leave a phone transform on what is now a desktop column.
+    if(desktop()){ el.style.transform = ""; return; }
     el.style.transform = `translate3d(0,${y.toFixed(2)}px,0)`;
     o.onMove && o.onMove(P.visible());
   };
@@ -2850,6 +2853,9 @@ function createPanel(el, o){
     o.onStop && o.onStop(stop);
     P.animateTo(stop, v0, () => o.onSettle && o.onSettle(stop));
   };
+  // "Partial" is geometry, not a name: on a short phone PEEK and REST clamp to
+  // the full height, and a panel at the top must let its content scroll.
+  P.isPartial = stop => P.visibleOf(stop) < P.visibleOf(o.topStop) - 1;
   P.snap = stop => { P.stopAnim(); P.stop = stop; o.onStop && o.onStop(stop);
     P.render(P.yOf(stop)); o.onSettle && o.onSettle(stop); };
 
@@ -3020,7 +3026,7 @@ const sheetPanel = createPanel(sheet, {
 function sheetStop(stop, fromGesture = false){
   if(stop === "half") stop = "full";      // one reading stop; the legend asks for it
   sheet.dataset.stop = stop;
-  sheet.classList.toggle("is-partial", stop !== "full");
+  sheet.classList.toggle("is-partial", !desktop() && sheetPanel.isPartial(stop));
   const expanded = stop !== "peek";
   const handle = document.getElementById("sheet-expand");
   handle.setAttribute("aria-expanded", expanded);
@@ -3031,6 +3037,7 @@ function sheetStop(stop, fromGesture = false){
   if(!fromGesture && !desktop() && sheet.classList.contains("open") && sheetPanel.stop !== stop){
     sheetPanel.settle(stop);
   }
+  sheetPanel.stop = stop;                 // one record of the stop at every width
 }
 
 function openSheet(html, render){
@@ -3043,7 +3050,11 @@ function openSheet(html, render){
     sheet.classList.remove("open");
   }
   const reopening = sheet.classList.contains("open");
-  if(!reopening && !restoringHistory && !pendingBack && !(history.state && history.state.cgSheet)){
+  // No entry before the first tap: Chrome's history intervention lets Back
+  // skip entries pushed without a user gesture, which on a QR deep link would
+  // skip the map and leave. Without activation it keeps the single entry.
+  const activated = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+  if(activated && !reopening && !restoringHistory && !pendingBack && !(history.state && history.state.cgSheet)){
     history.pushState({cgSheet:true}, "", location.pathname);
   }
   // Every sheet starts with no address; openers that have one set it after.
@@ -3114,7 +3125,8 @@ window.addEventListener("popstate", e => {
   try{
     if(z) openZone(z); else if(b) openUnassessedBeach(b); else if(p) openPost(p);
     // A sheet with no address (legend, saved copy) cannot be rebuilt from a URL.
-    else history.replaceState(null, "", location.pathname);
+    // Stepping back out keeps the stack free of a dead copy of the map.
+    else history.back();
   }finally{ restoringHistory = false; }
 });
 
@@ -3142,8 +3154,10 @@ function closeSheet(opts = {}){
     if(!desktop()) placeControls(dockPanel.visible(), true);
   };
   if(!desktop()){
-    // The dock comes back up under the sheet as it leaves.
+    // The dock comes back up under the sheet as it leaves, and it has to be
+    // focusable now: focus returns to a card below, before the slide ends.
     document.body.classList.remove("selection-open");
+    dockEl.removeAttribute("inert");
     placeControls(sheetPanel.visible(), false);
     sheetPanel.animateTo("closed", opts.velocity || 0, finish);
   }else{
@@ -3175,7 +3189,7 @@ function setDockStop(stop, fromGesture = false){
   document.body.classList.toggle("dock-min", stop === "min");
   document.body.classList.toggle("dock-full", stop === "full");
   document.body.classList.toggle("list-expanded", stop === "full");
-  dockEl.classList.toggle("is-partial", stop !== "full");
+  dockEl.classList.toggle("is-partial", dockPanel.isPartial(stop));
   document.getElementById("dock-handle").setAttribute("aria-expanded", stop !== "min");
   document.getElementById("list-toggle").setAttribute("aria-expanded", stop === "full");
   updateCoastalLabels();
@@ -3204,6 +3218,7 @@ function layoutPanels(){
   dockPanel.snap(dockStop);
   if(sheet.classList.contains("open")){
     sheetPanel.measure();
+    sheetStop(sheetPanel.stop, true);     // re-derive partial for the new height
     sheetPanel.render(sheetPanel.yOf(sheetPanel.stop));
     placeControls(sheetPanel.visible(), true);
   }

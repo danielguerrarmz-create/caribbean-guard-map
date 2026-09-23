@@ -2,11 +2,11 @@
 
 ## Website and map are separate Vercel projects
 
-The organization website at `https://caribbean-guard-map-6sqm.vercel.app/` is the root-repository Vite project. Its `/mapa/` route redirects to the safety map project at `https://web-five-beta-p7wt9cgwmf.vercel.app/`. Deploying the website does not publish map changes or its ignored satellite tiles. Deploy the website from the repository root and the map from `web/` when both have changed. Verify the website route and the map's worker version after both releases.
+The organization website at `https://caribbean-guard-map-6sqm.vercel.app/` is deployed from the repository root. Since 23 September 2026 it is the Next.js site in `site/` (a subtree of the live caribbeanguard.org repository); root `vercel.json` installs and builds it and serves `site/out`. Its `/mapa/` route redirects to the safety map project at `https://web-five-beta-p7wt9cgwmf.vercel.app/`. Deploying the website does not publish map changes or its ignored satellite tiles. Deploy the website from the repository root and the map from `web/` when both have changed. Verify the website route and the map's worker version after both releases.
 
 ## Existing target
 
-The map is a static Vercel project. Deploy **`web/`**, not the repository root or the separate `site/` website.
+The map is a static Vercel project. Deploy **`web/`**, not the repository root or the `site/` website.
 
 - Project: `caribbean-guard-map`
 - Project ID: `prj_it5kQJM4XVWkmDu3NjEzGOfCcRc3`
