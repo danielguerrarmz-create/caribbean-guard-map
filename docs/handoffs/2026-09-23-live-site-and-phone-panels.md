@@ -25,8 +25,8 @@ Not verified: a real iPhone or Android device, VoiceOver/TalkBack.
 
 ## Previews (23 September, after review)
 
-- Map preview (public): https://caribbean-guard-1smruw1t5-danielguerrarmz-create11.vercel.app, worker `cg-map-v36`, deployed from `web/`.
-- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-29r8cjsnp-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
+- Map preview (public): https://caribbean-guard-1w3cb3vwk-danielguerrarmz-create11.vercel.app, worker `cg-map-v37`, deployed from `web/`.
+- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-iv00wrkqo-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
 - Production aliases untouched.
 
 ## Phone review round (23 September)
@@ -44,3 +44,7 @@ Daniel's seven items, all applied in `98d0aef`: equipment marks set on the beach
 ## Round four (23 September)
 
 `fd8dcfd`: saved sheet shortened and platform-specific (iPhone Share steps, Android install button or menu steps), swipe to close; beach cards show straight-line distance from the reader (if location already granted and within 25 km) or from central Puerto Viejo; legend closes by swipe. GPS distances are untested in the field.
+
+## Round five (23 September)
+
+`42718ad`: partial stops scroll content back to top (the beach title was stranded after scrolling at full then dragging down); no visible close button on phone sheets.
