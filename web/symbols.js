@@ -15,6 +15,13 @@
     rip_current:'<path d="M3 19q2-1.6 4 0t4 0t4 0t4 0t4 0M12 15V4m-4 4 4-4 4 4"/>',
     strong_current_area:'<path d="M12 3 21 20H3Z"/><path d="M7 16q2-1.6 4 0t4 0t2 0M12 8v4"/>',
     location:'<path d="M18.5 10c0 4.5-6.5 10.5-6.5 10.5S5.5 14.5 5.5 10a6.5 6.5 0 1 1 13 0Z"/><circle cx="12" cy="10" r="2"/>',
+    /* Place categories (2026-09-23). Shape carries the category; colour stays
+       neutral so no place ever borrows a hazard tier's red, amber or green. */
+    place_stay:'<path d="M3 19V6M3 15h18v4M21 15v-2.5A3.5 3.5 0 0 0 17.5 9H11v6"/><circle cx="7" cy="11.5" r="2"/>',
+    place_eat:'<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17.5 21V3c-2.2 1.2-3.5 3.5-3.5 7v3h3.5"/>',
+    place_shop:'<path d="M5 8h14l-1.2 12.5H6.2Z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/>',
+    place_landmark:'<path d="M6 21V3.5M6 4.5h11l-2.5 4 2.5 4H6"/>',
+    place_other:'<path d="M18.5 10c0 4.5-6.5 10.5-6.5 10.5S5.5 14.5 5.5 10a6.5 6.5 0 1 1 13 0Z"/><circle cx="12" cy="10" r="2"/>',
     main_road:'<path d="M2 12h20" stroke-width="4"/>',
     side_road:'<path d="M2 9h20M2 15h20"/>',
     pedestrian:'<path d="M2 12h20" stroke-dasharray="3 3"/>',
@@ -24,7 +31,25 @@
     from:'<path d="M12 20V4m-5 5 5-5 5 5"/>',
     temp:'<path d="M14 14V6a2 2 0 0 0-4 0v8a4 4 0 1 0 4 0Z"/><path d="M12 10v7"/>'
   };
-  const svg=(kind)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[kind]||paths.unknown}</svg>`;
+  /* Rescue stations draw Caribbean Guard's own lifebuoy (Daniel, 2026-09-23):
+     the orange-and-white ring and black cross at the heart of the logo. The
+     whole logo, with its curved lettering, is illegible at map-pin size, so
+     only its core is used. In full colour, the one symbol that is: a station
+     is the association's own equipment. Proposed stations keep the same ring
+     drained of colour and dashed, so "planned" never reads as "there". */
+  const ring=(proposed)=>{
+    const seg=(2*Math.PI*7.6/8).toFixed(3);
+    const orange=proposed?'#f4d8cf':'#ee5f3b', ink=proposed?'#8a8f93':'#141414';
+    return `<circle cx="12" cy="12" r="7.6" stroke="#fff" stroke-width="4.8"/>`+
+      `<circle cx="12" cy="12" r="7.6" stroke="${orange}" stroke-width="4.8" stroke-dasharray="${seg} ${seg}" transform="rotate(-11 12 12)"/>`+
+      `<circle cx="12" cy="12" r="10" stroke="${ink}" stroke-width="1.3"${proposed?' stroke-dasharray="2.6 2"':''}/>`+
+      `<circle cx="12" cy="12" r="5.2" fill="#fff" stroke="${ink}" stroke-width="1.3"/>`+
+      `<path d="M12 9v6M9 12h6" stroke="${ink}" stroke-width="2.3" stroke-linecap="square"/>`;
+  };
+  const colour={rescue_station:ring(false),proposed_rescue_station:ring(true)};
+  const svg=(kind)=>colour[kind]
+    ? `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">${colour[kind]}</svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[kind]||paths.unknown}</svg>`;
   const badge=(kind,cls='')=>`<span class="symbol ${kind} ${cls}" aria-hidden="true">${svg(kind)}</span>`;
   global.CGSymbols={svg,badge};
 })(window);

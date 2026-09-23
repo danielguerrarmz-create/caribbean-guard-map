@@ -30,7 +30,12 @@
      A fallback would put the CDN back in the threat model to buy nothing: if the
      local copy is shipped anyway, ship only the local copy. -->
 <link rel="stylesheet" href="vendor/leaflet.css">
-<!-- Inter, self hosted, 400 / 600 / 800, latin subset, 71 KB in total.
+<!-- POPPINS since 2026-09-23 (Daniel's call): the map now speaks in the same
+     typeface as caribbeanguard.org. Self hosted, 400 / 600 / 800, latin subset
+     (Spanish accents and inverted marks included), 24 KB for all three, less
+     than the 71 KB of Inter it replaces. SIL OFL, see fonts/POPPINS-OFL.txt.
+     The history below is kept because the hierarchy argument still holds.
+     Inter, self hosted, 400 / 600 / 800, latin subset, 71 KB in total.
      It replaced Atkinson Hyperlegible on 2026-09-17. Atkinson is a better
      letterform-by-letterform font for a low vision reader, and it was chosen
      for that; it shipped in two weights, and two weights cannot build a
@@ -46,8 +51,8 @@
      that is below the fold in the dock and inside a sheet that is not open yet,
      so preloading it would compete for the same connection as the two that are
      on screen. -->
-<link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/inter-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/poppins-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/poppins-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   /* INTER, THREE WEIGHTS, SELF-HOSTED, LATIN SUBSET.
      It replaces Atkinson Hyperlegible, which shipped at 400 and 700 only.
@@ -67,16 +72,18 @@
      on a two-bar signal before the map will save. Accepted by Daniel on
      2026-09-17 as the price of a readable hierarchy. */
   @font-face{
-    font-family:"Inter"; font-style:normal; font-weight:400;
-    font-display:swap; src:url(fonts/inter-latin-400-normal.woff2) format("woff2");
+    font-family:"Poppins"; font-style:normal; font-weight:400;
+    font-display:swap; src:url(fonts/poppins-latin-400-normal.woff2) format("woff2");
   }
   @font-face{
-    font-family:"Inter"; font-style:normal; font-weight:600;
-    font-display:swap; src:url(fonts/inter-latin-600-normal.woff2) format("woff2");
+    font-family:"Poppins"; font-style:normal; font-weight:600;
+    font-display:swap; src:url(fonts/poppins-latin-600-normal.woff2) format("woff2");
   }
   @font-face{
-    font-family:"Inter"; font-style:normal; font-weight:800;
-    font-display:swap; src:url(fonts/inter-latin-800-normal.woff2) format("woff2");
+    /* Bold, the heaviest weight caribbeanguard.org uses, answers every 700
+       and 800 on this page so the map never out-shouts the brand. */
+    font-family:"Poppins"; font-style:normal; font-weight:700 800;
+    font-display:swap; src:url(fonts/poppins-latin-700-normal.woff2) format("woff2");
   }
   :root{
     /* Two tiers on purpose.
@@ -140,7 +147,7 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;
-    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    font-family:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
                 "Helvetica Neue",sans-serif;
     font-size:var(--t-body); line-height:1.3;
     -webkit-font-smoothing:antialiased;
@@ -909,7 +916,7 @@
 <div class="topbar">
   <!-- Links home. Hat 5: the association's biggest tourist touchpoint was a
        dead end with no route back to the organisation whose name is on it. -->
-  <a class="brand" id="brand" href="https://caribbeanguard.org" target="_blank" rel="noopener">
+  <a class="brand" id="brand" href="https://caribbeanguard.org">
     <img src="icons/caribbean-guard-logo.png" alt="" width="52" height="52">
     <span class="brand-text">Caribbean Guard<small id="tagline">Mapa de seguridad costera</small></span></a>
   <span class="region-label">Caribe Sur · Costa Rica</span>
@@ -999,12 +1006,15 @@
   </section>
 
   <div class="list-heading"><h3 class="eyebrow rail-eyebrow" id="rail-beaches">Playas</h3><button id="list-toggle" aria-expanded="false" aria-controls="picker">Ver todas</button></div>
+  <p class="dist-origin" id="dist-origin" hidden></p>
   <div class="strip" id="picker">
     <button class="card" data-id="cg:zone/playa-negra" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Negra</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
-    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/></svg></span><span class="beach-copy"><span class="nm">Salsa Brava</span><span class="beach-status">NO ENTRES AL AGUA</span></span></button>
+    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/></svg></span><span class="beach-copy"><span class="nm">Puerto Viejo</span><span class="beach-status">NO ENTRES AL AGUA</span></span></button>
     <button class="card" data-id="cg:zone/cocles" aria-current="false"><span class="symbol high-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 10h8l2 4H6zM9 14l-2 7m8-7 2 7M5 21h14"/></svg></span><span class="beach-copy"><span class="nm">Playa Cocles</span><span class="beach-status">SOLO CON GUARDAVIDAS</span></span></button>
     <button class="card" data-id="cg:zone/chiquita" aria-current="false"><span class="symbol conditional beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2Z"/><path d="M12 9v5m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Chiquita</span><span class="beach-status">REVISA ANTES DE ENTRAR</span></span></button>
     <button class="card" data-id="cg:zone/punta-uva" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Punta Uva</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
+    <button class="card unassessed" data-id="cg:beach/playa-grande" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Grande</span><span class="beach-status">SIN EVALUAR</span></span></button>
+    <button class="card unassessed" data-id="cg:beach/manzanillo" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Manzanillo</span><span class="beach-status">SIN EVALUAR</span></span></button>
     <button class="card void" data-id="void" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">El resto de la costa</span><span class="beach-status">Sin describir</span></span></button>
   </div>
 
@@ -1203,8 +1213,8 @@ const ZONES = [
   },
   {
     id:"cg:zone/salsa-brava",
-    name:{es:"Salsa Brava", en:"Salsa Brava"},
-    sub:{es:"Puerto Viejo centro", en:"Puerto Viejo town"},
+    name:{es:"Puerto Viejo", en:"Puerto Viejo"},
+    sub:{es:"Sector Salsa Brava", en:"Salsa Brava section"},
     character:{
       class:"no-swim",
       authored:"desk", reviewed:null,
@@ -1359,6 +1369,16 @@ const ZONES = [
   }
 ];
 
+/* These are named beach locations, not assessed safety zones. Playa Grande is
+   the Caribbean beach west of Manzanillo, not the Pacific beach in Guanacaste.
+   Neither point creates a coloured coast segment or inherits a nearby verdict. */
+const UNASSESSED_BEACHES = [
+  {id:"cg:beach/playa-grande", name:"Playa Grande", at:[9.6362389,-82.6783389], line:[],
+   source:"Museo Nacional de Costa Rica, Pecio Manzanillo"},
+  {id:"cg:beach/manzanillo", name:"Manzanillo", at:[9.6339158,-82.6571847], line:[],
+   source:"OpenStreetMap way/37606802, Playa Manzanillo"}
+];
+
 /* Rescue stations: the copy is authored here, the POSITION is not.
 
    cg-hazards.geojson carried four `rescue_station` points whose coordinates
@@ -1500,6 +1520,7 @@ const T = {
          Caribbean Guard's own legend noun instead. */
       seaTitle:"El mar hoy",
       seaAll:"Modelo para toda esta costa, no para una playa.",
+      seaLine:"Modelo de toda la costa, no por playa",
       seaWave:"Ola", seaPeriod:"Periodo", seaFrom:"Viene de", seaTemp:"Agua",
       seaModel:t=>`Modelo, ${t}`,
       seaStale:h=>`Modelo de hace más de ${h} horas.`,
@@ -1574,8 +1595,11 @@ const T = {
       /* the coast this map does not describe, as a card in the picker */
       voidName:"El resto de la costa",
       voidStatus:"Sin describir",
-      voidWhy:(total,zoned,surveyed)=>`Este mapa cubre ${total} km de costa. Cinco playas están descritas, y suman unos ${zoned} km. El mapa anotado de Caribbean Guard, del que salen las corrientes marcadas, cubre ${surveyed} km. El resto no está descrito ni recorrido por nadie.`,
+      voidWhy:(total,zoned,surveyed)=>`Este mapa cubre ${total} km de costa. Hay indicaciones para cinco tramos, que suman unos ${zoned} km. Playa Grande y Manzanillo aparecen como lugares, sin evaluación de seguridad. El mapa anotado de Caribbean Guard cubre ${surveyed} km. El resto de la costa sigue sin describir.`,
       voidRule:"Que no haya nada dibujado en un tramo no quiere decir que ese tramo sea seguro. Quiere decir que nadie lo ha mirado.",
+      unassessedStatus:"Sin evaluar",
+      unassessedWhy:"Aún no hay indicaciones de seguridad para nadar en esta playa.",
+      unassessedLocation:"El área gris es aproximada: no marca los límites de la playa ni una entrada segura.",
       /* stations */
       station:"Estación de Rescate",
       stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo recorrido. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
@@ -1616,7 +1640,13 @@ const T = {
       savedNoStore:"Este navegador no guarda la página",
       savedRefreshing:"Actualizando...",
       savedFailed:"Sin señal. Sigues viendo la copia guardada.",
-      savedTitle:"La copia guardada",
+      savedTitle:"Guardado en tu teléfono",
+      savedOkLine:when=>`Funciona sin señal · ${when}`,
+      savedShort:"El mapa, las playas y los textos quedan en tu teléfono y se actualizan solos cuando hay señal.",
+      savedKeepTitle:"Tenlo siempre a mano",
+      savedStepsIos:["Toca <b>Compartir</b> en la barra de Safari.","Elige <b>Agregar a inicio</b>."],
+      savedIosNote:"En iPhone, así la copia no se borra si pasas días sin abrirla.",
+      savedStepsAndroid:["Toca el <b>menú de Chrome</b> (tres puntos, arriba a la derecha).","Elige <b>Agregar a la pantalla principal</b> o <b>Instalar app</b>."],
       savedWhatIs:"Esta página se guarda entera en tu teléfono la primera vez que la abres: el mapa, las playas y los textos. Después funciona sin señal.",
       savedCadence:"Se actualiza sola cada vez que la abres con señal. Sin señal, ves la última copia guardada, con la fecha de arriba.",
       savedIos:"En iPhone, si pasas como una semana usando Safari sin volver a abrir esta página, el sistema puede borrar la copia. Agregarla a la pantalla de inicio evita eso.",
@@ -1680,6 +1710,7 @@ const T = {
       /* See the note on the Spanish block. */
       seaTitle:"The sea today",
       seaAll:"Model for this whole coast, not for one beach.",
+      seaLine:"Whole-coast model, not per beach",
       seaWave:"Wave", seaPeriod:"Period", seaFrom:"From", seaTemp:"Water",
       seaModel:t=>`Model, ${t}`,
       seaStale:h=>`Model is more than ${h} hours old.`,
@@ -1728,8 +1759,11 @@ const T = {
       gapPartial:"Only part of this beach falls inside the stretch Caribbean Guard surveyed. Outside that stretch nothing is marked because nobody marked it.",
       voidName:"The rest of the coast",
       voidStatus:"Not described",
-      voidWhy:(total,zoned,surveyed)=>`This map covers ${total} km of coast. Five beaches are described and they add up to about ${zoned} km. Caribbean Guard's annotated map, which is where the marked rip currents come from, covers ${surveyed} km. The rest is described and surveyed by nobody.`,
+      voidWhy:(total,zoned,surveyed)=>`This map covers ${total} km of coast. Five stretches have guidance, totaling about ${zoned} km. Playa Grande and Manzanillo are shown as places without a safety assessment. Caribbean Guard's annotated map covers ${surveyed} km. The remaining coast is not described.`,
       voidRule:"A stretch with nothing drawn on it is not a stretch that is safe. It is a stretch nobody has looked at.",
+      unassessedStatus:"Not assessed",
+      unassessedWhy:"No beach-specific swimming guidance has been reviewed here.",
+      unassessedLocation:"The grey area is approximate: it does not mark the beach limits or a safe entry.",
       station:"Rescue Station",
       stationScope:"These are the four stations that appear inside the surveyed stretch. Caribbean Guard mentions nine along the whole coast. We do not know where the others are, so do not count on these being all of them.",
       stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
@@ -1751,7 +1785,13 @@ const T = {
       savedNoStore:"This browser does not save the page",
       savedRefreshing:"Refreshing...",
       savedFailed:"No signal. You are still seeing the saved copy.",
-      savedTitle:"The saved copy",
+      savedTitle:"Saved on your phone",
+      savedOkLine:when=>`Works with no signal · ${when}`,
+      savedShort:"The map, the beaches and the text stay on your phone and refresh themselves when there is signal.",
+      savedKeepTitle:"Keep it handy",
+      savedStepsIos:["Tap <b>Share</b> in Safari's toolbar.","Choose <b>Add to Home Screen</b>."],
+      savedIosNote:"On iPhone this also stops the saved copy being cleared after days unused.",
+      savedStepsAndroid:["Tap <b>Chrome's menu</b> (three dots, top right).","Choose <b>Add to Home screen</b> or <b>Install app</b>."],
       savedWhatIs:"This page saves itself onto your phone the first time you open it: the map, the beaches and the text. After that it works with no signal.",
       savedCadence:"It refreshes itself every time you open it with signal. With no signal you see the last saved copy, dated above.",
       savedIos:"On iPhone, if about a week of Safari use goes by without you opening this page again, the system may clear the saved copy. Adding it to your home screen prevents that.",
@@ -1803,16 +1843,14 @@ const T = {
    `startsWith("en") ? "en" : "es"`. That earlier form silently sent every
    non-English locale to Spanish, which happens to be the same answer most of the
    time and for the wrong reason. */
+/* SPANISH IS THE DEFAULT, whatever the phone's locale (Daniel, 2026-09-23):
+   this is a Costa Rican organisation's map and its sign on the sand is in
+   Spanish. The locale-following described above is retired. A reader who taps
+   EN keeps English on this device from then on. */
+const LANG_KEY = "cg-lang";
 function pickLang(){
-  const tags = (navigator.languages && navigator.languages.length)
-    ? navigator.languages
-    : [navigator.language || ""];
-  for(const tag of tags){
-    const base = String(tag).toLowerCase().split("-")[0];
-    if(base === "en") return "en";
-    if(base === "es") return "es";
-  }
-  return "es";   // the floor, and it is the language of the coast
+  try{ const saved = localStorage.getItem(LANG_KEY); if(saved === "en" || saved === "es") return saved; }catch(e){}
+  return "es";
 }
 let lang = pickLang();
 
@@ -2131,7 +2169,8 @@ function chrome(){
   return {
     top: mapTopInset() + 8,
     // the dock, not the strip: the saved line sits above the cards inside it
-    bot: (dockEl?.offsetHeight || 96) + 8,
+    // What shows of it: the dock is laid out full height and slid down.
+    bot: (dockEl ? Math.max(0, window.innerHeight - dockEl.getBoundingClientRect().top) : 96) + 8,
     left: 0, right: 0
   };
 }
@@ -2332,7 +2371,7 @@ function label(ll, text, cls){
 
 const PLACES = [
   {ll: [9.65670, -82.75450], t: "Puerto Viejo"},
-  {ll: [9.64050, -82.65900], t: "Manzanillo"}
+  {ll: [9.63167, -82.65721], t: "Manzanillo"}
 ];
 const SEA = {ll: [9.67400, -82.72000], t: "Mar Caribe"};
 
@@ -2341,6 +2380,24 @@ const SEA = {ll: [9.67400, -82.72000], t: "Mar Caribe"};
 // a datum on the record rather than a slice of z.line, so the names are on the
 // picture before the traced geometry arrives.
 const zoneLabels = ZONES.map(z => label(z.at, z.name.es, "zone"));
+const unassessedLabels = UNASSESSED_BEACHES.map(b => label(b.at, b.name, "zone"));
+/* BEACH NAMES ARE TAPPABLE (Daniel, 2026-09-23): the name and the highlighted
+   water are the two ways into a beach's panel, and zooming alone never opens
+   it. The note above about labels swallowing taps still holds for towns and
+   the sea; a beach name opens the very zone under it, so nothing is lost. */
+function tappableLabel(m, open){
+  m.options.interactive = true;
+  m.on("add", ()=>{
+    const e = m.getElement(); if(!e || e.cgTap) return;
+    e.cgTap = true; e.classList.add("tap");
+    e.setAttribute("role", "button"); e.tabIndex = 0;
+    e.addEventListener("click", ev => { ev.stopPropagation(); open(); });
+    e.addEventListener("keydown", ev => { if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); open(); } });
+  });
+  if(m.getElement()) m.fire("add");
+}
+zoneLabels.forEach((m, i) => tappableLabel(m, () => openZone(ZONES[i])));
+unassessedLabels.forEach((m, i) => tappableLabel(m, () => openUnassessedBeach(UNASSESSED_BEACHES[i])));
 // NOT `placeLabels`. CGGeom exports a FUNCTION of that name and this const
 // would shadow it at exactly the point restyleLabels() wants to call it.
 const placeMarks = PLACES.map(p => label(p.ll, p.t, "place"));
@@ -2368,13 +2425,18 @@ const STATION_CLUSTER_ZOOM = 15;
 function stationsClustered(){ return map.getZoom() < STATION_CLUSTER_ZOOM; }
 function applyStationVisibility(){
   if(!stationsReady) return;
+  /* EVERY CONFIRMED STATION SHOWS AT EVERY ZOOM (Daniel, 2026-09-23). The x4
+     badge hid real equipment behind a count at the whole-coast view, the view
+     most people see first. Confirmed stations now always show, drawn small
+     and without numbers at the overview; only PROPOSED ones wait for zoom. */
   const clustered = stationsClustered();
-  Object.values(postMarkers).forEach(m=>{
+  Object.entries(postMarkers).forEach(([id, m])=>{
     const e = m.getElement();
-    if(e) e.style.display = clustered ? "none" : "";
+    const p = POSTS.find(x => x.id === id);
+    if(e) e.style.display = clustered && p && p.proposed ? "none" : "";
   });
   const ce = clusterMarker && clusterMarker.getElement();
-  if(ce) ce.style.display = clustered ? "" : "none";
+  if(ce) ce.style.display = "none";
 }
 
 /* The station marks are OBSTACLES to the labels and never the other way round.
@@ -2399,7 +2461,7 @@ function stationBoxes(){
 function hideLabelsUnderStations(){
   const boxes = stationBoxes();
   if(!boxes.length) return;
-  [...zoneLabels, ...placeMarks, seaLabel].forEach(m=>{
+  [...zoneLabels, ...unassessedLabels, ...placeMarks, seaLabel].forEach(m=>{
     const e = m.getElement();
     if(!e || e.style.display === "none") return;
     const r = e.getBoundingClientRect();
@@ -2432,13 +2494,67 @@ function restyleLabels(){
   applyStationVisibility();
   CGGeom.placeLabels(map, [
     ...zoneLabels.map(m  => ({marker:m, priority:10, visible:zones})),
-    ...placeMarks.map(m  => ({marker:m, priority:1,  visible:places})),
+    ...unassessedLabels.map(m => ({marker:m, priority:9, visible:zones})),
+    ...placeMarks.map((m,i) => ({marker:m, priority:1,
+      visible:places && !(zones && (PLACES[i].t === "Puerto Viejo" || PLACES[i].t === "Manzanillo"))})),
     {marker:seaLabel, priority:5, visible:sea}
   ]);
   hideLabelsUnderStations();
+  placeBeachLabels();
+}
+
+/* A BEACH NAME NEVER SITS ON AN ICON (Daniel, 2026-09-23). The old pass could
+   only HIDE a name that collided with a station, and it never looked at the
+   equipment and place pins at all, so "Playa Grande" landed under 5.3. Now
+   each beach name looks for its own room: it tries its home spot, then nearby
+   spots, seaward first because that is where a beach's water is, and takes
+   the first that clears every visible pin and every name already placed.
+   Only if nothing within reach is free does it step out, which at the zooms
+   where names show is rare. Towns and the sea then yield to the beaches. */
+const LABEL_TRIES = [[0,0],[0,-24],[0,24],[0,-44],[-56,-18],[56,-18],[0,44],[-56,18],[56,18],[0,-66],[-90,0],[90,0],[0,66]];
+function placeBeachLabels(){
+  const pad = 3;
+  const hit = (a, b) => a.left < b.right + pad && a.right > b.left - pad &&
+                        a.top < b.bottom + pad && a.bottom > b.top - pad;
+  const icons = [...document.querySelectorAll(".leaflet-marker-pane .leaflet-marker-icon:not(.lbl)")]
+    .filter(e => e.offsetParent && getComputedStyle(e).visibility !== "hidden")
+    .map(e => e.getBoundingClientRect()).filter(r => r.width);
+  const placed = [];
+  [...zoneLabels, ...unassessedLabels].forEach(m => {
+    const e = m.getElement(); if(!e) return;
+    if(e.cgMargins === undefined) e.cgMargins = [parseFloat(e.style.marginLeft) || 0, parseFloat(e.style.marginTop) || 0];
+    const [ml, mt] = e.cgMargins;
+    e.style.marginLeft = ml + "px"; e.style.marginTop = mt + "px";
+    if(e.style.display === "none" && !e.cgMoved) return;      // hidden by the zoom rules
+    e.style.display = ""; e.cgMoved = false;
+    const home = e.getBoundingClientRect();
+    if(!home.width){ return; }
+    for(const [dx, dy] of LABEL_TRIES){
+      const r = {left:home.left + dx, right:home.right + dx, top:home.top + dy, bottom:home.bottom + dy};
+      if(!icons.some(b => hit(r, b)) && !placed.some(b => hit(r, b))){
+        e.style.marginLeft = (ml + dx) + "px"; e.style.marginTop = (mt + dy) + "px";
+        e.cgMoved = !!(dx || dy);
+        placed.push(r);
+        return;
+      }
+    }
+    e.style.display = "none"; e.cgMoved = true;
+  });
+  // Map controls float over the map too; nothing is written under them.
+  const chromeBoxes = [...document.querySelectorAll(".map-key,.topbar .brand,.topbar .sos,.topbar .lang,.fab,.compass")]
+    .map(e => e.getBoundingClientRect()).filter(r => r.width);
+  [...placeMarks, seaLabel].forEach(m => {
+    const e = m.getElement();
+    if(!e || e.style.display === "none") return;
+    const r = e.getBoundingClientRect();
+    if(placed.some(b => hit(r, b)) || chromeBoxes.some(b => hit(r, b))) e.style.display = "none";
+  });
 }
 map.on("zoomend", restyleLabels);
 map.whenReady(restyleLabels);
+// Pins restyle for the overview on their own zoomend (map-overview), after this
+// one has measured them; place the names again once that has painted.
+map.on("zoomend", ()=>requestAnimationFrame(()=>requestAnimationFrame(placeBeachLabels)));
 
 /* Distances on a 16.6 km strip are not guessable from imagery alone, and "swim
    parallel to the beach" is advice that needs a sense of how far that is. */
@@ -2636,8 +2752,11 @@ const geomReady = fetch("data/zones-geometry.json")
       if(pts && pts.length) z.line = pts;
       else console.warn("[cg] no geometry for", z.id);
     });
+    // Provisional extents for the beaches Caribbean Guard has not bounded.
+    UNASSESSED_BEACHES.forEach(b => { b.line = (g.provisional && g.provisional[b.id]) || []; });
     drawZones();
     restyleLabels();
+    renderDistances();      // nearest point of each beach, now that lines exist
   })
   .catch(err => {
     console.warn("[cg] zone geometry did not load:", err);
@@ -2740,17 +2859,283 @@ function joinStations(gj){
    so tapping ES while reading the English Cocles panel threw the verdict away.
    Every opener now records how to render itself again, and setLang replays it
    in place. See `lastRender`. */
+/* ---------- PHONE PANELS: ONE GESTURE MODEL FOR THE DOCK AND THE SHEET ----------
+   Rebuilt 2026-09-23 for how this map is actually held: one hand, one thumb,
+   often wet, in sun. Four decisions carry it.
+
+   1. THE PANEL MOVES BY TRANSFORM, NEVER BY HEIGHT. Both panels are laid out
+      once at full height and slid with translate3d, which the compositor moves
+      without laying out the page. Animating `height` re-laid out the dock, its
+      list and the map controls on every frame; on a budget Android that is the
+      difference between following the thumb and trailing it.
+   2. THE WHOLE PANEL IS THE GRAB AREA. The 88 x 28 handle was the only place a
+      drag started. Now the handle, the title, the forecast and the list all
+      move the panel, the way Apple Maps and Google Maps sheets behave: below
+      its top stop, dragging anywhere resizes; at the top stop the list scrolls,
+      and pulling down from its first row lowers the panel again.
+   3. RELEASE CARRIES THE FINGER'S SPEED. The stop is chosen from where the
+      flick would have come to rest, not where the finger lifted, and the panel
+      settles on a spring that starts at the finger's velocity. A spring that
+      starts from rest is the stall people feel as "not smooth".
+   4. PAST THE ENDS IT RESISTS RATHER THAN STOPS. Rubber banding tells a thumb
+      it reached an edge without a dead stop.
+
+   Tap targets are unchanged: the handle is still a button (Enter, Space and a
+   tap toggle it) and a tap anywhere else still selects what it lands on. A
+   drag never also clicks. Reduced motion moves straight to the stop. Desktop
+   (>= 820 px) never runs any of this; both panels are columns there. */
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const topbarH = () => document.querySelector(".topbar")?.offsetHeight || 64;
+// The home-indicator inset, read off a probe: env() inside a custom property
+// is not resolved to pixels by getComputedStyle in every engine.
+const safeProbe = Object.assign(document.createElement("div"), {ariaHidden:"true"});
+safeProbe.style.cssText = "position:fixed;left:0;bottom:0;width:0;visibility:hidden;pointer-events:none;height:env(safe-area-inset-bottom,0px)";
+document.body.appendChild(safeProbe);
+const safeBottom = () => safeProbe.offsetHeight || 0;
+
+function createPanel(el, o){
+  const P = {el, stop:o.initial, y:0, full:0, anim:0, dragging:false, stops:{}};
+  const rubber = (over, dim) => (over * dim * 0.55) / (dim + over * 0.55);
+
+  P.measure = ()=>{
+    // One full height for every stop; the stops are how much of it shows.
+    P.full = Math.max(0, window.innerHeight - topbarH());
+    el.style.height = P.full + "px";
+    // Read once here, never per frame: the detents read layout, and a layout
+    // read inside a gesture forces a reflow on every move (measured: 110 ms
+    // of forced reflow in one drag at 6x CPU before this cache).
+    P.stops = o.detents();
+  };
+  P.visibleOf = stop => Math.min(P.full, Math.round(P.stops[stop] || 0));
+  P.yOf = stop => P.full - P.visibleOf(stop);
+  P.visible = () => Math.max(0, P.full - P.y);
+  P.render = y => {
+    P.y = y;
+    // A close that was still sliding when the window crossed 820 px must not
+    // leave a phone transform on what is now a desktop column.
+    if(desktop()){ el.style.transform = ""; return; }
+    el.style.transform = `translate3d(0,${y.toFixed(2)}px,0)`;
+    o.onMove && o.onMove(P.visible());
+  };
+  P.stopAnim = () => { cancelAnimationFrame(P.anim); P.anim = 0; el.classList.remove("settling"); };
+
+  /* A damped spring, integrated in fixed 4 ms steps so it behaves the same at
+     60 and 120 Hz. Response 0.34 s and damping 0.86: a soft landing with a
+     barely visible overshoot after a hard flick, and none after a slow drag. */
+  P.animateTo = (stop, v0 = 0, done) => {
+    P.stopAnim();
+    const target = stop === "closed" ? P.full : P.yOf(stop);
+    if(reducedMotion.matches || !P.full){ P.render(target); done && done(); return; }
+    const k = Math.pow(2 * Math.PI / 0.34, 2), c = 2 * 0.86 * Math.sqrt(k);
+    let x = P.y, v = v0 * 1000, last = performance.now();
+    el.classList.add("settling");
+    const step = now => {
+      let dt = Math.min(0.064, (now - last) / 1000); last = now;
+      while(dt > 0){
+        const h = Math.min(dt, 0.004);
+        v += (-k * (x - target) - c * v) * h;
+        x += v * h; dt -= h;
+      }
+      // Leaving needs no settling: once it is off the screen it is done.
+      if((stop === "closed" && x >= target - 1) || (Math.abs(x - target) < 0.4 && Math.abs(v) < 12)){
+        P.render(target); P.anim = 0; el.classList.remove("settling"); done && done(); return;
+      }
+      P.render(x);
+      P.anim = requestAnimationFrame(step);
+    };
+    P.anim = requestAnimationFrame(step);
+  };
+  P.settle = (stop, v0 = 0) => {
+    P.stop = stop;
+    o.onStop && o.onStop(stop);
+    P.animateTo(stop, v0, () => o.onSettle && o.onSettle(stop));
+  };
+  // "Partial" is geometry, not a name: on a short phone PEEK and REST clamp to
+  // the full height, and a panel at the top must let its content scroll.
+  P.isPartial = stop => P.visibleOf(stop) < P.visibleOf(o.topStop) - 1;
+  P.snap = stop => { P.stopAnim(); P.stop = stop; o.onStop && o.onStop(stop);
+    P.render(P.yOf(stop)); o.onSettle && o.onSettle(stop); };
+
+  /* ---- the gesture ---- */
+  let startY = 0, startX = 0, startPanelY = 0, mode = null, scroller = null,
+      samples = [], suppressClick = false, touchId = null;
+  const SLOP = 6;
+  const atTop = () => P.y <= P.yOf(o.topStop) + 1;
+  const scrollerOf = t => {
+    const s = t && t.closest && t.closest(o.scroller);
+    return s && el.contains(s) ? s : null;
+  };
+  function begin(x, y, target){
+    if(desktop() || !o.enabled()) return false;
+    P.stopAnim();
+    if(!P.full) P.measure();
+    startX = x; startY = y; startPanelY = P.y; mode = "pending";
+    scroller = scrollerOf(target);
+    samples = [{y, t:performance.now()}];
+    return true;
+  }
+  // Returns true when the panel took the movement and the page must not scroll.
+  function move(x, y){
+    if(!mode || mode === "scroll" || mode === "ignore") return false;
+    const dy = y - startY, dx = x - startX;
+    if(mode === "pending"){
+      if(Math.abs(dy) < SLOP && Math.abs(dx) < SLOP) return !scroller || !atTop();
+      if(Math.abs(dx) > Math.abs(dy) * 1.2){ mode = "ignore"; return false; }
+      // At the top stop a list owns vertical movement, except a pull down from
+      // its first row, which is the panel's.
+      if(scroller && atTop() && !(dy > 0 && scroller.scrollTop <= 0)){ mode = "scroll"; return false; }
+      mode = "drag"; P.dragging = true; el.classList.add("dragging");
+      // A mouse drag otherwise selects the text it passes over, and a live
+      // selection turns the next drag into a native text drag-and-drop.
+      document.body.classList.add("panel-dragging");
+      try{ window.getSelection().removeAllRanges(); }catch(_){}
+      startY = y; startPanelY = P.y;          // no jump of SLOP px on pickup
+    }
+    const now = performance.now();
+    samples.push({y, t:now});
+    while(samples.length > 2 && now - samples[0].t > 90) samples.shift();
+    const lo = P.yOf(o.topStop), hi = o.canClose ? P.full : P.yOf(o.bottomStop);
+    let ny = startPanelY + (y - startY);
+    if(ny < lo) ny = lo - rubber(lo - ny, P.full);
+    if(ny > hi) ny = hi + rubber(ny - hi, 180);
+    P.render(ny);
+    return true;
+  }
+  function end(cancelled){
+    const was = mode; mode = null;
+    if(was !== "drag") return;
+    P.dragging = false; el.classList.remove("dragging");
+    document.body.classList.remove("panel-dragging");
+    suppressClick = true; setTimeout(()=>{ suppressClick = false; }, 60);
+    const a = samples[0], b = samples[samples.length - 1];
+    const v = cancelled || !a || b.t === a.t ? 0 : (b.y - a.y) / (b.t - a.t);   // px/ms, + is down
+    // Where the flick would have stopped: 0.2 s of travel at release speed.
+    const projected = P.y + v * 200;
+    const stops = o.stops().filter(s => s !== "closed" || o.canClose);
+    let best = P.stop, bestD = Infinity;
+    stops.forEach(s => {
+      const d = Math.abs((s === "closed" ? P.full : P.yOf(s)) - projected);
+      if(d < bestD){ bestD = d; best = s; }
+    });
+    if(best === "closed"){ o.onClose(v); return; }
+    P.settle(best, v);
+  }
+
+  // Touch: listened to directly, non-passive, because a drag has to be able to
+  // stop the page (and Android's pull to refresh) from moving underneath it.
+  el.addEventListener("touchstart", e => {
+    if(e.touches.length !== 1){ if(mode === "drag") end(true); mode = null; return; }
+    const t = e.touches[0];
+    if(begin(t.clientX, t.clientY, e.target)) touchId = t.identifier;
+  }, {passive:true});
+  el.addEventListener("touchmove", e => {
+    const t = [...e.changedTouches].find(x => x.identifier === touchId);
+    if(!t) return;
+    if(move(t.clientX, t.clientY) && e.cancelable) e.preventDefault();
+  }, {passive:false});
+  el.addEventListener("touchend", e => {
+    if([...e.changedTouches].some(x => x.identifier === touchId)){ touchId = null; end(false); }
+  });
+  el.addEventListener("touchcancel", () => { touchId = null; end(true); });
+
+  // Mouse and pen, so the same panel works in a narrow desktop window.
+  el.addEventListener("pointerdown", e => {
+    if(e.pointerType === "touch" || e.button !== 0) return;
+    if(!begin(e.clientX, e.clientY, e.target)) return;
+    const mv = ev => { if(move(ev.clientX, ev.clientY)) ev.preventDefault(); };
+    const up = ev => {
+      window.removeEventListener("pointermove", mv);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      end(ev.type === "pointercancel");
+    };
+    window.addEventListener("pointermove", mv);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  });
+  el.addEventListener("dragstart", e => { if(mode) e.preventDefault(); });
+  // A drag that ends over a button must not also press it.
+  el.addEventListener("click", e => {
+    if(suppressClick){ suppressClick = false; e.stopPropagation(); e.preventDefault(); }
+  }, true);
+  // Keyboard focus that lands below the visible part of the panel raises it.
+  el.addEventListener("focusin", e => {
+    if(desktop() || !o.enabled() || P.stop === o.topStop || e.target === el || P.anim || P.dragging) return;
+    // Keyboard only. Opening a sheet focuses its heading while it is still
+    // below the screen, and that must not read as a request to raise it.
+    if(e.target.id === "sheet-title" || !e.target.matches(":focus-visible")) return;
+    const r = e.target.getBoundingClientRect();
+    if(r.bottom > window.innerHeight - safeBottom() - 4) P.settle(o.topStop);
+  });
+  return P;
+}
+
+/* Map controls ride on whichever panel is in front, by transform while it
+   moves, and by --dock-h once it rests, so the fab, the compass and the scale
+   never re-lay out mid gesture. */
+let controlsBase = 0;
+function placeControls(visible, settled){
+  const shift = settled ? 0 : controlsBase - visible;
+  if(settled){
+    controlsBase = visible;
+    document.documentElement.style.setProperty("--dock-h", Math.round(visible) + "px");
+  }
+  const tf = shift ? `translate3d(0,${shift.toFixed(2)}px,0)` : "";
+  document.querySelectorAll(".fab,.compass,.leaflet-bottom.leaflet-left").forEach(n => { n.style.transform = tf; });
+}
+
 const sheet = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
-const STOPS = ["peek", "half", "full"];
+const dockEl = document.getElementById("dock");
 let lastRender = null;    // () => void, replays the open sheet in the new language
 let lastFocus = null;     // what to give focus back to on close
 let sheetTimer = null;
+let dockStop = "rest";
 
-function sheetStop(stop, fromDrag = false){
+const dockPanel = createPanel(dockEl, {
+  initial:"rest", topStop:"full", bottomStop:"min", canClose:false,
+  scroller:".strip",
+  enabled:() => !sheet.classList.contains("open") && !document.body.classList.contains("legend-mode"),
+  detents:() => {
+    const H = window.innerHeight, full = H - topbarH();
+    return {
+      min: 64 + safeBottom(),
+      rest: Math.max(280, Math.min(full - 120, H * 0.44)),
+      full
+    };
+  },
+  stops:() => ["min", "rest", "full"],
+  onMove:v => { if(!sheet.classList.contains("open")) placeControls(v, false); },
+  onStop:s => setDockStop(s, true),
+  onSettle:() => { if(!sheet.classList.contains("open")) placeControls(dockPanel.visible(), true); measureDock(); }
+});
+
+const sheetPanel = createPanel(sheet, {
+  initial:"peek", topStop:"full", bottomStop:"peek", canClose:true,
+  scroller:".sheet-body",
+  enabled:() => sheet.classList.contains("open"),
+  detents:() => {
+    const H = window.innerHeight;
+    const small = H < 650;
+    return {peek: small ? H - topbarH() : Math.max(300, H * 0.5), full: H - topbarH()};
+  },
+  stops:() => ["closed", "peek", "full"],
+  onMove:v => placeControls(v, false),
+  onStop:s => sheetStop(s, true),
+  onSettle:() => placeControls(sheetPanel.visible(), true),
+  onClose:v => closeSheet({velocity:v})
+});
+
+function sheetStop(stop, fromGesture = false){
+  if(stop === "half") stop = "full";      // one reading stop; the legend asks for it
   sheet.dataset.stop = stop;
-  if(fromDrag) requestAnimationFrame(()=>{ sheet.style.height = ""; });
-  else sheet.style.height = "";
+  const partial = !desktop() && sheetPanel.isPartial(stop);
+  sheet.classList.toggle("is-partial", partial);
+  /* THE TITLE MUST NEVER BE SCROLLED AWAY (Daniel, 2026-09-23). Scroll the text
+     at the top stop, drag the handle down, and the body kept its scroll: below
+     the top stop scrolling is locked, so the beach name stayed out of reach.
+     Any partial stop now brings the content back to its top as it settles. */
+  if(partial && sheetBody.scrollTop > 0) sheetBody.scrollTo({top:0, behavior: reducedMotion.matches ? "auto" : "smooth"});
   const expanded = stop !== "peek";
   const handle = document.getElementById("sheet-expand");
   handle.setAttribute("aria-expanded", expanded);
@@ -2758,185 +3143,226 @@ function sheetStop(stop, fromDrag = false){
     ? (expanded ? "Bajar detalles de playa" : "Subir detalles de playa")
     : (expanded ? "Lower beach details" : "Raise beach details"));
   handle.textContent = "";
+  if(!fromGesture && !desktop() && sheet.classList.contains("open") && sheetPanel.stop !== stop){
+    sheetPanel.settle(stop);
+  }
+  sheetPanel.stop = stop;                 // one record of the stop at every width
 }
 
 function openSheet(html, render){
   if(!desktop() && legendExpanded){ legendExpanded = false; renderLegendPerm(); }
   lastRender = render || null;
   const active = document.activeElement;
+  if(sheetClosing){            // reopened while the last one was still leaving
+    sheetClosing = false;
+    sheetPanel.stopAnim();
+    sheet.classList.remove("open");
+  }
   const reopening = sheet.classList.contains("open");
+  // No entry before the first tap: Chrome's history intervention lets Back
+  // skip entries pushed without a user gesture, which on a QR deep link would
+  // skip the map and leave. Without activation it keeps the single entry.
+  const activated = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+  if(activated && !reopening && !restoringHistory && !pendingBack && !(history.state && history.state.cgSheet)){
+    history.pushState({cgSheet:true}, "", location.pathname);
+  }
+  // Every sheet starts with no address; openers that have one set it after.
+  sheetAddress("");
   if(!reopening) lastFocus = (active && active !== document.body) ? active : null;
   sheetBody.innerHTML = html;
+  sheetBody.scrollTop = 0;
+  sheet.classList.remove("no-close");
   clearTimeout(sheetTimer);
   sheet.hidden = false;
   sheet.removeAttribute("inert");
-  if(!reopening) sheetStop("peek");
-  // A reflow between un-hiding and adding .open, or the browser collapses the
-  // two style changes into one frame and the slide-in never animates.
-  void sheet.offsetHeight;
   sheet.classList.add("open");
   document.body.classList.add("selection-open");
-  document.getElementById("dock").setAttribute("inert", "");
+  dockEl.setAttribute("inert", "");
+  if(!desktop()){
+    // ONE PANEL AT A TIME. The dock is parked below the screen, not just
+    // hidden: at its full stop, iOS kept painting its layer under the new
+    // sheet (Daniel's screenshot, 2026-09-23). It comes back on close.
+    dockPanel.stopAnim();
+    dockPanel.render(dockPanel.full);
+    sheetPanel.measure();
+    if(!reopening){
+      sheetStop("peek", true);
+      sheetPanel.stop = "peek";
+      sheetPanel.render(sheetPanel.full);        // start below the screen
+      placeControls(0, true);
+      sheetPanel.settle("peek");
+    }
+  }else if(!reopening){
+    sheetStop("peek", true);
+    // A reflow between un-hiding and adding .open, or the browser collapses the
+    // two style changes into one frame and the slide-in never animates.
+    sheet.classList.remove("open"); void sheet.offsetHeight; sheet.classList.add("open");
+  }
   const h2 = document.getElementById("sheet-title");
   if(h2 && !reopening) h2.focus({preventScroll:true});
 }
 
-function closeSheet(){
+/* BACK CLOSES THE SHEET. Every opener used to replaceState, so on Android the
+   system Back button, and the iPhone edge swipe, left the map entirely from an
+   open beach. Opening a sheet from the map now pushes ONE entry, and anything
+   opened on top of it rewrites that entry, so Back always returns to the map in
+   one step and Forward reopens the same beach. The close button pops the same
+   entry, so the two are one action and the stack never grows. A QR deep link
+   lands on the map first (see the loader at the end of the file) for the same
+   reason: Back from a scanned beach shows the coast, not the camera app. */
+let restoringHistory = false, sheetClosing = false;
+/* history.back() is asynchronous. A sheet opened before it lands must not push
+   its entry yet, or the traversal pops the new entry instead of the old one;
+   it waits for the popstate and pushes then. sheetQuery is the address the
+   open sheet should have, kept for exactly that moment. */
+let pendingBack = false, sheetQuery = "";
+function sheetAddress(query){
+  sheetQuery = query;
+  if(!pendingBack) history.replaceState(history.state, "", location.pathname + (query ? "?" + query : ""));
+}
+window.addEventListener("popstate", e => {
+  if(pendingBack){
+    pendingBack = false;
+    if(sheet.classList.contains("open") && !sheetClosing){
+      history.pushState({cgSheet:true}, "", location.pathname + (sheetQuery ? "?" + sheetQuery : ""));
+    }
+    return;
+  }
+  if(!(e.state && e.state.cgSheet)){
+    if(sheet.classList.contains("open")) closeSheet({fromHistory:true});
+    return;
+  }
+  const q = new URLSearchParams(location.search);
+  const z = ZONES.find(x => localId(x.id) === q.get("z"));
+  const b = UNASSESSED_BEACHES.find(x => localId(x.id) === q.get("b"));
+  const p = POSTS.find(x => localId(x.id) === q.get("p"));
+  restoringHistory = true;
+  try{
+    if(z) openZone(z); else if(b) openUnassessedBeach(b); else if(p) openPost(p);
+    // A sheet with no address (legend, saved copy) cannot be rebuilt from a URL.
+    // Stepping back out keeps the stack free of a dead copy of the map.
+    else history.back();
+  }finally{ restoringHistory = false; }
+});
+
+function closeSheet(opts = {}){
   clearBand();
-  if(!sheet.classList.contains("open")) return;
-  sheet.classList.remove("open");
-  document.body.classList.remove("selection-open");
-  document.getElementById("dock").removeAttribute("inert");
+  if(!sheet.classList.contains("open") || sheetClosing) return;
+  // Leaving through the UI pops our own history entry; the popstate that
+  // follows finds sheetClosing set and does nothing.
+  if(!opts.fromHistory){
+    if(pendingBack){ /* already on its way back */ }
+    else if(history.state && history.state.cgSheet){ pendingBack = true; history.back(); }
+    else history.replaceState(null, "", location.pathname);
+  }
+  sheetClosing = true;
   lastRender = null;
-  // Wait out the slide before removing it from the tree, so the animation is
-  // seen; `hidden` is display:none and would cut it off mid-flight.
   clearTimeout(sheetTimer);
-  sheetTimer = setTimeout(()=>{
+  const finish = () => {
+    if(!sheetClosing) return;           // a new sheet took over mid-slide
+    sheetClosing = false;
+    sheet.classList.remove("open");
+    document.body.classList.remove("selection-open");
+    dockEl.removeAttribute("inert");
     sheet.hidden = true;
     sheet.setAttribute("inert", "");
-    sheet.style.height = "";
-  }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 340);
+    if(!desktop()) placeControls(dockPanel.visible(), true);
+  };
+  if(!desktop()){
+    // The dock comes back up under the sheet as it leaves, and it has to be
+    // focusable now: focus returns to a card below, before the slide ends.
+    document.body.classList.remove("selection-open");
+    dockEl.removeAttribute("inert");
+    placeControls(sheetPanel.visible(), false);
+    sheetPanel.animateTo("closed", opts.velocity || 0, finish);
+    /* LEAVING A BEACH SHOWS THE MAP (Daniel, 2026-09-23). The list used to
+       spring back to wherever it had been, often its middle stop, so a swipe
+       meant "show me the map" and got a panel instead. It now returns at its
+       lowest stop, a strip ready to be pulled up, and the camera stays on the
+       beach the reader was looking at. */
+    setDockStop("min", true);
+    dockPanel.stop = "min";
+    dockPanel.animateTo("min", 0, () => placeControls(dockPanel.visible(), true));
+  }else{
+    sheetClosing = false;
+    sheet.classList.remove("open");
+    document.body.classList.remove("selection-open");
+    dockEl.removeAttribute("inert");
+    // Wait out the slide before removing it from the tree, so the animation is
+    // seen; `hidden` is display:none and would cut it off mid-flight.
+    sheetTimer = setTimeout(()=>{ sheet.hidden = true; sheet.setAttribute("inert", ""); },
+      reducedMotion.matches ? 0 : 340);
+  }
   const returnTo = lastFocus && document.contains(lastFocus) ? lastFocus
     : document.querySelector('.card[aria-current="true"]') || document.querySelector('.card');
   if(returnTo) returnTo.focus({preventScroll:true});
   lastFocus = null;
   markCurrent(null);
-  history.replaceState(null, "", location.pathname);
-  fitCoast();
+  if(desktop()) fitCoast();
 }
 
-document.getElementById("sheet-close").onclick = closeSheet;
-let suppressSheetHandleClick = false;
+document.getElementById("sheet-close").onclick = () => closeSheet();
 document.getElementById("sheet-expand").onclick = ()=>{
-  if(suppressSheetHandleClick){ suppressSheetHandleClick = false; return; }
   sheetStop(sheet.dataset.stop === "peek" ? "full" : "peek");
 };
-let dockStop = "rest";
-function setDockStop(stop, fromDrag = false){
+
+function setDockStop(stop, fromGesture = false){
   if(desktop()) return;
   dockStop = stop;
   document.body.classList.toggle("dock-min", stop === "min");
   document.body.classList.toggle("dock-full", stop === "full");
   document.body.classList.toggle("list-expanded", stop === "full");
-  const handle = document.getElementById("dock-handle");
-  handle.setAttribute("aria-expanded", stop !== "min");
-  handle.setAttribute("aria-label", lang === "es"
-    ? (stop === "min" ? "Abrir panel de playas" : stop === "full" ? "Bajar panel de playas" : "Contraer panel de playas")
-    : (stop === "min" ? "Open beach panel" : stop === "full" ? "Lower beach panel" : "Collapse beach panel"));
+  dockEl.classList.toggle("is-partial", dockPanel.isPartial(stop));
+  // Same rule for the beach list: below the top stop it cannot scroll, so it
+  // returns to its first beach rather than stranding the reader mid-list.
+  const strip = document.getElementById("picker");
+  if(dockPanel.isPartial(stop) && strip.scrollTop > 0) strip.scrollTo({top:0, behavior: reducedMotion.matches ? "auto" : "smooth"});
+  document.getElementById("dock-handle").setAttribute("aria-expanded", stop !== "min");
   document.getElementById("list-toggle").setAttribute("aria-expanded", stop === "full");
   updateCoastalLabels();
-  if(fromDrag) requestAnimationFrame(()=>{ document.getElementById("dock").style.height = ""; });
-  else measureDock(false);
+  if(!fromGesture && dockPanel.stop !== stop) dockPanel.settle(stop);
 }
 document.getElementById("list-toggle").onclick = ()=>setDockStop(dockStop === "full" ? "rest" : "full");
-let suppressDockHandleClick = false;
 document.getElementById("dock-handle").onclick = ()=>{
-  if(suppressDockHandleClick){ suppressDockHandleClick = false; return; }
-  setDockStop(dockStop === "min" ? "rest" : dockStop === "full" ? "rest" : "min");
+  setDockStop(dockStop === "rest" ? "min" : "rest");
 };
-(function(){
-  const handle = document.getElementById("dock-handle");
-  const panel = document.getElementById("dock");
-  let startY = 0, startH = 0, moved = 0, dragging = false, pointerId = null, frame = 0;
-  let lastY = 0, lastTime = 0, velocity = 0;
-  const limits = ()=>({min:54, rest:window.innerHeight * (window.matchMedia("(max-width:380px) and (max-height:650px)").matches ? .5 : .4), full:window.innerHeight - document.querySelector(".topbar").offsetHeight});
-  handle.addEventListener("pointerdown", e=>{
-    if(desktop() || (e.pointerType === "mouse" && e.button !== 0)) return;
-    startY = lastY = e.clientY; lastTime = e.timeStamp; startH = panel.getBoundingClientRect().height;
-    moved = velocity = 0; dragging = true; pointerId = e.pointerId;
-    panel.style.height = startH + "px";
-    panel.classList.add("dragging");
-    try{ handle.setPointerCapture(e.pointerId); }catch(_){}
-  });
-  handle.addEventListener("pointermove", e=>{
-    if(!dragging || e.pointerId !== pointerId) return;
-    moved = e.clientY - startY;
-    const dt = e.timeStamp - lastTime;
-    if(dt > 0) velocity = (e.clientY - lastY) / dt;
-    lastY = e.clientY; lastTime = e.timeStamp;
-    if(Math.abs(moved) > 6 && document.body.classList.contains("dock-min")) document.body.classList.remove("dock-min");
-    const {min,full} = limits();
-    const h = Math.max(min, Math.min(full, startH - moved));
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(()=>{ panel.style.height = h + "px"; measureDock(false); });
-  });
-  function end(e){
-    if(!dragging || e.pointerId !== pointerId) return;
-    dragging = false; pointerId = null;
-    cancelAnimationFrame(frame);
-    panel.classList.remove("dragging");
-    if(e.type === "pointercancel"){
-      setDockStop(dockStop, true);
-      return;
-    }
-    if(Math.abs(moved) < 8){ panel.style.height = ""; return; }
-    suppressDockHandleClick = true;
-    setTimeout(()=>{ suppressDockHandleClick = false; }, 0);
-    const stops = limits();
-    const h = Math.max(stops.min, Math.min(stops.full, startH - moved));
-    const projected = Math.max(stops.min, Math.min(stops.full, h - velocity * 120));
-    const best = Object.keys(stops).reduce((a,b)=>Math.abs(stops[b]-projected) < Math.abs(stops[a]-projected) ? b : a);
-    setDockStop(best, true);
+// Tapping the title of a lowered panel raises it: at MIN the title is all
+// there is to aim at, and it is the biggest target on that strip.
+document.querySelector(".railhead").addEventListener("click", ()=>{
+  if(!desktop() && dockStop === "min") setDockStop("rest");
+});
+
+/* Lay both panels out for the current viewport. Runs at load, on resize and on
+   rotation, and on the way across the 820 px line in either direction. */
+function layoutPanels(){
+  // The legend pill matches the language pill above it, edge for edge.
+  const langEl = document.getElementById("lang-group");
+  if(langEl && langEl.offsetWidth) document.documentElement.style.setProperty("--lang-w", langEl.offsetWidth + "px");
+  if(desktop()){
+    [dockEl, sheet].forEach(n => { n.style.transform = ""; n.style.height = ""; });
+    placeControls(0, true);
+    document.documentElement.style.removeProperty("--dock-h");
+    return;
   }
-  handle.addEventListener("pointerup", end);
-  handle.addEventListener("pointercancel", end);
-  if(window.ResizeObserver) new ResizeObserver(()=>measureDock(false)).observe(panel);
-})();
+  dockPanel.measure();
+  // Under an open sheet the dock stays parked below the screen (one panel).
+  if(sheet.classList.contains("open")){ dockPanel.stop = dockStop; dockPanel.render(dockPanel.full); }
+  else dockPanel.snap(dockStop);
+  if(sheet.classList.contains("open")){
+    sheetPanel.measure();
+    sheetStop(sheetPanel.stop, true);     // re-derive partial for the new height
+    sheetPanel.render(sheetPanel.yOf(sheetPanel.stop));
+    placeControls(sheetPanel.visible(), true);
+  }
+}
+window.addEventListener("resize", () => requestAnimationFrame(layoutPanels));
+
 document.addEventListener("keydown", e=>{
   if(e.key === "Escape" && sheet.classList.contains("open")) closeSheet();
 });
-
-/* Drag between the stops, and off the bottom to close.
-   The handle is the whole top strip rather than the 44x5 bar, because a 5 px
-   target is not a target. The sheet body joins in only when it is scrolled to
-   the top and the gesture is downward, which is the one case where dragging the
-   sheet and scrolling its contents are not in conflict. */
-(function(){
-  const head = document.getElementById("sheet-expand");
-  let startY = 0, startH = 0, dragging = false, moved = 0, pointerId = null, frame = 0;
-
-  function begin(e){
-    if(desktop() || (e.pointerType === "mouse" && e.button !== 0)) return;
-    startY = e.clientY;
-    startH = sheet.getBoundingClientRect().height;
-    dragging = true; moved = 0; pointerId = e.pointerId;
-    sheet.classList.add("dragging");
-    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
-  }
-  function move(e){
-    if(!dragging || e.pointerId !== pointerId) return;
-    moved = e.clientY - startY;
-    const max = window.innerHeight;
-    const h = Math.max(0, Math.min(max, startH - moved));
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(()=>{ sheet.style.height = h + "px"; });
-  }
-  function end(e){
-    if(!dragging || e.pointerId !== pointerId) return;
-    dragging = false;
-    pointerId = null;
-    cancelAnimationFrame(frame);
-    sheet.classList.remove("dragging");
-    const vh = window.innerHeight;
-    const h = Math.max(0, Math.min(vh, startH - moved));
-    if(e.type === "pointercancel"){ sheetStop(sheet.dataset.stop, true); return; }
-    if(Math.abs(moved) < 8){ sheet.style.height = ""; return; }
-    suppressSheetHandleClick = true;
-    if(suppressSheetHandleClick) setTimeout(()=>{ suppressSheetHandleClick = false; }, 0);
-    // Below 60% of PEEK the gesture was a dismissal, not a resize.
-    if(h < vh * 0.33 * 0.6){ closeSheet(); return; }
-    const targets = {peek: vh * 0.48, half: vh * 0.72,
-      full: vh - document.querySelector(".topbar").offsetHeight};
-    let best = "peek", bestD = Infinity;
-    STOPS.forEach(k=>{ const d = Math.abs(targets[k] - h); if(d < bestD){ bestD = d; best = k; } });
-    sheetStop(best, true);
-  }
-
-  head.addEventListener("pointerdown", begin);
-  window.addEventListener("pointermove", move, {passive:true});
-  window.addEventListener("pointerup", end);
-  window.addEventListener("pointercancel", end);
-})();
+// The page itself never scrolls; only panels do. Belt and braces for engines
+// without overflow:clip, where focus() or a find-in-page can still move it.
+window.addEventListener("scroll", () => { if(window.scrollY || window.scrollX) window.scrollTo(0, 0); }, {passive:true});
 
 /* The footer every sheet carries. Hat 5, finding 10: a safety instrument with
    no correction channel keeps a known error forever, and there was no contact
@@ -2956,7 +3382,7 @@ function reportHref(subject){
 }
 function sheetFoot(){
   const t = T[lang];
-  return `<p class="footlink"><a href="${CG_HOME}" target="_blank" rel="noopener">${t.homeLink}</a></p>`;
+  return `<p class="footlink"><a href="${CG_HOME}">${t.homeLink}</a></p>`;
 }
 
 /* ---- THE TRUST LINE ----
@@ -3039,7 +3465,6 @@ function openZone(z){
     <div class="zone-detail">
     <div class="zone-top">
     <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
-    <p class="sub">${z.sub[lang]}</p>
     <div class="statuscard ${tierOf(z)}">
       <span class="tile" aria-hidden="true">${CGSymbols.badge(c.class)}</span>
       <span class="eyebrow">${t.ebWhatToDo}</span>
@@ -3081,7 +3506,7 @@ function openZone(z){
      z.line is empty here as well; drawZones() calls this again when the
      geometry fetch resolves. */
   showBand(z);
-  history.replaceState(null,"","?z=" + localId(z.id));
+  sheetAddress("z=" + localId(z.id));
 }
 
 /* The coast this map does not describe, opened from its own card in the strip.
@@ -3109,7 +3534,29 @@ function openVoid(){
   openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
   markCurrent(null);
   clearBand();
-  history.replaceState(null, "", location.pathname);
+  sheetAddress("");
+}
+
+function openUnassessedBeach(beach){
+  const render = ()=>{
+    const t = T[lang];
+    return `
+    <h2 id="sheet-title" tabindex="-1">${beach.name}</h2>
+    <p class="why">${t.unassessedWhy}</p>
+    <p class="caveat">${t.unassessedLocation}</p>
+    <p class="defer">${t.defer}</p>
+    <div class="actions">
+      <a class="btn" href="${reportHref(t.reportSubject + ": " + beach.name)}">${t.report}</a>
+      <a class="btn primary" href="tel:911">${t.call}</a>
+    </div>
+    ${sheetFoot()}`;
+  };
+  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  markCurrent(beach.id);
+  clearBand();
+  showBand(beach);
+  flyClear(L.latLngBounds([beach.at]).pad(0.004), {maxZoom:15});
+  sheetAddress("b=" + localId(beach.id));
 }
 
 /* Fly so the subject lands in the strip the sheet is NOT covering. Without this
@@ -3177,21 +3624,44 @@ map.createPane(BAND_PANE);
 map.getPane(BAND_PANE).style.zIndex = 350;
 map.getPane(BAND_PANE).style.pointerEvents = "none";
 
+/* SEAMLESS JOINTS (Daniel, 2026-09-23). Each band used to take its normal from
+   its own neighbouring points only, so at a joint the west band's last normal
+   and the east band's first normal pointed different ways and the two areas
+   overlapped in a wedge. Now the normal at every point is taken over a window
+   of points that runs ACROSS the joint into the neighbouring beach, so both
+   bands compute the identical edge there and meet on one line. The window also
+   smooths the offset where the coast turns tightly. */
+const NORMAL_WINDOW = 3;
+function bandNeighbours(z){
+  const same = (p, q) => Math.abs(p[0]-q[0]) < 1e-6 && Math.abs(p[1]-q[1]) < 1e-6;
+  const all = [...ZONES, ...UNASSESSED_BEACHES].filter(o => o !== z && o.line && o.line.length);
+  const first = z.line[0], last = z.line[z.line.length - 1];
+  return {
+    west: all.find(o => same(o.line[o.line.length - 1], first)),
+    east: all.find(o => same(o.line[0], last))
+  };
+}
 function seawardEdge(z){
   // Metres per degree at this coast; the same frame tools/osm_coastline.py uses.
   const mLat = 111132, mLon = 111320 * Math.cos(9.645 * Math.PI / 180);
-  const pts = z.line.map(p => [p[1] * mLon, p[0] * mLat]);
+  const toM = p => [p[1] * mLon, p[0] * mLat];
+  const nb = bandNeighbours(z);
+  const before = nb.west ? nb.west.line.slice(-1 - NORMAL_WINDOW, -1) : [];
+  const after = nb.east ? nb.east.line.slice(1, 1 + NORMAL_WINDOW) : [];
+  const ext = [...before, ...z.line, ...after].map(toM);
+  const off = before.length;
   const inner = [], out = [];
-  for(let i = 0; i < pts.length; i++){
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+  for(let j = 0; j < z.line.length; j++){
+    const i = j + off;
+    const a = ext[Math.max(0, i - NORMAL_WINDOW)], b = ext[Math.min(ext.length - 1, i + NORMAL_WINDOW)];
     const dx = b[0] - a[0], dy = b[1] - a[1];
     const len = Math.hypot(dx, dy) || 1;
     // The LEFT normal, which is seaward: the line runs west to east and the
     // open sea is on its left. tools/osm_coastline.py offsets the same way and
     // for the same reason; if one of them ever flips, both must.
-    inner.push([pts[i][0] - dy / len * BAND_INNER_M,
-                pts[i][1] + dx / len * BAND_INNER_M]);
-    out.push([pts[i][0] - dy / len * BAND_M, pts[i][1] + dx / len * BAND_M]);
+    const p = ext[i];
+    inner.push([p[0] - dy / len * BAND_INNER_M, p[1] + dx / len * BAND_INNER_M]);
+    out.push([p[0] - dy / len * BAND_M, p[1] + dx / len * BAND_M]);
   }
   return {inner, outer: out,
           ll: q => [q[1] / mLat, q[0] / mLon]};
@@ -3202,44 +3672,40 @@ function bandPolygon(z){
   return e.inner.concat(e.outer.slice().reverse()).map(e.ll);
 }
 
+/* The end caps ARE the band's own end edges now, so a cap and the neighbour's
+   band edge are the same line rather than two lines at two angles. */
 function endTicks(z){
-  const mLat = 111132, mLon = 111320 * Math.cos(9.645 * Math.PI / 180);
-  const pts = z.line.map(p => [p[1] * mLon, p[0] * mLat]);
-  /* THE DIRECTION IS ALWAYS THE FORWARD ONE, a -> b west to east, at BOTH ends.
-     The first version of this took the tangent at the far end from the last
-     point back to the second-to-last, which is the line's direction REVERSED,
-     which flips the left normal, which drew the east tick 120 m inland through
-     the trees. A normal is only seaward relative to a direction of travel; the
-     same mistake in tools/osm_coastline.py would offset the entire coastline
-     into the jungle and still look like a coastline. */
-  const tick = (at, a, b) => {
-    const dx = pts[b][0] - pts[a][0], dy = pts[b][1] - pts[a][1];
-    const len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len, ny = dx / len;
-    // From the mapped shoreline to the illustrative offshore extent.
-    return [[(pts[at][1] + ny * BAND_INNER_M) / mLat, (pts[at][0] + nx * BAND_INNER_M) / mLon],
-            [(pts[at][1] + ny * BAND_M) / mLat, (pts[at][0] + nx * BAND_M) / mLon]];
-  };
-  const n = pts.length;
-  return [tick(0, 0, Math.min(1, n - 1)),
-          tick(n - 1, Math.max(0, n - 2), n - 1)];
+  const e = seawardEdge(z), n = e.inner.length;
+  return [[e.inner[0], e.outer[0]].map(e.ll), [e.inner[n - 1], e.outer[n - 1]].map(e.ll)];
 }
+
+/* PROVISIONAL AREAS ARE GREY (Daniel, 2026-09-23). Playa Grande and
+   Manzanillo have no Caribbean Guard boundary, so their extent is cut from the
+   mapped coastline and drawn in the absence colour, with DASHED ends: the ends
+   of a reviewed beach are a decision somebody made and are solid; these are
+   not. Grey is outside the hazard palette, so it can never read as a tier. */
+const PROVISIONAL_GREY = "#9aa7b0";
+const isProvisional = z => !z.character;
+const bandColour = z => isProvisional(z) ? PROVISIONAL_GREY : COLOR[tierOf(z)];
+const openBeach = z => isProvisional(z) ? openUnassessedBeach(z) : openZone(z);
 
 function clearBand(){
   if(bandLayer){ bandLayer.remove(); bandLayer = null; }
+  const had = bandZone;
   bandZone = null;
+  if(had && typeof drawAmbientBands === "function") drawAmbientBands();
 }
 
 function showBand(z){
   clearBand();
   if(!z || !z.line.length || map.getZoom() < BAND_MIN_ZOOM) { bandZone = z || null; return; }
-  const col = COLOR[tierOf(z)];
+  const col = bandColour(z), prov = isProvisional(z);
   const edge = seawardEdge(z);
   bandLayer = L.layerGroup([
     L.polygon(bandPolygon(z), {
       pane:BAND_PANE, stroke:false, fill:true, fillColor:col, fillOpacity:.14,
-      interactive:false
-    }),
+      interactive:true, bubblingMouseEvents:false
+    }).on("click", () => openBeach(z)),
     /* THE SEAWARD EDGE IS DASHED AND THE END CAPS ARE SOLID, and the difference
        between those two strokes is the whole claim this band makes.
        The ends are a decision somebody took: Cocles stops here and Chiquita
@@ -3257,11 +3723,37 @@ function showBand(z){
     }),
     ...endTicks(z).map(t => L.polyline(t, {
       pane:BAND_PANE, color:col, weight:2, opacity:.9, lineCap:"butt",
-      interactive:false
+      dashArray: prov ? "4 4" : null, interactive:false
     }))
   ]).addTo(map);
   bandZone = z;
+  drawAmbientBands();
 }
+
+/* THE BEACH AREAS SHOW ON ZOOM, NOT ONLY ON SELECTION (Daniel, 2026-09-23).
+   Zoomed in to a beach, every zone in view draws its band at a lighter
+   strength, so a reader sees where each beach's water is before choosing one.
+   Tapping the band opens that beach; zooming alone never opens a panel. The
+   selected beach keeps the full-strength band above. */
+var AMBIENT_MIN_ZOOM = 14;
+const ambientBands = L.layerGroup().addTo(map);
+function drawAmbientBands(){
+  ambientBands.clearLayers();
+  if(!zonesReady || map.getZoom() < AMBIENT_MIN_ZOOM) return;
+  const view = map.getBounds().pad(0.2);
+  [...ZONES, ...UNASSESSED_BEACHES].forEach(z => {
+    if(!z.line.length || (bandZone && bandZone.id === z.id)) return;
+    if(!view.intersects(L.latLngBounds(z.line))) return;
+    const col = bandColour(z), prov = isProvisional(z);
+    const edge = seawardEdge(z);
+    L.polygon(bandPolygon(z), {pane:BAND_PANE, stroke:false, fill:true,
+      fillColor:col, fillOpacity: prov ? .18 : .08, interactive:true, bubblingMouseEvents:false})
+      .on("click", () => openBeach(z)).addTo(ambientBands);
+    L.polyline(edge.outer.map(edge.ll), {pane:BAND_PANE, color:col, weight:1,
+      opacity:.35, dashArray:"5 7", interactive:false}).addTo(ambientBands);
+  });
+}
+map.on("zoomend moveend", drawAmbientBands);
 
 // The band appears and disappears with zoom on its own, because a reader who
 // pinches out past z14 with a sheet open should not be left with a wash they
@@ -3284,7 +3776,8 @@ function flyClear(bounds, opts){
     }, opts||{}));
     return;
   }
-  const sheetH = open ? sheet.offsetHeight : 0;
+  // The stop it is heading for, not where it is: it starts below the screen.
+  const sheetH = open ? sheetPanel.visibleOf(sheetPanel.stop) : 0;
   map.flyToBounds(bounds, Object.assign({
     duration:.7, maxZoom:17,
     paddingTopLeft:[24, headH + 16],
@@ -3320,7 +3813,7 @@ function openPost(p){
   };
   openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
   flyClear(L.latLngBounds([p.ll]).pad(0.002), {maxZoom:16.5});
-  history.replaceState(null,"","?p=" + localId(p.id));
+  sheetAddress("p=" + localId(p.id));
 }
 
 /* ---------- the legend ----------
@@ -3374,17 +3867,28 @@ function openLegend(){
   // A legend is a reading task, not a glance, so it opens past PEEK.
   sheetStop("half");
 }
+/* THE LEGEND IS THREE SECTIONS (2026-09-23): what keeps you safe, where
+   things are, and how to get there. Places are split by category so a reader
+   can find a hotel or a supermarket, or switch them all off to see the water. */
+const PLACE_CATEGORIES = ['stay','eat','shop','landmark','other'];
 const sourceLayerDefs = [
-  ['hazards','rip_current','Corrientes de resaca','Rip currents'],
-  ['rescue','rescue_station','Equipo de rescate','Rescue equipment'],
-  ['proposals','proposed_rescue_station','Propuestas / sin identificar','Proposed / unknown'],
-  ['access','pedestrian','Caminos y senderos','Roads and paths'],
-  ['places','location','Lugares','Places']
+  ['hazards','rip_current','Corrientes de resaca','Rip currents','safety'],
+  ['rescue','rescue_station','Equipo de rescate','Rescue equipment','safety'],
+  ['proposals','proposed_rescue_station','Propuestas / sin identificar','Proposed / unknown','safety'],
+  ['places_stay','place_stay','Hospedaje','Places to stay','places'],
+  ['places_eat','place_eat','Comer y beber','Food and drink','places'],
+  ['places_shop','place_shop','Tiendas y servicios','Shops and services','places'],
+  ['places_landmark','place_landmark','Referencias','Landmarks','places'],
+  ['places_other','place_other','Otros lugares','Other places','places'],
+  ['access','pedestrian','Caminos y senderos','Roads and paths','access']
 ];
+const LEGEND_SECTIONS = [['safety','Seguridad','Safety'],['places','Lugares','Places'],['access','Cómo llegar','Getting there']];
+
 const sourceLayerState = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,true]));
 const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerGroup().addTo(map)]));
 let legendExpanded = false;
 let legendClosingTimer = null;
+let legendParked = false;
 function renderLegendPerm(){
   clearTimeout(legendClosingTimer);
   const el = document.getElementById("legend-perm");
@@ -3393,19 +3897,31 @@ function renderLegendPerm(){
   el.classList.remove('is-closing');
   const mobileLegend = legendExpanded && !desktop();
   document.body.classList.toggle('legend-mode', mobileLegend);
+  /* ONE PANEL AT A TIME, the legend included (Daniel, 2026-09-23): the beach
+     panel is parked below the screen while the legend is up, not merely
+     hidden, and comes back to its own stop when the legend closes. */
+  if(mobileLegend && !legendParked){
+    legendParked = true; dockPanel.stopAnim(); dockPanel.render(dockPanel.full);
+  }else if(!mobileLegend && legendParked){
+    legendParked = false;
+    if(!sheet.classList.contains('open')) dockPanel.animateTo(dockStop, 0, () => placeControls(dockPanel.visible(), true));
+  }
   const dockEl = document.getElementById('dock');
   if(mobileLegend) dockEl.setAttribute('inert', '');
   else if(!document.getElementById('sheet')?.classList.contains('open')) dockEl.removeAttribute('inert');
   el.setAttribute("aria-label", lang === "es" ? "Leyenda" : "Legend");
   const es = lang === 'es';
   el.classList.toggle('is-open', legendExpanded);
-  el.innerHTML = `<button type="button" class="key-toggle" aria-controls="legend-content" aria-expanded="${legendExpanded}">
-      <span>${es ? 'Capas del mapa' : 'Map layers'}</span><span class="key-toggle-icon" aria-hidden="true"></span>
+  if(!legendExpanded) el.classList.remove('opened');
+  el.innerHTML = `${legendExpanded ? '<div class="key-grab" aria-hidden="true"></div>' : ''}<button type="button" class="key-toggle" aria-controls="legend-content" aria-expanded="${legendExpanded}">
+      <span>${es ? 'Leyenda' : 'Legend'}</span>
     </button><div class="key-content" id="legend-content" ${legendExpanded?'':'hidden'}>
-    <div class="source-layer-grid">${sourceLayerDefs.map(([id,icon,esName,enName])=>`<label>
+    ${LEGEND_SECTIONS.map(([sec,esSec,enSec])=>`<section class="key-section">
+      <h3 class="key-section-label">${es?esSec:enSec}</h3>
+      <div class="source-layer-grid">${sourceLayerDefs.filter(d=>d[4]===sec).map(([id,icon,esName,enName])=>`<label>
       <input type="checkbox" data-source-layer="${id}" ${sourceLayerState[id]?'checked':''}>
-      ${CGSymbols.badge(icon)}<span>${es?esName:enName}</span></label>`).join('')}</div>
-    <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Los símbolos punteados son propuestas.':'Zoom in for detail. Dashed symbols are proposed.'}</p>
+      ${CGSymbols.badge(icon, id.startsWith('places_')?'place-badge':'')}<span>${es?esName:enName}</span></label>`).join('')}</div></section>`).join('')}
+    <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Los símbolos punteados son propuestas. Las corrientes en movimiento marcan resaca según el mapa de Caribbean Guard; su dirección no está medida.':'Zoom in for detail. Dashed symbols are proposed. Moving currents mark rips from the Caribbean Guard map; their direction is not measured.'}</p>
     <details class="key-data"><summary>${es?'Fuentes y precisión':'Sources and accuracy'}</summary>
       <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
     </details></div>`;
@@ -3420,9 +3936,87 @@ function renderLegendPerm(){
     sourceLayerState[input.dataset.sourceLayer]=input.checked;
     const layer=sourceLayers[input.dataset.sourceLayer];
     input.checked?layer.addTo(map):map.removeLayer(layer);
+    requestAnimationFrame(restyleLabels);
   });
 }
 document.getElementById("legend-open").onclick = openLegend;
+
+/* SWIPE DOWN CLOSES THE LEGEND (Daniel, 2026-09-23), the same gesture as every
+   other panel: the tray follows the finger, resists being pulled up, and on
+   release either leaves (a flick, or past a third of its height) or springs
+   back. Inside the list, a drag down only takes the tray once the list is at
+   its top; scrolling the list is untouched. The header stays a button, so a
+   tap, Enter or a screen reader still closes it. */
+(function(){
+  const el = document.getElementById("legend-perm");
+  // Once the slide-in has played it must not replay when a drag ends.
+  el.addEventListener("animationend", e => { if(e.target === el && el.classList.contains("is-open")) el.classList.add("opened"); });
+  let y0 = 0, x0 = 0, dy = 0, mode = null, samples = [], suppress = false, id = null;
+  const open = () => legendExpanded && !desktop() && el.classList.contains("is-open");
+  const set = v => { el.style.transform = v ? `translate3d(0,${v.toFixed(1)}px,0)` : ""; };
+  function begin(x, y, target){
+    if(!open()) return false;
+    const list = el.querySelector(".key-content");
+    const inList = list && list.contains(target);
+    y0 = y; x0 = x; dy = 0; samples = [{y, t:performance.now()}];
+    mode = inList && list.scrollTop > 0 ? "scroll" : (inList ? "list" : "pending");
+    el.style.transition = "none";
+    return true;
+  }
+  function move(x, y){
+    if(!mode || mode === "scroll" || mode === "ignore") return false;
+    const d = y - y0;
+    if(mode !== "drag"){
+      if(Math.abs(d) < 6 && Math.abs(x - x0) < 6) return mode === "pending";
+      if(Math.abs(x - x0) > Math.abs(d)){ mode = "ignore"; return false; }
+      if(mode === "list" && d < 0){ mode = "scroll"; return false; }
+      mode = "drag"; el.classList.add("dragging"); y0 = y;
+    }
+    dy = y - y0;
+    const now = performance.now(); samples.push({y, t:now});
+    while(samples.length > 2 && now - samples[0].t > 90) samples.shift();
+    set(dy >= 0 ? dy : -(-dy * 40) / (40 - dy));      // resists upward
+    return true;
+  }
+  function end(){
+    const was = mode; mode = null;
+    if(was !== "drag") return;
+    suppress = true; setTimeout(() => { suppress = false; }, 60);
+    const a = samples[0], b = samples[samples.length - 1];
+    const v = b.t > a.t ? (b.y - a.y) / (b.t - a.t) : 0;
+    const h = el.offsetHeight;
+    const quick = reducedMotion.matches;
+    if(v > 0.5 || dy > h / 3){
+      el.style.transition = quick ? "none" : `transform ${Math.max(.14, Math.min(.3, (h - dy) / Math.max(1, v * 1000)))}s cubic-bezier(.3,.6,.4,1)`;
+      set(h + 20);
+      setTimeout(() => {
+        el.classList.remove("dragging"); el.style.transition = ""; set(0);
+        legendExpanded = false; renderLegendPerm();
+      }, quick ? 0 : 300);
+    }else{
+      el.style.transition = quick ? "none" : "transform .34s cubic-bezier(.22,1,.36,1)";
+      set(0);
+      setTimeout(() => { el.classList.remove("dragging"); el.style.transition = ""; }, 360);
+    }
+  }
+  el.addEventListener("touchstart", e => {
+    if(e.touches.length !== 1) return;
+    const t = e.touches[0]; if(begin(t.clientX, t.clientY, e.target)) id = t.identifier;
+  }, {passive:true});
+  el.addEventListener("touchmove", e => {
+    const t = [...e.changedTouches].find(x => x.identifier === id); if(!t) return;
+    if(move(t.clientX, t.clientY) && e.cancelable) e.preventDefault();
+  }, {passive:false});
+  el.addEventListener("touchend", () => { id = null; end(); });
+  el.addEventListener("touchcancel", () => { id = null; dy = 0; end(); });
+  el.addEventListener("pointerdown", e => {
+    if(e.pointerType === "touch" || e.button !== 0 || !begin(e.clientX, e.clientY, e.target)) return;
+    const mv = ev => { if(move(ev.clientX, ev.clientY)) ev.preventDefault(); };
+    const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); end(); };
+    window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+  });
+  el.addEventListener("click", e => { if(suppress){ suppress = false; e.stopPropagation(); e.preventDefault(); } }, true);
+})();
 
 /* ---------- beach picker ----------
    The coast is 12 km of near identical jungle and sand. Nobody pans a map to
@@ -3528,7 +4122,12 @@ function buildPicker(){
   // Character on the card, because the character is what the map stroke says and
   // the card is the legend for the stroke. A signed bulletin adds a chip; it
   // never replaces the character label.
-  const cards = ZONES.map(cardHTML).join("");
+  const cards = ZONES.map(cardHTML).join("") + UNASSESSED_BEACHES.map(b=>`
+    <button class="card unassessed" data-id="${b.id}" aria-current="false">
+      ${CGSymbols.badge('unknown', 'beach-symbol')}
+      <span class="beach-copy"><span class="nm">${b.name}</span>
+      <span class="beach-status">${t.unassessedStatus}</span></span>
+    </button>`).join("");
   /* The absence, listed as a peer of the presences, and a DIFFERENT SPECIES of
      card: dashed, hatched, and carrying no status pill at all. Hat 1 skimmed
      straight past the most defensible thing on the page because it had the same
@@ -3544,14 +4143,77 @@ function buildPicker(){
   document.getElementById("picker").innerHTML = cards + voidCard;
   document.querySelectorAll(".card").forEach(c=>{
     c.setAttribute("aria-current", c.dataset.id === selected);
-    c.onclick = c.dataset.id === "void"
-      ? openVoid
-      : ()=>openZone(ZONES.find(z=>z.id === c.dataset.id));
+    c.onclick = c.dataset.id === "void" ? openVoid
+      : c.dataset.id.startsWith("cg:beach/")
+        ? ()=>openUnassessedBeach(UNASSESSED_BEACHES.find(b=>b.id === c.dataset.id))
+        : ()=>openZone(ZONES.find(z=>z.id === c.dataset.id));
   });
   renderCounter();
+  renderDistances();
   // after layout, not during it: offsetHeight read in the same frame as the
   // innerHTML write returns the height of the markup that has not been laid out
   requestAnimationFrame(measureDock);
+}
+
+/* ---------- HOW FAR IS EACH BEACH (Daniel, 2026-09-23) ----------
+   Each card shows the straight-line distance to the nearest point of that
+   beach. From the reader when the phone has ALREADY granted location (this
+   never asks on load: a permission prompt before the reader has done anything
+   is how the map lost them before), and from the centre of Puerto Viejo
+   otherwise, including when the reader's position is more than 25 km from the
+   coast. The caption above the list always says which, and "en línea recta",
+   because a walk along the road is longer and the map must not imply a route. */
+const DIST_DEFAULT = {ll:[9.65670, -82.75450], you:false};
+const DIST_OUT_OF_RANGE_M = 25000;
+let distOrigin = DIST_DEFAULT;
+function beachPoints(id){
+  const z = ZONES.find(x => x.id === id) || UNASSESSED_BEACHES.find(x => x.id === id);
+  if(!z) return null;
+  return z.line && z.line.length ? z.line : [z.at];
+}
+function nearestM(from, pts){
+  let best = Infinity;
+  for(const p of pts){ const d = map.distance(from, p); if(d < best) best = d; }
+  return best;
+}
+function fmtDist(m){
+  const es = lang === "es";
+  if(distOrigin.you && m < 150) return es ? "Aquí" : "Here";
+  if(m < 1000) return `${Math.max(50, Math.round(m / 50) * 50)} m`;
+  const km = m < 10000 ? (m / 1000).toFixed(1) : String(Math.round(m / 1000));
+  return `${es ? km.replace(".", ",") : km} km`;
+}
+function renderDistances(){
+  const es = lang === "es";
+  document.querySelectorAll(".card[data-id]").forEach(c => {
+    const pts = beachPoints(c.dataset.id);
+    let el = c.querySelector(".card-dist");
+    if(!pts){ if(el) el.remove(); return; }
+    if(!el){ el = document.createElement("span"); el.className = "card-dist"; c.appendChild(el); }
+    el.textContent = fmtDist(nearestM(distOrigin.ll, pts));
+  });
+  const cap = document.getElementById("dist-origin");
+  if(cap){
+    cap.hidden = false;
+    cap.textContent = distOrigin.you
+      ? (es ? "Distancia en línea recta desde donde estás" : "Straight-line distance from where you are")
+      : (es ? "Distancia en línea recta desde el centro de Puerto Viejo" : "Straight-line distance from central Puerto Viejo");
+  }
+}
+function setDistOrigin(ll){
+  const near = [...ZONES, ...UNASSESSED_BEACHES].some(z => nearestM(ll, z.line && z.line.length ? z.line : [z.at]) < DIST_OUT_OF_RANGE_M);
+  distOrigin = near ? {ll, you:true} : DIST_DEFAULT;
+  renderDistances();
+}
+// Only if location is already allowed; then keep it current, cheaply.
+if(navigator.permissions && navigator.geolocation){
+  navigator.permissions.query({name:"geolocation"}).then(st => {
+    const watch = () => navigator.geolocation.watchPosition(
+      p => setDistOrigin([p.coords.latitude, p.coords.longitude]), () => {},
+      {enableHighAccuracy:false, maximumAge:60000, timeout:20000});
+    if(st.state === "granted") watch();
+    st.onchange = () => { if(st.state === "granted") watch(); };
+  }).catch(() => {});
 }
 
 /* "2 de 6". A horizontal scroller with both scrollbars hidden does not announce
@@ -3586,7 +4248,18 @@ function markCurrent(id){
        code on the post at Cocles opens card three, and until this ran the
        reader landed on card one and had to hunt for the beach they were
        standing on. */
-    if(on) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+    /* The strip, never the page. scrollIntoView scrolls EVERY scrollable
+       ancestor, and with the phone panels parked partly below the screen by
+       transform, that included the document: selecting a beach shifted the
+       whole page up 96 px and hid the top bar. */
+    if(on){
+      const strip = document.getElementById("picker");
+      const r = c.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+      if(strip.scrollHeight > strip.clientHeight + 1 && (r.top < sr.top || r.bottom > sr.bottom)){
+        strip.scrollTo({top: strip.scrollTop + r.top - sr.top - (sr.height - r.height) / 2,
+                        behavior: reducedMotion.matches ? "auto" : "smooth"});
+      }
+    }
   });
   anyCurrent = !!id && !!layers[id];
   Object.entries(layers).forEach(([k,g])=>{ g.cgCurrent = (k === id); });
@@ -3607,7 +4280,13 @@ let lastDockH = 0;
 function measureDock(mayFit = true){
   const dock = document.getElementById("dock");
   if(!dock) return;
-  const h = dock.offsetHeight;
+  const phone = !desktop();
+  // On a phone the panels own --dock-h (placeControls); mid-slide or under an
+  // open sheet the dock's own height is not the one the controls should clear.
+  if(phone && (dock.classList.contains("settling") || dock.classList.contains("dragging") ||
+               document.getElementById("sheet").classList.contains("open"))) return;
+  const h = phone ? Math.max(0, Math.round(window.innerHeight - dock.getBoundingClientRect().top))
+                  : dock.offsetHeight;
   if(h === lastDockH) return;
   const first = lastDockH === 0;
   lastDockH = h;
@@ -3683,6 +4362,7 @@ function doLocate(){
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:la,longitude:lo,accuracy:acc}=pos.coords;
     const ll=[la,lo];
+    setDistOrigin(ll);
     if(meMarker){map.removeLayer(meMarker);map.removeLayer(meCircle);}
 
     /* The circle is GPS error AND our registration error, combined, not GPS
@@ -3800,8 +4480,9 @@ function setLang(l){
   }
   if(lastRender) lastRender();
 }
-document.getElementById("btn-es").onclick=()=>setLang("es");
-document.getElementById("btn-en").onclick=()=>setLang("en");
+function chooseLang(l){ try{ localStorage.setItem(LANG_KEY, l); }catch(e){} setLang(l); }
+document.getElementById("btn-es").onclick=()=>chooseLang("es");
+document.getElementById("btn-en").onclick=()=>chooseLang("en");
 
 
 /* ============================================================
@@ -3923,6 +4604,7 @@ function sourceEsc(value){
   return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 }
 function sourcePlaceLabel(p,es){
+  if(p.display_name && p.display_name !== 'Sin nombre') return p.display_name;
   const generic=/^(1 minuto|3 minutos|Calle|Centro|Apartamentos|Hotel)$/i.test(p.name||'');
   const mappedName=/real location/i.test(p.osm_name||'')?'':p.osm_name;
   return mappedName||(!generic&&p.name)||(es?'Lugar sin identificar':'Unidentified place');
@@ -3935,7 +4617,9 @@ function sourcePopup(f){
     const note=p.registration==='osm_named_place'
       ? (es?'Ubicación en OpenStreetMap':'OpenStreetMap location')
       : (es?'Posición estimada del documento':'Estimated document position');
-    return `<strong>${sourceEsc(label)}</strong><br><small>${note}</small>`;
+    const def=sourceLayerDefs.find(d=>d[0]==='places_'+(p.category||'other'));
+    const cat=def?(es?def[2]:def[3]):'';
+    return `<strong>${sourceEsc(label)}</strong><br><small>${cat?sourceEsc(cat)+' · ':''}${note}</small>`;
   }
   const note=proposed ? (es?'Propuesto, no disponible':'Proposed, not available')
     : p.kind==='unclassified_facility' ? (es?'Servicio no identificado':'Service unknown')
@@ -3945,9 +4629,10 @@ function sourcePopup(f){
 function drawProjectedAnnotations(gj){
   const categories={rip_current:'hazards',rescue_station:'rescue',
     proposed_rescue_station:'proposals',proposed_cg_station:'proposals',unclassified_facility:'proposals',
-    location:'places'};
+    location:'places_other'};
   for(const f of gj.features){
-    const kind=f.properties.kind, group=sourceLayers[categories[kind]];
+    const kind=f.properties.kind;
+    const group=sourceLayers[kind==='location' ? 'places_'+(f.properties.category||'other') : categories[kind]];
     if(!group)continue;
     if(f.id==='pdf:location/408')continue; // Coincident duplicate of source mark 406.
     const g=f.geometry;
@@ -3957,7 +4642,7 @@ function drawProjectedAnnotations(gj){
       const hit=L.polyline(pts,{color:'#000',weight:20,opacity:0}).addTo(group).bindPopup(()=>sourcePopup(f));
       projectedArrows.push({arrow,pts,hit});
     }else{
-      const symbol=kind==='location'?'location':kind==='unclassified_facility'?'unknown':kind;
+      const symbol=kind==='location'?'place_'+(f.properties.category||'other'):kind==='unclassified_facility'?'unknown':kind;
       const [lon,lat]=g.coordinates;
       const markerTitle=kind==='location'
         ? sourcePlaceLabel(f.properties,lang==='es')
@@ -3988,7 +4673,7 @@ function drawProjectedAnnotations(gj){
       }
     });
     projectedDetail.forEach(({layer,kind})=>{
-      const visible=kind==='location'?zoom>=15.5:zoom>=14;
+      const visible=kind==='location'?zoom>=15.5:kind==='rescue_station'?true:zoom>=14;
       const node=layer.getElement();if(node)node.style.display=visible?'':'none';
     });
   });
@@ -4273,7 +4958,7 @@ function renderSea(){
   const ageH = (Date.now() - at.getTime()) / 3600000;
   const stale = ageH > SEA_STALE_H;
   const hhmm = at.toLocaleTimeString(lang === "es" ? "es-CR" : "en-GB",
-                                     {hour:"2-digit", minute:"2-digit"});
+                                     {hour:"2-digit", minute:"2-digit", hourCycle:"h23"});
   const col = (kind, val, lbl) =>
     `<div class="col"><span class="tile" aria-hidden="true">${CGSymbols.svg(kind)}</span>
        <span class="val">${val}</span><span class="lbl">${lbl}</span></div>`;
@@ -4286,9 +4971,7 @@ function renderSea(){
       ${col("from",   seaDir(c.wave_direction), t.seaFrom)}
       ${col("temp",   Math.round(c.sea_surface_temperature) + "°C", t.seaTemp)}
     </div>
-    <div class="foot"><div>${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaAll}</div>
-      <div>${t.seaCredit} <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>
-      <span class="stamp"> · ${t.seaModel(hhmm)}</span></div></div>`;
+    <p class="foot">${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaLine} · <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · <span class="stamp">${hhmm}</span></p>`;
 }
 
 /* NETWORK-FIRST WITH A CACHED FALLBACK, and no precache entry.
@@ -4360,28 +5043,35 @@ function renderSaved(state){
 /* The explanation, on tap. Everything in here is a statement about what this
    page does, not a promise about what the sea is doing, so it is the one sheet
    in the file with no hazard colour in it at all. */
+/* THE SAVED COPY, REWRITTEN SHORT (Daniel, 2026-09-23). One status line, one
+   sentence of what it means, and the steps for THIS phone only: iPhone gets
+   Safari's Share steps, Android gets the install button when Chrome offers
+   one and the menu steps when it does not. No close button: it is a sheet
+   like the others and swiping it down closes it (the button stays for screen
+   readers, visually hidden). */
+function isAndroid(){ return /Android/i.test(navigator.userAgent || ""); }
 function openSaved(){
   const t = T[lang];
-  const when = savedAt ? t.savedAt(fmtStamp(savedAt)) : t.savedNever;
-  let install = "";
+  const ok = SW_SUPPORTED && savedAt;
+  const status = ok ? t.savedOkLine(fmtStamp(savedAt)) : (SW_SUPPORTED ? t.savedNever : t.savedNoStore);
+  const steps = list => `<ol class="saved-steps">${list.map(x => `<li>${x}</li>`).join("")}</ol>`;
+  let how = "";
   if(standalone()){
-    install = `<p class="caveat">${t.savedInstalled}</p>`;
-  } else if(installPrompt){
-    install = `<div class="actions"><button class="btn primary wide" id="do-install">${t.installBtn}</button></div>`;
-  } else if(isIOS()){
-    install = `<p class="caveat">${t.installIos}</p>`;
+    how = `<p class="saved-done">${t.savedInstalled}</p>`;
+  }else if(installPrompt){
+    how = `<div class="actions"><button class="btn install wide" id="do-install">${t.installBtn}</button></div>`;
+  }else if(isIOS()){
+    how = `<h3 class="eyebrow">${t.savedKeepTitle}</h3>${steps(t.savedStepsIos)}<p class="saved-note">${t.savedIosNote}</p>`;
+  }else if(isAndroid()){
+    how = `<h3 class="eyebrow">${t.savedKeepTitle}</h3>${steps(t.savedStepsAndroid)}`;
   }
   const html = `
     <h2 id="sheet-title" tabindex="-1">${t.savedTitle}</h2>
-    <p class="sub">${when}</p>
-    ${SW_SUPPORTED
-      ? `<p class="why">${t.savedWhatIs}</p>
-         <p class="prov"><span class="row">${t.savedCadence}</span></p>
-         ${isIOS() && !standalone() ? `<p class="caveat">${t.savedIos}</p>` : ""}`
-      : `<p class="why">${t.savedNoSw}</p>`}
-    ${install}
-    ${sheetFoot()}`;
+    <p class="saved-status ${ok ? "is-ok" : ""}">${status}</p>
+    <p class="why">${SW_SUPPORTED ? t.savedShort : t.savedNoSw}</p>
+    ${how}`;
   openSheet(html, openSaved);
+  sheet.classList.add("no-close");
   const btn = document.getElementById("do-install");
   if(btn) btn.onclick = ()=>{
     const p = installPrompt; installPrompt = null;
@@ -4493,12 +5183,16 @@ renderSaved();
      sheet or a column. Nothing here reads a stored breakpoint, so a window
      dragged across 820 px settles correctly. */
   window.addEventListener("resize", ()=>{ renderLocate(); });
+  layoutPanels();
   const q=new URLSearchParams(location.search);
+  if(q.toString()) history.replaceState(null, "", location.pathname);
   const z=ZONES.find(x=>localId(x.id)===q.get("z"));
+  const b=UNASSESSED_BEACHES.find(x=>localId(x.id)===q.get("b"));
   const p=POSTS.find(x=>localId(x.id)===q.get("p"));
   /* Open from the full-coast view rather than jumping straight in. The fly is
      what tells someone who just scanned a QR code where on the coast they are. */
   if(z){ setTimeout(()=>openZone(z),350); }
+  else if(b){ setTimeout(()=>openUnassessedBeach(b),350); }
   else if(p){ setTimeout(()=>openPost(p),350); }
 
   /* The install nudge, which is what "Guarde esta página" was reaching for. It

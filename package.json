@@ -3,14 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Mobile-first coastal safety map for Caribbean Guard, Puerto Viejo to Manzanillo",
+  "description": "Caribbean Guard: organization website (site/, Next.js) and mobile-first coastal safety map (web/)",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm --prefix site run dev",
+    "build": "npm --prefix site run build",
+    "setup": "npm ci && npm --prefix site ci",
     "dev:map": "vite web --host 127.0.0.1 --port 5174",
     "build:map": "node tools/build_map.js",
-    "check:map": "node tools/check_copy.js",
-    "build": "vite build",
-    "preview": "vite preview --host"
+    "check:map": "node tools/check_copy.js"
   },
   "devDependencies": {
     "vite": "^5.4.10"

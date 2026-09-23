@@ -344,14 +344,14 @@ body.map-overview .projected-number{display:none}
 .forecast .sea .lbl{font-size:10px;letter-spacing:.04em}
 .forecast .sea .foot{padding-top:8px;border-top:1px solid var(--line)}
 @media(min-width:820px) and (max-height:780px){
- .railhead{padding-top:14px;padding-bottom:8px}
+ .railhead{padding-top:10px;padding-bottom:4px}
  .list-heading{padding-bottom:4px}
- .card{min-height:50px;padding-top:5px;padding-bottom:5px}
- .card .beach-symbol,.card.void .beach-symbol{width:34px;height:34px}
- .card .beach-symbol svg{width:23px;height:23px}
- .forecast{padding-top:8px}
+ .card{min-height:44px;padding-top:3px;padding-bottom:3px}
+ .card .beach-symbol,.card.void .beach-symbol{width:32px;height:32px}
+ .card .beach-symbol svg{width:22px;height:22px}
+ .forecast{padding-top:5px}
  .forecast-title{margin-bottom:5px}
- .forecast .sea{padding:8px;margin-bottom:6px}
+ .forecast .sea{padding:6px;margin-bottom:3px}
  .forecast .sea .cols{margin-bottom:5px}
  .forecast .sea .tile{width:25px;height:25px}
  .forecast .sea .tile svg{width:17px;height:17px}
@@ -464,7 +464,8 @@ body.map-overview .projected-number{display:none}
  .sheet-expand{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2;display:flex;align-items:center;justify-content:center;width:88px;height:44px;min-height:44px;margin:0;padding:0;border:0;background:transparent;color:transparent;cursor:grab;touch-action:none}
  .sheet-expand::after{content:"";display:block;width:44px;height:5px;border-radius:999px;background:#b7c7cf}
  .sheet-body{padding-top:44px}
- .sheet[data-stop=peek] .statuscard .why{display:none}
+ /* The why stays at every stop: the sheet moves by transform now, and content
+    that appears as it rises would re-lay out the sheet mid gesture. */
  .map-key{transition:width .24s ease,box-shadow .24s ease}
  .map-key .key-content{animation:key-reveal .24s cubic-bezier(.22,1,.36,1) both}
  @keyframes key-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -484,3 +485,171 @@ body.map-overview .projected-number{display:none}
 @media(max-width:819px) and (prefers-reduced-motion:reduce){
  .dock,.dock>:not(.dock-handle),.sheet,.map-key,.map-key .key-content,.fab,.compass,.sos,.lang,.brand,.key-toggle,.card,.sheet button,.source-layer-grid label{animation:none!important;transition:none!important}
 }
+
+/* Phone panels, 2026-09-23: laid out once at full height and moved by transform
+   from index.html (createPanel). Nothing here may animate height, bottom or
+   transform on the dock, the sheet or the controls that ride on them: a CSS
+   transition would trail every frame the finger sets. */
+html,body{overscroll-behavior:none}
+@media(max-width:819px){
+ .dock,.dock-min .dock,.dock-full .dock,.list-expanded .dock{top:auto;bottom:0;height:calc(100dvh - var(--header));min-height:0;max-height:none;
+  transition:none;will-change:transform;contain:layout paint;
+  box-shadow:0 -2px 18px #0827342e,0 120px 0 0 var(--paper)}
+ .dock-min .dock>:not(.dock-handle),.dock>:not(.dock-handle){opacity:1;visibility:visible;pointer-events:auto;transition:none}
+ .dock{overflow:hidden}
+ /* Below its top stop the panel owns every vertical movement on it. */
+ .dock.is-partial,.sheet.is-partial{touch-action:none}
+ .dock.is-partial .strip{overflow-y:hidden}
+ .sheet.is-partial .sheet-body{overflow-y:hidden}
+ .strip,.sheet-body{overscroll-behavior:contain}
+ .dock-handle,.railhead,.list-heading,.forecast,.sheet-expand{touch-action:none;user-select:none;-webkit-user-select:none}
+ .dock-handle{width:120px;height:26px;min-height:26px;cursor:grab}
+ .dock-grab,.sheet-expand::after{transition:background-color .15s ease,width .2s cubic-bezier(.22,1,.36,1)}
+ .dock.dragging .dock-grab,.sheet.dragging .sheet-expand::after{background:#7f97a1;width:52px}
+ .dock.dragging,.sheet.dragging{cursor:grabbing}
+ .railhead{padding:0 20px 4px}
+ .railhead h1{font-size:19px;line-height:1.25;letter-spacing:-.02em;margin:0 0 6px}
+ .dock-min .railhead{cursor:pointer}
+ .sheet,.sheet[data-stop],.sheet[data-stop=peek],.sheet[data-stop=half],.sheet[data-stop=full]{top:auto;bottom:0;height:calc(100dvh - var(--header));max-height:none;
+  transition:none;will-change:transform;border-radius:18px 18px 0 0;
+  box-shadow:0 -4px 24px #08273433,0 120px 0 0 var(--paper)}
+ .sheet:not(.open){transform:translate3d(0,100%,0)}
+ .sheet-expand{width:120px}
+ /* Controls clear what shows of the panel; --dock-h already includes the
+    home-indicator inset because it is measured from the screen's bottom edge. */
+ .fab,.fab.hidden,.compass{bottom:calc(var(--dock-h) + 12px);transition:background-color .18s ease,box-shadow .18s ease,scale .12s ease}
+ .leaflet-bottom.leaflet-left,.selection-open .leaflet-bottom.leaflet-left{bottom:calc(var(--dock-h) + 6px)}
+ .fab,.compass,.leaflet-bottom.leaflet-left{will-change:transform}
+ .fab:active,.compass:active{transform:none;scale:.94}
+ .sos:active,.lang button:active,.key-toggle:active{transform:none;scale:.96}
+ .card:active{transform:none;background:#e6eff1}
+}
+@media(max-width:819px) and (prefers-reduced-motion:reduce){
+ .dock-grab,.sheet-expand::after{transition:none}
+}
+
+/* Quieter chrome, 2026-09-23. Labels in sentence case at reading weight; the
+   tracked uppercase stays only on the eyebrows, where it names a block. */
+.map-key .key-toggle{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;min-height:44px;padding:10px 14px;gap:14px}
+.eyebrow,.forecast-title,.rail-eyebrow,.sheet .eyebrow{letter-spacing:.06em}
+.leaflet-control-scale{padding:4px 7px 2px!important}
+.leaflet-control-scale-line{height:22px;padding:0 0 8px!important;font-size:11px!important}
+.leaflet-control-scale-line:after{height:6px}
+@media(max-width:819px){
+ .map-key{border-radius:999px}
+ .map-key.is-open{border-radius:18px 18px 0 0}
+ .map-key .key-toggle{border-radius:999px;min-height:40px;padding:8px 14px}
+ .map-key.is-open .key-toggle{border-radius:18px 18px 0 0}
+}
+/* A phone held sideways crosses 820 px and gets the desktop rail, with 390 px
+   of height to share. The beaches are what the rail is for, so the header
+   shrinks and the forecast steps out; the beach sheet still carries weather. */
+@media(min-width:820px) and (max-height:500px){
+ :root{--header:56px}
+ .topbar{padding:4px 16px}
+ .brand img{width:40px;height:40px}
+ .brand small,.region-label{display:none}
+ .railhead{padding:10px 20px 2px}.railhead .what{display:none}
+ .forecast{display:none}
+ .dockrow{min-height:40px;padding:0 12px}
+}
+.panel-dragging,.panel-dragging *{user-select:none;-webkit-user-select:none}
+html,body{overflow:clip}
+/* Poppins runs wider than Inter; the negative tracking tuned for Inter crowds it. */
+.statuscard .instr,.pill,.sheet .escape{letter-spacing:0}
+.sheet h2,.railhead h1{letter-spacing:-.02em}
+
+/* 2026-09-23, Daniel's phone review. */
+@media(max-width:819px){
+ /* The forecast heading sits on the same inset and rhythm as BEACHES. */
+ .forecast{padding:0 16px 6px}
+ .forecast-title,.list-heading .rail-eyebrow{display:flex;align-items:center;min-height:36px;margin:0;font-size:11px;font-weight:700;letter-spacing:.06em}
+ .list-heading{padding:0 16px}
+ /* More air inside the card, smaller readings, one footer line. */
+ .forecast .sea{padding:12px 16px 10px}
+ .forecast .sea .cols{gap:8px;margin:0 0 10px}
+ .forecast .sea .tile{width:20px;height:20px;background:transparent}
+ .forecast .sea .tile svg{width:16px;height:16px}
+ .forecast .sea .val{font-size:13px}
+ .forecast .sea .lbl{font-size:9.5px;letter-spacing:.05em}
+ .forecast .sea .foot,.dock-full .forecast .sea .foot{display:block;margin:0;padding-top:8px;font-size:10.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ /* The brand pill hugs its wordmark: the text box shrinks to its longest word. */
+ .brand{padding:2px 14px 2px 3px;gap:8px}
+ .brand-text{width:min-content;max-width:none}
+}
+.forecast .sea .foot a{color:inherit}
+.forecast .sea .foot .stamp{white-space:nowrap}
+/* The lifebuoy carries its own colour; its disc is plain white. */
+.symbol.rescue_station,.symbol.proposed_rescue_station{background:#fff;border:0}
+.symbol.rescue_station svg,.symbol.proposed_rescue_station svg{width:86%;height:86%}
+/* Beach names open their beach; the hit area is larger than the ink. */
+.leaflet-marker-icon.lbl.zone.tap{pointer-events:auto;cursor:pointer}
+.leaflet-marker-icon.lbl.zone.tap::after{content:"";position:absolute;inset:-12px -8px}
+.leaflet-marker-icon.lbl.zone.tap:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+/* Rip currents as moving water (2026-09-23). The streaks advance one dash
+   period (14 px) every 0.6 s, about 23 px/s: slow and steady like water, well
+   under the 50-100 px/s of a UI "marching ants" selection. Linear on purpose:
+   a current does not ease in and out. Negative offset = forward along the
+   drawn line, which runs from the sand out to sea. */
+@keyframes cg-rip-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-14}}
+.cg-rip-flow{animation:cg-rip-flow .6s linear infinite}
+.cg-rip-channel{mix-blend-mode:normal}
+/* Nothing moves while the map itself moves, below the zoom where rips show in
+   detail, or when the reader asked for less motion; the dashes and the head
+   still say which way. */
+.leaflet-dragging .cg-rip-flow,.leaflet-zoom-anim .cg-rip-flow,.map-overview .cg-rip-flow{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.cg-rip-flow{animation:none}}
+
+/* 2026-09-23 round three. The closed legend is a twin of the ES/EN pill:
+   same width, height, corner, edge and shadow, label centred, no chevron. */
+@media(max-width:819px){
+ .map-key:not(.is-open){width:var(--lang-w,auto);border-radius:6px;border:1px solid #d9e4e8;box-shadow:0 2px 12px #071b2850;background:#ffffffed}
+ .map-key:not(.is-open) .key-toggle{justify-content:center;min-height:44px;padding:0 10px;border-radius:6px;font-size:13px;font-weight:600}
+}
+.key-toggle-icon{display:none}
+.key-section+.key-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.key-section .key-section-label{margin:0 0 8px}
+.symbol.place-badge,.projected-place .symbol{background:#f6f3ea;color:#284f54}
+/* Beach sheets no longer carry a subtitle line (Daniel, 2026-09-23); the
+   name sits directly over the instruction. */
+.sheet h2+.statuscard,.sheet h2+.why{margin-top:16px}
+.key-close{display:grid;place-items:center;width:32px;height:32px;margin:-6px -6px -6px 0;border-radius:50%;border:1px solid var(--line);font-size:20px;font-weight:400;line-height:1;color:var(--ink)}
+
+/* Saved copy sheet (2026-09-23): short, platform-specific, swipe to close. */
+.sheet.no-close .close{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0}
+.saved-status{display:inline-flex;align-items:center;gap:8px;margin:10px 0 14px;padding:6px 12px;border-radius:999px;background:#eef3f5;color:var(--muted);font-size:13px;font-weight:600}
+.saved-status.is-ok{background:#e7f1f4;color:var(--ink)}
+.saved-status.is-ok::before{content:"";width:8px;height:8px;border-radius:50%;background:#2f8f6b}
+.saved-steps{margin:6px 0 10px;padding:0;list-style:none;counter-reset:s}
+.saved-steps li{counter-increment:s;position:relative;padding:8px 0 8px 36px;font-size:15px;line-height:1.4;border-top:1px solid var(--line)}
+.saved-steps li:first-child{border-top:0}
+.saved-steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.saved-note,.saved-done{font-size:13px;line-height:1.45;color:var(--muted);margin:4px 0 0}
+/* Distance to each beach, right-aligned before the chevron. */
+.card .card-dist{margin-left:auto;padding-left:8px;flex:none;font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dist-origin{margin:-4px 16px 4px;font-size:11px;line-height:1.35;color:var(--muted)}
+@media(min-width:820px){.dist-origin{margin:-2px 20px 6px}}
+/* Legend tray: a grabber instead of a close mark; a drag owns the transform. */
+.key-close{display:none}
+.key-grab{display:none}
+@media(max-width:819px){
+ .map-key.is-open .key-grab{display:block;width:44px;height:5px;margin:8px auto -4px;border-radius:999px;background:#b7c7cf}
+ .map-key.is-open{touch-action:none}
+ .map-key.is-open .key-content{touch-action:pan-y;overscroll-behavior:contain}
+ .map-key.dragging,.map-key.dragging .key-content{animation:none!important}
+ .map-key.dragging .key-grab{background:#7f97a1;width:52px}
+}
+@media(max-width:819px){.map-key.is-open.opened:not(.is-closing){animation:none}}
+.btn.install{background:var(--ink);border-color:var(--ink);color:#fff;font-size:15px}
+/* No close button on any phone sheet (Daniel, 2026-09-23): swiping down closes
+   every panel. The button stays in the page, visually hidden, for screen
+   readers and keyboards; Escape also closes. Desktop keeps it: no swipe there. */
+@media(max-width:819px){
+ .sheet .close{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0}
+ .sheet h2{padding-right:0}
+}
+/* Confirmed stations at the whole-coast view: small, no number, still tappable. */
+body.map-overview .station-marker{transform:scale(.62)}
+body.map-overview .station-marker .number{display:none}
+body.map-overview .projected-marker .symbol.rescue_station{box-shadow:0 1px 4px #102d3b90}

@@ -288,6 +288,9 @@
   var ARROW_OUTLINE = "#0b1c2c";
   var ARROW_OUTLINE_W = 1.0;
   var ARROW_OUTLINE_OPACITY = 0.85;
+  // One streak and its gap: 4 px of ink (plus round caps) every 14 px. The
+  // stylesheet moves the dash one full period per cycle; see .cg-rip-flow.
+  var FLOW_DASH = "4 10";
 
   /* A rip is 30 to 100 m long, which is a couple of pixels at the whole-coast
      view: a fixed head is a red blob detached from a shaft nobody can see, and
@@ -394,10 +397,19 @@
     var colour = opts.color || "#e53935";
     var dash = opts.dashArray === undefined ? null : opts.dashArray;
 
-    function poly(pts, c, w, op, d, klass) {
+    /* ITS OWN PANE, SO ITS MOTION REPAINTS ONLY ITSELF. Leaflet draws every
+       vector in a pane into one SVG, and an animated stroke repaints the SVG it
+       lives in. In the overlay pane that was every beach stroke too, on every
+       frame; in this pane it is the rips alone. */
+    if (!map.getPane("cgRipPane")) {
+      map.createPane("cgRipPane").style.zIndex = 410;
+      map.getPane("cgRipPane").style.pointerEvents = "none";
+    }
+    function poly(pts, c, w, op, d, klass, cap) {
       return L.polyline(pts, {
+        pane: "cgRipPane",
         color: c, weight: w, opacity: op, dashArray: d || null,
-        lineCap: "round", lineJoin: "round", interactive: false,
+        lineCap: cap || "round", lineJoin: "round", interactive: false,
         className: klass || ''
       }).addTo(g);
     }
@@ -412,13 +424,21 @@
     var oc = opts.outline || ARROW_OUTLINE;
     var oo = opts.outlineOpacity == null ? ARROW_OUTLINE_OPACITY : opts.outlineOpacity;
 
-    // One fine outline makes the mark legible over dark reef and pale surf.
-    var phase = Math.abs(Math.round((latlngs[0][0] + latlngs[0][1]) * 100000)) % 4;
-    var pulse = 'cg-current-pulse cg-current-phase-' + phase;
-    var shaftOut = poly(drawn, oc, w + 2 * ow, oo, dash, pulse);
-    var shaft = poly(drawn, colour, w, 1, dash, pulse);
-    var headOut = poly(head, oc, w + 2 * ow, oo, null, pulse);
-    var headLine = poly(head, colour, w, 1, null, pulse);
+    /* A CURRENT, NOT AN ARROW (Daniel, 2026-09-23). Three layers:
+         the CHANNEL, a wide faint red band, is the rip's neck: the strip of
+           water that moves, which is how NOAA and RNLI describe what to look
+           for ("a channel of darker, churning water");
+         the FLOW, short streaks with a dark edge, travels along the channel
+           from the sand out to sea at a constant speed and never reverses,
+           which is what reads as water moving rather than a sign blinking;
+         the HEAD, one small solid chevron, says which way when the motion is
+           off (reduced motion, overview zooms) and in a screenshot.
+       Direction is the field sheet's, not surveyed; the legend says so. */
+    var channel = poly(drawn, colour, w * 4.2, 0.22, null, 'cg-rip-channel', 'butt');
+    var shaftOut = poly(drawn, oc, w + 2 * ow, oo, FLOW_DASH, 'cg-rip-flow');
+    var shaft = poly(drawn, colour, w, 1, FLOW_DASH, 'cg-rip-flow');
+    var headOut = poly(head, oc, w + 2 * ow, oo, null, 'cg-rip-head');
+    var headLine = poly(head, colour, w, 1, null, 'cg-rip-head');
 
     g.cgRedraw = function (m, lls, o) {
       o = o || opts;
@@ -428,6 +448,7 @@
       var ow2 = o.outlineWidth == null ? ARROW_OUTLINE_W : o.outlineWidth;
       var d2 = gentleShaft(m, lls, z);
       var h2 = headPoints(m, d2[d2.length - 2] || d2[0], d2[d2.length - 1], hh);
+      channel.setLatLngs(d2); channel.setStyle({ weight: ww * 4.2 });
       shaftOut.setLatLngs(d2); shaftOut.setStyle({ weight: ww + 2 * ow2 });
       shaft.setLatLngs(d2); shaft.setStyle({ weight: ww });
       headOut.setLatLngs(h2); headOut.setStyle({ weight: ww + 2 * ow2 });

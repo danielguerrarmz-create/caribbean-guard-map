@@ -15,11 +15,23 @@ REFERENCE = ROOT / "web/data/cg-hazards.geojson"
 OUTPUT = ROOT / "web/data/full-map-geographic.geojson"
 NUMBERS = ("3.2", "3.3", "3.5", "3.6")
 ACCESS_KINDS = {"location"}
+# Rescue equipment stands on the beach. The four-station affine is fitted near
+# Cocles and drifts with distance: measured 2026-09-23, these marks sat from
+# 219 m out to sea to 448 m inland east of Punta Uva and at Playa Negra. They
+# now take the same OSM place correction as the place layer for their position
+# ALONG the coast, and are set a fixed distance inland of the mapped shoreline
+# ACROSS it. Still estimates: needs_confirmation stays true.
+SHORE_KINDS = {"rescue_station", "proposed_rescue_station", "proposed_cg_station",
+               "unclassified_facility"}
+SHORE_SETBACK_M = 15.0
+RIP_START_M = 40.0
+RIP_CLEAR_M = 25.0
 ROAD_KINDS = {"main_road", "side_road", "pedestrian"}
 # Manually reviewed OSM matches span the coast and correct the document's
 # place layer. Safety marks retain their separate station-based registration.
 MATCHES = ROOT / "tools/data/place-matches.json"
 OSM_PLACES = ROOT / "tools/data/osm-place-candidates.json"
+CATEGORIES = ROOT / "tools/data/place-categories.json"
 METRES_PER_DEGREE = np.array([M_PER_DEG_LON, M_PER_DEG_LAT])
 
 
@@ -82,8 +94,11 @@ def main():
 
     def locate(point, kind):
         ll = np.array([*point, 1.0]) @ matrix
-        if kind in ACCESS_KINDS:
+        if kind in ACCESS_KINDS or kind in SHORE_KINDS:
             ll += access_correction(np.array(point)) / METRES_PER_DEGREE
+        if kind in SHORE_KINDS:
+            shore, normal, _ = nearest_shore(ll * METRES_PER_DEGREE)
+            ll = (shore - normal * SHORE_SETBACK_M) / METRES_PER_DEGREE
         return [round(float(ll[0]), 7), round(float(ll[1]), 7)]
 
     def register_rip(points):
@@ -101,16 +116,19 @@ def main():
         end = nearest_shore(xy[-1])
         i = 0 if start[2] <= end[2] else -1
         shore, normal, distance = start if i == 0 else end
-        shifted = xy + (shore + normal * 24.0 - xy[i])
-        # A small seaward clearance keeps a curved arrow off the sand without
-        # changing its document direction or the shoreline anchor it follows.
+        # 40 m out, and never closer than 25 m anywhere along the shaft (Daniel,
+        # 2026-09-23: arrows touched the sand). The OSM shoreline sits on wet
+        # sand in places, so 24 m / 6 m still drew on the beach on the imagery.
+        # A rip is a thing in the water; its drawn start is illustrative.
+        shifted = xy + (shore + normal * RIP_START_M - xy[i])
         minimum = min(float(np.dot(p - nearest_shore(p)[0], nearest_shore(p)[1]))
                       for p in shifted)
-        if minimum < 6:
-            shifted += normal * (6 - minimum)
+        if minimum < RIP_CLEAR_M:
+            shifted += normal * (RIP_CLEAR_M - minimum)
         return [[round(float(lon), 7), round(float(lat), 7)]
                 for lon, lat in shifted / METRES_PER_DEGREE], round(distance, 1)
 
+    categories = json.loads(CATEGORIES.read_text(encoding="utf8"))["places"]
     features = []
     for f in source["features"]:
         kind = f["kind"]
@@ -137,11 +155,16 @@ def main():
         features.append({"type": "Feature", "id": f["id"], "geometry": geometry,
                          "properties": {"kind": kind, "number": f.get("number"),
                                         "name": f.get("name"), "source_page": 1,
-                                        "registration": "osm_named_place" if matched else ("estimated_from_nearby_places" if kind in ACCESS_KINDS else "pdf_direction_osm_shore_anchor" if kind == "rip_current" else "provisional_four_station_affine"),
+                                        "registration": "osm_named_place" if matched else ("estimated_from_nearby_places" if kind in ACCESS_KINDS else "shore_set_along_coast_estimate" if kind in SHORE_KINDS else "pdf_direction_osm_shore_anchor" if kind == "rip_current" else "provisional_four_station_affine"),
                                         "pdf_anchor_to_shore_m": rip_shift,
                                         "osm_name": matched["name"] if matched else None,
                                         "source_url": matched["url"] if matched else None,
                                         "needs_confirmation": not bool(matched)}})
+        if kind == "location":
+            cat = categories.get(f["id"].split("/")[-1], {"category": "other", "name": None})
+            props = features[-1]["properties"]
+            props["category"] = cat["category"]
+            props["display_name"] = cat["name"] or (matched["name"] if matched else f.get("name")) or "Sin nombre"
 
     output = {"type": "FeatureCollection", "properties": {
         "source": source["source"], "source_sha256": source["sha256"],

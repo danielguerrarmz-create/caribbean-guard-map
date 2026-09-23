@@ -23,7 +23,18 @@ npm run check:map
 npm run build:map
 ```
 
-Packaging writes `dist-map/` and requires locally generated imagery. `web/tiles/` is excluded from Git. On a fresh checkout, run `python tools/build_tiles.py` before packaging or deploying; this requires its Python dependencies and network access. The default `npm run dev` and `npm run build` target the separate `site/` website, not the map.
+Packaging writes `dist-map/` and requires locally generated imagery. `web/tiles/` is excluded from Git. On a fresh checkout, run `python tools/build_tiles.py` before packaging or deploying; this requires its Python dependencies and network access. The default `npm run dev` and `npm run build` target the organization website in `site/`, not the map.
+
+## The organization website (`site/`)
+
+`site/` is the live caribbeanguard.org Next.js site, imported as a git subtree of [TommasoRibaudo/caribbeanguard-org](https://github.com/TommasoRibaudo/caribbeanguard-org) with its history. That upstream repository is never edited from here. The only local change is the **Mapa** tab in `site/src/components/layout/Header.tsx`, which links to `MAP_URL` (`site/src/lib/map.ts`).
+
+```powershell
+npm run setup                     # installs root and site dependencies
+$env:NEXT_PUBLIC_MAP_URL = "http://127.0.0.1:5174/"; npm run dev   # site on :3000, Mapa opens the local map
+```
+
+Pull later upstream changes with `git subtree pull --prefix=site https://github.com/TommasoRibaudo/caribbeanguard-org.git master`. `npm run build` writes the static export to `site/out/`.
 
 Useful entry points:
 
@@ -34,6 +45,7 @@ Useful entry points:
 
 | Path | Purpose |
 |---|---|
+| `site/` | Organization website (Next.js static export, upstream subtree) |
 | `web/index.html` | Leaflet map, beach records, interactions and bilingual copy |
 | `web/coastal.css` | Responsive layout and visual tokens |
 | `web/symbols.js` | Shared SVG status, hazard and facility pictograms |
