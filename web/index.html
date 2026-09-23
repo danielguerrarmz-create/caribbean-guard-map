@@ -1372,9 +1372,9 @@ const ZONES = [
    the Caribbean beach west of Manzanillo, not the Pacific beach in Guanacaste.
    Neither point creates a coloured coast segment or inherits a nearby verdict. */
 const UNASSESSED_BEACHES = [
-  {id:"cg:beach/playa-grande", name:"Playa Grande", at:[9.6362389,-82.6783389],
+  {id:"cg:beach/playa-grande", name:"Playa Grande", at:[9.6362389,-82.6783389], line:[],
    source:"Museo Nacional de Costa Rica, Pecio Manzanillo"},
-  {id:"cg:beach/manzanillo", name:"Manzanillo", at:[9.6339158,-82.6571847],
+  {id:"cg:beach/manzanillo", name:"Manzanillo", at:[9.6339158,-82.6571847], line:[],
    source:"OpenStreetMap way/37606802, Playa Manzanillo"}
 ];
 
@@ -1598,7 +1598,7 @@ const T = {
       voidRule:"Que no haya nada dibujado en un tramo no quiere decir que ese tramo sea seguro. Quiere decir que nadie lo ha mirado.",
       unassessedStatus:"Sin evaluar",
       unassessedWhy:"Aún no hay indicaciones de seguridad para nadar en esta playa.",
-      unassessedLocation:"El punto es aproximado; no indica una entrada segura.",
+      unassessedLocation:"El área gris es aproximada: no marca los límites de la playa ni una entrada segura.",
       /* stations */
       station:"Estación de Rescate",
       stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo recorrido. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
@@ -1756,7 +1756,7 @@ const T = {
       voidRule:"A stretch with nothing drawn on it is not a stretch that is safe. It is a stretch nobody has looked at.",
       unassessedStatus:"Not assessed",
       unassessedWhy:"No beach-specific swimming guidance has been reviewed here.",
-      unassessedLocation:"This map point is approximate; it does not show a safe entry.",
+      unassessedLocation:"The grey area is approximate: it does not mark the beach limits or a safe entry.",
       station:"Rescue Station",
       stationScope:"These are the four stations that appear inside the surveyed stretch. Caribbean Guard mentions nine along the whole coast. We do not know where the others are, so do not count on these being all of them.",
       stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
@@ -2731,6 +2731,8 @@ const geomReady = fetch("data/zones-geometry.json")
       if(pts && pts.length) z.line = pts;
       else console.warn("[cg] no geometry for", z.id);
     });
+    // Provisional extents for the beaches Caribbean Guard has not bounded.
+    UNASSESSED_BEACHES.forEach(b => { b.line = (g.provisional && g.provisional[b.id]) || []; });
     drawZones();
     restyleLabels();
   })
@@ -3511,6 +3513,7 @@ function openUnassessedBeach(beach){
   openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
   markCurrent(beach.id);
   clearBand();
+  showBand(beach);
   flyClear(L.latLngBounds([beach.at]).pad(0.004), {maxZoom:15});
   sheetAddress("b=" + localId(beach.id));
 }
@@ -3628,6 +3631,16 @@ function endTicks(z){
           tick(n - 1, Math.max(0, n - 2), n - 1)];
 }
 
+/* PROVISIONAL AREAS ARE GREY (Daniel, 2026-09-23). Playa Grande and
+   Manzanillo have no Caribbean Guard boundary, so their extent is cut from the
+   mapped coastline and drawn in the absence colour, with DASHED ends: the ends
+   of a reviewed beach are a decision somebody made and are solid; these are
+   not. Grey is outside the hazard palette, so it can never read as a tier. */
+const PROVISIONAL_GREY = "#9aa7b0";
+const isProvisional = z => !z.character;
+const bandColour = z => isProvisional(z) ? PROVISIONAL_GREY : COLOR[tierOf(z)];
+const openBeach = z => isProvisional(z) ? openUnassessedBeach(z) : openZone(z);
+
 function clearBand(){
   if(bandLayer){ bandLayer.remove(); bandLayer = null; }
   const had = bandZone;
@@ -3638,13 +3651,13 @@ function clearBand(){
 function showBand(z){
   clearBand();
   if(!z || !z.line.length || map.getZoom() < BAND_MIN_ZOOM) { bandZone = z || null; return; }
-  const col = COLOR[tierOf(z)];
+  const col = bandColour(z), prov = isProvisional(z);
   const edge = seawardEdge(z);
   bandLayer = L.layerGroup([
     L.polygon(bandPolygon(z), {
       pane:BAND_PANE, stroke:false, fill:true, fillColor:col, fillOpacity:.14,
       interactive:true, bubblingMouseEvents:false
-    }).on("click", () => openZone(z)),
+    }).on("click", () => openBeach(z)),
     /* THE SEAWARD EDGE IS DASHED AND THE END CAPS ARE SOLID, and the difference
        between those two strokes is the whole claim this band makes.
        The ends are a decision somebody took: Cocles stops here and Chiquita
@@ -3662,7 +3675,7 @@ function showBand(z){
     }),
     ...endTicks(z).map(t => L.polyline(t, {
       pane:BAND_PANE, color:col, weight:2, opacity:.9, lineCap:"butt",
-      interactive:false
+      dashArray: prov ? "4 4" : null, interactive:false
     }))
   ]).addTo(map);
   bandZone = z;
@@ -3680,18 +3693,18 @@ function drawAmbientBands(){
   ambientBands.clearLayers();
   if(!zonesReady || map.getZoom() < AMBIENT_MIN_ZOOM) return;
   const view = map.getBounds().pad(0.2);
-  ZONES.forEach(z => {
+  [...ZONES, ...UNASSESSED_BEACHES].forEach(z => {
     if(!z.line.length || (bandZone && bandZone.id === z.id)) return;
     if(!view.intersects(L.latLngBounds(z.line))) return;
-    const col = COLOR[tierOf(z)];
+    const col = bandColour(z), prov = isProvisional(z);
     const edge = seawardEdge(z);
     L.polygon(bandPolygon(z), {pane:BAND_PANE, stroke:false, fill:true,
-      fillColor:col, fillOpacity:.08, interactive:true, bubblingMouseEvents:false})
-      .on("click", () => openZone(z)).addTo(ambientBands);
+      fillColor:col, fillOpacity: prov ? .18 : .08, interactive:true, bubblingMouseEvents:false})
+      .on("click", () => openBeach(z)).addTo(ambientBands);
     L.polyline(edge.outer.map(edge.ll), {pane:BAND_PANE, color:col, weight:1,
       opacity:.35, dashArray:"5 7", interactive:false}).addTo(ambientBands);
     endTicks(z).forEach(t => L.polyline(t, {pane:BAND_PANE, color:col, weight:1.5,
-      opacity:.55, lineCap:"butt", interactive:false}).addTo(ambientBands));
+      opacity:.55, lineCap:"butt", dashArray: prov ? "4 4" : null, interactive:false}).addTo(ambientBands));
   });
 }
 map.on("zoomend moveend", drawAmbientBands);
