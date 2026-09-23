@@ -25,6 +25,10 @@ Not verified: a real iPhone or Android device, VoiceOver/TalkBack.
 
 ## Previews (23 September, after review)
 
-- Map preview (public): https://caribbean-guard-eu39nomtt-danielguerrarmz-create11.vercel.app, worker `cg-map-v30`, deployed from `web/`.
-- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-d17zok1z9-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
+- Map preview (public): https://caribbean-guard-9r0xd3zal-danielguerrarmz-create11.vercel.app, worker `cg-map-v31`, deployed from `web/`.
+- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-b1a25rpr6-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
 - Production aliases untouched.
+
+## Phone review round (23 September)
+
+Daniel's seven items, all applied in `98d0aef`: equipment marks set on the beach (OSM along-coast correction plus a 15 m shoreline setback, `tools/project_full_annotations.py`), one panel at a time on mobile, Leyenda/Legend, Spanish default with remembered EN, forecast card rhythm and one-line footer, tighter brand pill, Poppins Bold as the heaviest weight.
