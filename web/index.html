@@ -30,7 +30,12 @@
      A fallback would put the CDN back in the threat model to buy nothing: if the
      local copy is shipped anyway, ship only the local copy. -->
 <link rel="stylesheet" href="vendor/leaflet.css">
-<!-- Inter, self hosted, 400 / 600 / 800, latin subset, 71 KB in total.
+<!-- POPPINS since 2026-09-23 (Daniel's call): the map now speaks in the same
+     typeface as caribbeanguard.org. Self hosted, 400 / 600 / 800, latin subset
+     (Spanish accents and inverted marks included), 24 KB for all three, less
+     than the 71 KB of Inter it replaces. SIL OFL, see fonts/POPPINS-OFL.txt.
+     The history below is kept because the hierarchy argument still holds.
+     Inter, self hosted, 400 / 600 / 800, latin subset, 71 KB in total.
      It replaced Atkinson Hyperlegible on 2026-09-17. Atkinson is a better
      letterform-by-letterform font for a low vision reader, and it was chosen
      for that; it shipped in two weights, and two weights cannot build a
@@ -46,8 +51,8 @@
      that is below the fold in the dock and inside a sheet that is not open yet,
      so preloading it would compete for the same connection as the two that are
      on screen. -->
-<link rel="preload" href="fonts/inter-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/inter-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/poppins-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/poppins-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   /* INTER, THREE WEIGHTS, SELF-HOSTED, LATIN SUBSET.
      It replaces Atkinson Hyperlegible, which shipped at 400 and 700 only.
@@ -67,16 +72,16 @@
      on a two-bar signal before the map will save. Accepted by Daniel on
      2026-09-17 as the price of a readable hierarchy. */
   @font-face{
-    font-family:"Inter"; font-style:normal; font-weight:400;
-    font-display:swap; src:url(fonts/inter-latin-400-normal.woff2) format("woff2");
+    font-family:"Poppins"; font-style:normal; font-weight:400;
+    font-display:swap; src:url(fonts/poppins-latin-400-normal.woff2) format("woff2");
   }
   @font-face{
-    font-family:"Inter"; font-style:normal; font-weight:600;
-    font-display:swap; src:url(fonts/inter-latin-600-normal.woff2) format("woff2");
+    font-family:"Poppins"; font-style:normal; font-weight:600;
+    font-display:swap; src:url(fonts/poppins-latin-600-normal.woff2) format("woff2");
   }
   @font-face{
-    font-family:"Inter"; font-style:normal; font-weight:800;
-    font-display:swap; src:url(fonts/inter-latin-800-normal.woff2) format("woff2");
+    font-family:"Poppins"; font-style:normal; font-weight:800;
+    font-display:swap; src:url(fonts/poppins-latin-800-normal.woff2) format("woff2");
   }
   :root{
     /* Two tiers on purpose.
@@ -140,7 +145,7 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;
-    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    font-family:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
                 "Helvetica Neue",sans-serif;
     font-size:var(--t-body); line-height:1.3;
     -webkit-font-smoothing:antialiased;
@@ -3234,6 +3239,9 @@ window.addEventListener("resize", () => requestAnimationFrame(layoutPanels));
 document.addEventListener("keydown", e=>{
   if(e.key === "Escape" && sheet.classList.contains("open")) closeSheet();
 });
+// The page itself never scrolls; only panels do. Belt and braces for engines
+// without overflow:clip, where focus() or a find-in-page can still move it.
+window.addEventListener("scroll", () => { if(window.scrollY || window.scrollX) window.scrollTo(0, 0); }, {passive:true});
 
 /* The footer every sheet carries. Hat 5, finding 10: a safety instrument with
    no correction channel keeps a known error forever, and there was no contact
@@ -3913,7 +3921,18 @@ function markCurrent(id){
        code on the post at Cocles opens card three, and until this ran the
        reader landed on card one and had to hunt for the beach they were
        standing on. */
-    if(on) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+    /* The strip, never the page. scrollIntoView scrolls EVERY scrollable
+       ancestor, and with the phone panels parked partly below the screen by
+       transform, that included the document: selecting a beach shifted the
+       whole page up 96 px and hid the top bar. */
+    if(on){
+      const strip = document.getElementById("picker");
+      const r = c.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+      if(strip.scrollHeight > strip.clientHeight + 1 && (r.top < sr.top || r.bottom > sr.bottom)){
+        strip.scrollTo({top: strip.scrollTop + r.top - sr.top - (sr.height - r.height) / 2,
+                        behavior: reducedMotion.matches ? "auto" : "smooth"});
+      }
+    }
   });
   anyCurrent = !!id && !!layers[id];
   Object.entries(layers).forEach(([k,g])=>{ g.cgCurrent = (k === id); });
