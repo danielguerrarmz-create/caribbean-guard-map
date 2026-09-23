@@ -3840,7 +3840,7 @@ function renderLegendPerm(){
     <div class="source-layer-grid">${sourceLayerDefs.map(([id,icon,esName,enName])=>`<label>
       <input type="checkbox" data-source-layer="${id}" ${sourceLayerState[id]?'checked':''}>
       ${CGSymbols.badge(icon)}<span>${es?esName:enName}</span></label>`).join('')}</div>
-    <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Los símbolos punteados son propuestas.':'Zoom in for detail. Dashed symbols are proposed.'}</p>
+    <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Los símbolos punteados son propuestas. Las corrientes en movimiento marcan resaca según el mapa de Caribbean Guard; su dirección no está medida.':'Zoom in for detail. Dashed symbols are proposed. Moving currents mark rips from the Caribbean Guard map; their direction is not measured.'}</p>
     <details class="key-data"><summary>${es?'Fuentes y precisión':'Sources and accuracy'}</summary>
       <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
     </details></div>`;

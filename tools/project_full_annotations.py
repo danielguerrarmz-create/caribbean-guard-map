@@ -24,6 +24,8 @@ ACCESS_KINDS = {"location"}
 SHORE_KINDS = {"rescue_station", "proposed_rescue_station", "proposed_cg_station",
                "unclassified_facility"}
 SHORE_SETBACK_M = 15.0
+RIP_START_M = 40.0
+RIP_CLEAR_M = 25.0
 ROAD_KINDS = {"main_road", "side_road", "pedestrian"}
 # Manually reviewed OSM matches span the coast and correct the document's
 # place layer. Safety marks retain their separate station-based registration.
@@ -113,13 +115,15 @@ def main():
         end = nearest_shore(xy[-1])
         i = 0 if start[2] <= end[2] else -1
         shore, normal, distance = start if i == 0 else end
-        shifted = xy + (shore + normal * 24.0 - xy[i])
-        # A small seaward clearance keeps a curved arrow off the sand without
-        # changing its document direction or the shoreline anchor it follows.
+        # 40 m out, and never closer than 25 m anywhere along the shaft (Daniel,
+        # 2026-09-23: arrows touched the sand). The OSM shoreline sits on wet
+        # sand in places, so 24 m / 6 m still drew on the beach on the imagery.
+        # A rip is a thing in the water; its drawn start is illustrative.
+        shifted = xy + (shore + normal * RIP_START_M - xy[i])
         minimum = min(float(np.dot(p - nearest_shore(p)[0], nearest_shore(p)[1]))
                       for p in shifted)
-        if minimum < 6:
-            shifted += normal * (6 - minimum)
+        if minimum < RIP_CLEAR_M:
+            shifted += normal * (RIP_CLEAR_M - minimum)
         return [[round(float(lon), 7), round(float(lat), 7)]
                 for lon, lat in shifted / METRES_PER_DEGREE], round(distance, 1)
 

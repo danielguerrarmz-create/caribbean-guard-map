@@ -586,3 +586,17 @@ html,body{overflow:clip}
 .leaflet-marker-icon.lbl.zone.tap{pointer-events:auto;cursor:pointer}
 .leaflet-marker-icon.lbl.zone.tap::after{content:"";position:absolute;inset:-12px -8px}
 .leaflet-marker-icon.lbl.zone.tap:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+/* Rip currents as moving water (2026-09-23). The streaks advance one dash
+   period (14 px) every 0.6 s, about 23 px/s: slow and steady like water, well
+   under the 50-100 px/s of a UI "marching ants" selection. Linear on purpose:
+   a current does not ease in and out. Negative offset = forward along the
+   drawn line, which runs from the sand out to sea. */
+@keyframes cg-rip-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-14}}
+.cg-rip-flow{animation:cg-rip-flow .6s linear infinite}
+.cg-rip-channel{mix-blend-mode:normal}
+/* Nothing moves while the map itself moves, below the zoom where rips show in
+   detail, or when the reader asked for less motion; the dashes and the head
+   still say which way. */
+.leaflet-dragging .cg-rip-flow,.leaflet-zoom-anim .cg-rip-flow,.map-overview .cg-rip-flow{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.cg-rip-flow{animation:none}}
