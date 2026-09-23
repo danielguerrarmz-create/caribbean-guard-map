@@ -2888,6 +2888,10 @@ function createPanel(el, o){
       // its first row, which is the panel's.
       if(scroller && atTop() && !(dy > 0 && scroller.scrollTop <= 0)){ mode = "scroll"; return false; }
       mode = "drag"; P.dragging = true; el.classList.add("dragging");
+      // A mouse drag otherwise selects the text it passes over, and a live
+      // selection turns the next drag into a native text drag-and-drop.
+      document.body.classList.add("panel-dragging");
+      try{ window.getSelection().removeAllRanges(); }catch(_){}
       startY = y; startPanelY = P.y;          // no jump of SLOP px on pickup
     }
     const now = performance.now();
@@ -2904,6 +2908,7 @@ function createPanel(el, o){
     const was = mode; mode = null;
     if(was !== "drag") return;
     P.dragging = false; el.classList.remove("dragging");
+    document.body.classList.remove("panel-dragging");
     suppressClick = true; setTimeout(()=>{ suppressClick = false; }, 60);
     const a = samples[0], b = samples[samples.length - 1];
     const v = cancelled || !a || b.t === a.t ? 0 : (b.y - a.y) / (b.t - a.t);   // px/ms, + is down
@@ -2951,6 +2956,7 @@ function createPanel(el, o){
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
   });
+  el.addEventListener("dragstart", e => { if(mode) e.preventDefault(); });
   // A drag that ends over a button must not also press it.
   el.addEventListener("click", e => {
     if(suppressClick){ suppressClick = false; e.stopPropagation(); e.preventDefault(); }
