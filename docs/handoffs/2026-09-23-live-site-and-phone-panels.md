@@ -25,8 +25,8 @@ Not verified: a real iPhone or Android device, VoiceOver/TalkBack.
 
 ## Previews (23 September, after review)
 
-- Map preview (public): https://caribbean-guard-1w3cb3vwk-danielguerrarmz-create11.vercel.app, worker `cg-map-v37`, deployed from `web/`.
-- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-iv00wrkqo-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
+- Map preview (public): https://caribbean-guard-jml6vno77-danielguerrarmz-create11.vercel.app, worker `cg-map-v38`, deployed from `web/`.
+- Site preview (behind Vercel login): https://caribbean-guard-map-6sqm-9ylldx4ik-danielguerrarmz-create11.vercel.app, built with `NEXT_PUBLIC_MAP_URL` set to the map preview so its Mapa tab opens the new map. Deployed from the root with a temporary `.vercelignore` (only `site/`, `vercel.json`, `package.json`), removed afterwards.
 - Production aliases untouched.
 
 ## Phone review round (23 September)
@@ -48,3 +48,7 @@ Daniel's seven items, all applied in `98d0aef`: equipment marks set on the beach
 ## Round five (23 September)
 
 `42718ad`: partial stops scroll content back to top (the beach title was stranded after scrolling at full then dragging down); no visible close button on phone sheets.
+
+## Round six (23 September)
+
+`a665132`: leaving a beach sheet returns the list at its lowest stop and keeps the camera; all 11 confirmed stations show at every zoom (cluster badge retired); labels hide under map controls.
