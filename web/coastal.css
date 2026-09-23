@@ -615,3 +615,30 @@ html,body{overflow:clip}
    name sits directly over the instruction. */
 .sheet h2+.statuscard,.sheet h2+.why{margin-top:16px}
 .key-close{display:grid;place-items:center;width:32px;height:32px;margin:-6px -6px -6px 0;border-radius:50%;border:1px solid var(--line);font-size:20px;font-weight:400;line-height:1;color:var(--ink)}
+
+/* Saved copy sheet (2026-09-23): short, platform-specific, swipe to close. */
+.sheet.no-close .close{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0}
+.saved-status{display:inline-flex;align-items:center;gap:8px;margin:10px 0 14px;padding:6px 12px;border-radius:999px;background:#eef3f5;color:var(--muted);font-size:13px;font-weight:600}
+.saved-status.is-ok{background:#e7f1f4;color:var(--ink)}
+.saved-status.is-ok::before{content:"";width:8px;height:8px;border-radius:50%;background:#2f8f6b}
+.saved-steps{margin:6px 0 10px;padding:0;list-style:none;counter-reset:s}
+.saved-steps li{counter-increment:s;position:relative;padding:8px 0 8px 36px;font-size:15px;line-height:1.4;border-top:1px solid var(--line)}
+.saved-steps li:first-child{border-top:0}
+.saved-steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.saved-note,.saved-done{font-size:13px;line-height:1.45;color:var(--muted);margin:4px 0 0}
+/* Distance to each beach, right-aligned before the chevron. */
+.card .card-dist{margin-left:auto;padding-left:8px;flex:none;font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dist-origin{margin:-4px 16px 4px;font-size:11px;line-height:1.35;color:var(--muted)}
+@media(min-width:820px){.dist-origin{margin:-2px 20px 6px}}
+/* Legend tray: a grabber instead of a close mark; a drag owns the transform. */
+.key-close{display:none}
+.key-grab{display:none}
+@media(max-width:819px){
+ .map-key.is-open .key-grab{display:block;width:44px;height:5px;margin:8px auto -4px;border-radius:999px;background:#b7c7cf}
+ .map-key.is-open{touch-action:none}
+ .map-key.is-open .key-content{touch-action:pan-y;overscroll-behavior:contain}
+ .map-key.dragging,.map-key.dragging .key-content{animation:none!important}
+ .map-key.dragging .key-grab{background:#7f97a1;width:52px}
+}
+@media(max-width:819px){.map-key.is-open.opened:not(.is-closing){animation:none}}
+.btn.install{background:var(--ink);border-color:var(--ink);color:#fff;font-size:15px}
