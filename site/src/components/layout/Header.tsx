@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { MAP_URL } from "@/lib/map";
 
 const NAV_LINKS = [
   { label: "Lifesaving Club", href: "/lifesaving-club" },
@@ -37,7 +38,7 @@ export default function Header() {
 
   return (
     <header className="theme-white sticky top-0 z-50 border-b border-black/5 bg-background">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6">
+      <div className="mx-auto flex h-20 max-w-[1400px] items-center justify-between gap-4 px-6">
         <Link
           href="/"
           className="relative block h-10 w-36 shrink-0 md:h-14 md:w-44"
@@ -54,7 +55,7 @@ export default function Header() {
         </Link>
 
         <nav
-          className="hidden items-center gap-6 xl:flex"
+          className="hidden items-center gap-4 min-[1400px]:flex 2xl:gap-6"
           aria-label="Principal"
         >
           {NAV_LINKS.map((link) => {
@@ -72,9 +73,15 @@ export default function Header() {
               </Link>
             );
           })}
+          <a
+            href={MAP_URL}
+            className="text-sm font-medium whitespace-nowrap text-foreground transition-colors hover:text-accent"
+          >
+            Mapa
+          </a>
         </nav>
 
-        <div className="hidden xl:block">
+        <div className="hidden min-[1400px]:block">
           <Link
             href="/donar"
             className="rounded-md border-2 border-accent px-5 py-2 text-sm font-semibold whitespace-nowrap text-accent transition-colors hover:bg-accent hover:text-white"
@@ -85,7 +92,7 @@ export default function Header() {
 
         <button
           type="button"
-          className="flex h-10 w-10 flex-col items-center justify-center gap-1.5 xl:hidden"
+          className="flex h-10 w-10 flex-col items-center justify-center gap-1.5 min-[1400px]:hidden"
           aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
@@ -109,7 +116,7 @@ export default function Header() {
       </div>
 
       {menuOpen && (
-        <div className="fixed inset-x-0 top-20 bottom-0 z-40 flex flex-col bg-background xl:hidden">
+        <div className="fixed inset-x-0 top-20 bottom-0 z-40 flex flex-col bg-background min-[1400px]:hidden">
           <nav
             className="flex flex-1 flex-col gap-1 overflow-y-auto px-6 py-8"
             aria-label="Principal móvil"
@@ -129,6 +136,12 @@ export default function Header() {
                 </Link>
               );
             })}
+            <a
+              href={MAP_URL}
+              className="border-b border-black/5 py-4 text-lg font-medium text-foreground"
+            >
+              Mapa
+            </a>
           </nav>
           <div className="shrink-0 border-t border-black/5 px-6 py-4">
             <Link
