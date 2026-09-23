@@ -579,3 +579,10 @@ html,body{overflow:clip}
 }
 .forecast .sea .foot a{color:inherit}
 .forecast .sea .foot .stamp{white-space:nowrap}
+/* The lifebuoy carries its own colour; its disc is plain white. */
+.symbol.rescue_station,.symbol.proposed_rescue_station{background:#fff;border:0}
+.symbol.rescue_station svg,.symbol.proposed_rescue_station svg{width:86%;height:86%}
+/* Beach names open their beach; the hit area is larger than the ink. */
+.leaflet-marker-icon.lbl.zone.tap{pointer-events:auto;cursor:pointer}
+.leaflet-marker-icon.lbl.zone.tap::after{content:"";position:absolute;inset:-12px -8px}
+.leaflet-marker-icon.lbl.zone.tap:focus-visible{outline:2px solid #fff;outline-offset:3px}

@@ -24,7 +24,25 @@
     from:'<path d="M12 20V4m-5 5 5-5 5 5"/>',
     temp:'<path d="M14 14V6a2 2 0 0 0-4 0v8a4 4 0 1 0 4 0Z"/><path d="M12 10v7"/>'
   };
-  const svg=(kind)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[kind]||paths.unknown}</svg>`;
+  /* Rescue stations draw Caribbean Guard's own lifebuoy (Daniel, 2026-09-23):
+     the orange-and-white ring and black cross at the heart of the logo. The
+     whole logo, with its curved lettering, is illegible at map-pin size, so
+     only its core is used. In full colour, the one symbol that is: a station
+     is the association's own equipment. Proposed stations keep the same ring
+     drained of colour and dashed, so "planned" never reads as "there". */
+  const ring=(proposed)=>{
+    const seg=(2*Math.PI*7.6/8).toFixed(3);
+    const orange=proposed?'#f4d8cf':'#ee5f3b', ink=proposed?'#8a8f93':'#141414';
+    return `<circle cx="12" cy="12" r="7.6" stroke="#fff" stroke-width="4.8"/>`+
+      `<circle cx="12" cy="12" r="7.6" stroke="${orange}" stroke-width="4.8" stroke-dasharray="${seg} ${seg}" transform="rotate(-11 12 12)"/>`+
+      `<circle cx="12" cy="12" r="10" stroke="${ink}" stroke-width="1.3"${proposed?' stroke-dasharray="2.6 2"':''}/>`+
+      `<circle cx="12" cy="12" r="5.2" fill="#fff" stroke="${ink}" stroke-width="1.3"/>`+
+      `<path d="M12 9v6M9 12h6" stroke="${ink}" stroke-width="2.3" stroke-linecap="square"/>`;
+  };
+  const colour={rescue_station:ring(false),proposed_rescue_station:ring(true)};
+  const svg=(kind)=>colour[kind]
+    ? `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">${colour[kind]}</svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[kind]||paths.unknown}</svg>`;
   const badge=(kind,cls='')=>`<span class="symbol ${kind} ${cls}" aria-hidden="true">${svg(kind)}</span>`;
   global.CGSymbols={svg,badge};
 })(window);

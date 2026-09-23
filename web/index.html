@@ -2368,6 +2368,23 @@ const SEA = {ll: [9.67400, -82.72000], t: "Mar Caribe"};
 // picture before the traced geometry arrives.
 const zoneLabels = ZONES.map(z => label(z.at, z.name.es, "zone"));
 const unassessedLabels = UNASSESSED_BEACHES.map(b => label(b.at, b.name, "zone"));
+/* BEACH NAMES ARE TAPPABLE (Daniel, 2026-09-23): the name and the highlighted
+   water are the two ways into a beach's panel, and zooming alone never opens
+   it. The note above about labels swallowing taps still holds for towns and
+   the sea; a beach name opens the very zone under it, so nothing is lost. */
+function tappableLabel(m, open){
+  m.options.interactive = true;
+  m.on("add", ()=>{
+    const e = m.getElement(); if(!e || e.cgTap) return;
+    e.cgTap = true; e.classList.add("tap");
+    e.setAttribute("role", "button"); e.tabIndex = 0;
+    e.addEventListener("click", ev => { ev.stopPropagation(); open(); });
+    e.addEventListener("keydown", ev => { if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); open(); } });
+  });
+  if(m.getElement()) m.fire("add");
+}
+zoneLabels.forEach((m, i) => tappableLabel(m, () => openZone(ZONES[i])));
+unassessedLabels.forEach((m, i) => tappableLabel(m, () => openUnassessedBeach(UNASSESSED_BEACHES[i])));
 // NOT `placeLabels`. CGGeom exports a FUNCTION of that name and this const
 // would shadow it at exactly the point restyleLabels() wants to call it.
 const placeMarks = PLACES.map(p => label(p.ll, p.t, "place"));
@@ -2465,9 +2482,58 @@ function restyleLabels(){
     {marker:seaLabel, priority:5, visible:sea}
   ]);
   hideLabelsUnderStations();
+  placeBeachLabels();
+}
+
+/* A BEACH NAME NEVER SITS ON AN ICON (Daniel, 2026-09-23). The old pass could
+   only HIDE a name that collided with a station, and it never looked at the
+   equipment and place pins at all, so "Playa Grande" landed under 5.3. Now
+   each beach name looks for its own room: it tries its home spot, then nearby
+   spots, seaward first because that is where a beach's water is, and takes
+   the first that clears every visible pin and every name already placed.
+   Only if nothing within reach is free does it step out, which at the zooms
+   where names show is rare. Towns and the sea then yield to the beaches. */
+const LABEL_TRIES = [[0,0],[0,-24],[0,24],[0,-44],[-56,-18],[56,-18],[0,44],[-56,18],[56,18],[0,-66],[-90,0],[90,0],[0,66]];
+function placeBeachLabels(){
+  const pad = 3;
+  const hit = (a, b) => a.left < b.right + pad && a.right > b.left - pad &&
+                        a.top < b.bottom + pad && a.bottom > b.top - pad;
+  const icons = [...document.querySelectorAll(".leaflet-marker-pane .leaflet-marker-icon:not(.lbl)")]
+    .filter(e => e.offsetParent && getComputedStyle(e).visibility !== "hidden")
+    .map(e => e.getBoundingClientRect()).filter(r => r.width);
+  const placed = [];
+  [...zoneLabels, ...unassessedLabels].forEach(m => {
+    const e = m.getElement(); if(!e) return;
+    if(e.cgMargins === undefined) e.cgMargins = [parseFloat(e.style.marginLeft) || 0, parseFloat(e.style.marginTop) || 0];
+    const [ml, mt] = e.cgMargins;
+    e.style.marginLeft = ml + "px"; e.style.marginTop = mt + "px";
+    if(e.style.display === "none" && !e.cgMoved) return;      // hidden by the zoom rules
+    e.style.display = ""; e.cgMoved = false;
+    const home = e.getBoundingClientRect();
+    if(!home.width){ return; }
+    for(const [dx, dy] of LABEL_TRIES){
+      const r = {left:home.left + dx, right:home.right + dx, top:home.top + dy, bottom:home.bottom + dy};
+      if(!icons.some(b => hit(r, b)) && !placed.some(b => hit(r, b))){
+        e.style.marginLeft = (ml + dx) + "px"; e.style.marginTop = (mt + dy) + "px";
+        e.cgMoved = !!(dx || dy);
+        placed.push(r);
+        return;
+      }
+    }
+    e.style.display = "none"; e.cgMoved = true;
+  });
+  [...placeMarks, seaLabel].forEach(m => {
+    const e = m.getElement();
+    if(!e || e.style.display === "none") return;
+    const r = e.getBoundingClientRect();
+    if(placed.some(b => hit(r, b))) e.style.display = "none";
+  });
 }
 map.on("zoomend", restyleLabels);
 map.whenReady(restyleLabels);
+// Pins restyle for the overview on their own zoomend (map-overview), after this
+// one has measured them; place the names again once that has painted.
+map.on("zoomend", ()=>requestAnimationFrame(()=>requestAnimationFrame(placeBeachLabels)));
 
 /* Distances on a 16.6 km strip are not guessable from imagery alone, and "swim
    parallel to the beach" is advice that needs a sense of how far that is. */
@@ -3564,7 +3630,9 @@ function endTicks(z){
 
 function clearBand(){
   if(bandLayer){ bandLayer.remove(); bandLayer = null; }
+  const had = bandZone;
   bandZone = null;
+  if(had && typeof drawAmbientBands === "function") drawAmbientBands();
 }
 
 function showBand(z){
@@ -3575,8 +3643,8 @@ function showBand(z){
   bandLayer = L.layerGroup([
     L.polygon(bandPolygon(z), {
       pane:BAND_PANE, stroke:false, fill:true, fillColor:col, fillOpacity:.14,
-      interactive:false
-    }),
+      interactive:true, bubblingMouseEvents:false
+    }).on("click", () => openZone(z)),
     /* THE SEAWARD EDGE IS DASHED AND THE END CAPS ARE SOLID, and the difference
        between those two strokes is the whole claim this band makes.
        The ends are a decision somebody took: Cocles stops here and Chiquita
@@ -3598,7 +3666,35 @@ function showBand(z){
     }))
   ]).addTo(map);
   bandZone = z;
+  drawAmbientBands();
 }
+
+/* THE BEACH AREAS SHOW ON ZOOM, NOT ONLY ON SELECTION (Daniel, 2026-09-23).
+   Zoomed in to a beach, every zone in view draws its band at a lighter
+   strength, so a reader sees where each beach's water is before choosing one.
+   Tapping the band opens that beach; zooming alone never opens a panel. The
+   selected beach keeps the full-strength band above. */
+var AMBIENT_MIN_ZOOM = 14;
+const ambientBands = L.layerGroup().addTo(map);
+function drawAmbientBands(){
+  ambientBands.clearLayers();
+  if(!zonesReady || map.getZoom() < AMBIENT_MIN_ZOOM) return;
+  const view = map.getBounds().pad(0.2);
+  ZONES.forEach(z => {
+    if(!z.line.length || (bandZone && bandZone.id === z.id)) return;
+    if(!view.intersects(L.latLngBounds(z.line))) return;
+    const col = COLOR[tierOf(z)];
+    const edge = seawardEdge(z);
+    L.polygon(bandPolygon(z), {pane:BAND_PANE, stroke:false, fill:true,
+      fillColor:col, fillOpacity:.08, interactive:true, bubblingMouseEvents:false})
+      .on("click", () => openZone(z)).addTo(ambientBands);
+    L.polyline(edge.outer.map(edge.ll), {pane:BAND_PANE, color:col, weight:1,
+      opacity:.35, dashArray:"5 7", interactive:false}).addTo(ambientBands);
+    endTicks(z).forEach(t => L.polyline(t, {pane:BAND_PANE, color:col, weight:1.5,
+      opacity:.55, lineCap:"butt", interactive:false}).addTo(ambientBands));
+  });
+}
+map.on("zoomend moveend", drawAmbientBands);
 
 // The band appears and disappears with zoom on its own, because a reader who
 // pinches out past z14 with a sheet open should not be left with a wash they
@@ -3759,6 +3855,7 @@ function renderLegendPerm(){
     sourceLayerState[input.dataset.sourceLayer]=input.checked;
     const layer=sourceLayers[input.dataset.sourceLayer];
     input.checked?layer.addTo(map):map.removeLayer(layer);
+    requestAnimationFrame(restyleLabels);
   });
 }
 document.getElementById("legend-open").onclick = openLegend;
