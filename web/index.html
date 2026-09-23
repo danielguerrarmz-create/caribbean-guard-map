@@ -51,7 +51,7 @@
      that is below the fold in the dock and inside a sheet that is not open yet,
      so preloading it would compete for the same connection as the two that are
      on screen. -->
-<link rel="preload" href="fonts/poppins-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/poppins-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/poppins-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   /* INTER, THREE WEIGHTS, SELF-HOSTED, LATIN SUBSET.
@@ -80,8 +80,10 @@
     font-display:swap; src:url(fonts/poppins-latin-600-normal.woff2) format("woff2");
   }
   @font-face{
-    font-family:"Poppins"; font-style:normal; font-weight:800;
-    font-display:swap; src:url(fonts/poppins-latin-800-normal.woff2) format("woff2");
+    /* Bold, the heaviest weight caribbeanguard.org uses, answers every 700
+       and 800 on this page so the map never out-shouts the brand. */
+    font-family:"Poppins"; font-style:normal; font-weight:700 800;
+    font-display:swap; src:url(fonts/poppins-latin-700-normal.woff2) format("woff2");
   }
   :root{
     /* Two tiers on purpose.
@@ -1517,6 +1519,7 @@ const T = {
          Caribbean Guard's own legend noun instead. */
       seaTitle:"El mar hoy",
       seaAll:"Modelo para toda esta costa, no para una playa.",
+      seaLine:"Modelo de toda la costa, no por playa",
       seaWave:"Ola", seaPeriod:"Periodo", seaFrom:"Viene de", seaTemp:"Agua",
       seaModel:t=>`Modelo, ${t}`,
       seaStale:h=>`Modelo de hace más de ${h} horas.`,
@@ -1700,6 +1703,7 @@ const T = {
       /* See the note on the Spanish block. */
       seaTitle:"The sea today",
       seaAll:"Model for this whole coast, not for one beach.",
+      seaLine:"Whole-coast model, not per beach",
       seaWave:"Wave", seaPeriod:"Period", seaFrom:"From", seaTemp:"Water",
       seaModel:t=>`Model, ${t}`,
       seaStale:h=>`Model is more than ${h} hours old.`,
@@ -1826,16 +1830,14 @@ const T = {
    `startsWith("en") ? "en" : "es"`. That earlier form silently sent every
    non-English locale to Spanish, which happens to be the same answer most of the
    time and for the wrong reason. */
+/* SPANISH IS THE DEFAULT, whatever the phone's locale (Daniel, 2026-09-23):
+   this is a Costa Rican organisation's map and its sign on the sand is in
+   Spanish. The locale-following described above is retired. A reader who taps
+   EN keeps English on this device from then on. */
+const LANG_KEY = "cg-lang";
 function pickLang(){
-  const tags = (navigator.languages && navigator.languages.length)
-    ? navigator.languages
-    : [navigator.language || ""];
-  for(const tag of tags){
-    const base = String(tag).toLowerCase().split("-")[0];
-    if(base === "en") return "en";
-    if(base === "es") return "es";
-  }
-  return "es";   // the floor, and it is the language of the coast
+  try{ const saved = localStorage.getItem(LANG_KEY); if(saved === "en" || saved === "es") return saved; }catch(e){}
+  return "es";
 }
 let lang = pickLang();
 
@@ -3080,6 +3082,11 @@ function openSheet(html, render){
   document.body.classList.add("selection-open");
   dockEl.setAttribute("inert", "");
   if(!desktop()){
+    // ONE PANEL AT A TIME. The dock is parked below the screen, not just
+    // hidden: at its full stop, iOS kept painting its layer under the new
+    // sheet (Daniel's screenshot, 2026-09-23). It comes back on close.
+    dockPanel.stopAnim();
+    dockPanel.render(dockPanel.full);
     sheetPanel.measure();
     if(!reopening){
       sheetStop("peek", true);
@@ -3171,6 +3178,7 @@ function closeSheet(opts = {}){
     dockEl.removeAttribute("inert");
     placeControls(sheetPanel.visible(), false);
     sheetPanel.animateTo("closed", opts.velocity || 0, finish);
+    dockPanel.animateTo(dockStop, 0, () => placeControls(dockPanel.visible(), true));
   }else{
     sheetClosing = false;
     sheet.classList.remove("open");
@@ -3226,7 +3234,9 @@ function layoutPanels(){
     return;
   }
   dockPanel.measure();
-  dockPanel.snap(dockStop);
+  // Under an open sheet the dock stays parked below the screen (one panel).
+  if(sheet.classList.contains("open")){ dockPanel.stop = dockStop; dockPanel.render(dockPanel.full); }
+  else dockPanel.snap(dockStop);
   if(sheet.classList.contains("open")){
     sheetPanel.measure();
     sheetStop(sheetPanel.stop, true);     // re-derive partial for the new height
@@ -3729,7 +3739,7 @@ function renderLegendPerm(){
   const es = lang === 'es';
   el.classList.toggle('is-open', legendExpanded);
   el.innerHTML = `<button type="button" class="key-toggle" aria-controls="legend-content" aria-expanded="${legendExpanded}">
-      <span>${es ? 'Capas del mapa' : 'Map layers'}</span><span class="key-toggle-icon" aria-hidden="true"></span>
+      <span>${es ? 'Leyenda' : 'Legend'}</span><span class="key-toggle-icon" aria-hidden="true"></span>
     </button><div class="key-content" id="legend-content" ${legendExpanded?'':'hidden'}>
     <div class="source-layer-grid">${sourceLayerDefs.map(([id,icon,esName,enName])=>`<label>
       <input type="checkbox" data-source-layer="${id}" ${sourceLayerState[id]?'checked':''}>
@@ -4152,8 +4162,9 @@ function setLang(l){
   }
   if(lastRender) lastRender();
 }
-document.getElementById("btn-es").onclick=()=>setLang("es");
-document.getElementById("btn-en").onclick=()=>setLang("en");
+function chooseLang(l){ try{ localStorage.setItem(LANG_KEY, l); }catch(e){} setLang(l); }
+document.getElementById("btn-es").onclick=()=>chooseLang("es");
+document.getElementById("btn-en").onclick=()=>chooseLang("en");
 
 
 /* ============================================================
@@ -4625,7 +4636,7 @@ function renderSea(){
   const ageH = (Date.now() - at.getTime()) / 3600000;
   const stale = ageH > SEA_STALE_H;
   const hhmm = at.toLocaleTimeString(lang === "es" ? "es-CR" : "en-GB",
-                                     {hour:"2-digit", minute:"2-digit"});
+                                     {hour:"2-digit", minute:"2-digit", hourCycle:"h23"});
   const col = (kind, val, lbl) =>
     `<div class="col"><span class="tile" aria-hidden="true">${CGSymbols.svg(kind)}</span>
        <span class="val">${val}</span><span class="lbl">${lbl}</span></div>`;
@@ -4638,9 +4649,7 @@ function renderSea(){
       ${col("from",   seaDir(c.wave_direction), t.seaFrom)}
       ${col("temp",   Math.round(c.sea_surface_temperature) + "°C", t.seaTemp)}
     </div>
-    <div class="foot"><div>${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaAll}</div>
-      <div>${t.seaCredit} <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>
-      <span class="stamp"> · ${t.seaModel(hhmm)}</span></div></div>`;
+    <p class="foot">${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaLine} · <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · <span class="stamp">${hhmm}</span></p>`;
 }
 
 /* NETWORK-FIRST WITH A CACHED FALLBACK, and no precache entry.

@@ -15,6 +15,15 @@ REFERENCE = ROOT / "web/data/cg-hazards.geojson"
 OUTPUT = ROOT / "web/data/full-map-geographic.geojson"
 NUMBERS = ("3.2", "3.3", "3.5", "3.6")
 ACCESS_KINDS = {"location"}
+# Rescue equipment stands on the beach. The four-station affine is fitted near
+# Cocles and drifts with distance: measured 2026-09-23, these marks sat from
+# 219 m out to sea to 448 m inland east of Punta Uva and at Playa Negra. They
+# now take the same OSM place correction as the place layer for their position
+# ALONG the coast, and are set a fixed distance inland of the mapped shoreline
+# ACROSS it. Still estimates: needs_confirmation stays true.
+SHORE_KINDS = {"rescue_station", "proposed_rescue_station", "proposed_cg_station",
+               "unclassified_facility"}
+SHORE_SETBACK_M = 15.0
 ROAD_KINDS = {"main_road", "side_road", "pedestrian"}
 # Manually reviewed OSM matches span the coast and correct the document's
 # place layer. Safety marks retain their separate station-based registration.
@@ -82,8 +91,11 @@ def main():
 
     def locate(point, kind):
         ll = np.array([*point, 1.0]) @ matrix
-        if kind in ACCESS_KINDS:
+        if kind in ACCESS_KINDS or kind in SHORE_KINDS:
             ll += access_correction(np.array(point)) / METRES_PER_DEGREE
+        if kind in SHORE_KINDS:
+            shore, normal, _ = nearest_shore(ll * METRES_PER_DEGREE)
+            ll = (shore - normal * SHORE_SETBACK_M) / METRES_PER_DEGREE
         return [round(float(ll[0]), 7), round(float(ll[1]), 7)]
 
     def register_rip(points):
@@ -137,7 +149,7 @@ def main():
         features.append({"type": "Feature", "id": f["id"], "geometry": geometry,
                          "properties": {"kind": kind, "number": f.get("number"),
                                         "name": f.get("name"), "source_page": 1,
-                                        "registration": "osm_named_place" if matched else ("estimated_from_nearby_places" if kind in ACCESS_KINDS else "pdf_direction_osm_shore_anchor" if kind == "rip_current" else "provisional_four_station_affine"),
+                                        "registration": "osm_named_place" if matched else ("estimated_from_nearby_places" if kind in ACCESS_KINDS else "shore_set_along_coast_estimate" if kind in SHORE_KINDS else "pdf_direction_osm_shore_anchor" if kind == "rip_current" else "provisional_four_station_affine"),
                                         "pdf_anchor_to_shore_m": rip_shift,
                                         "osm_name": matched["name"] if matched else None,
                                         "source_url": matched["url"] if matched else None,
