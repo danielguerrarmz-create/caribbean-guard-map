@@ -1,7 +1,7 @@
 # Coastal map linework and type system
 
 Date: 2026-10-26
-Status: Review branch; no merge or deployment.
+Status: Review branch; no merge or production deployment.
 
 ## Coast display
 
