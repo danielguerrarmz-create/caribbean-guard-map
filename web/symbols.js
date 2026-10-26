@@ -25,6 +25,7 @@
     main_road:'<path d="M2 12h20" stroke-width="4"/>',
     side_road:'<path d="M2 9h20M2 15h20"/>',
     pedestrian:'<path d="M2 12h20" stroke-dasharray="3 3"/>',
+    trailhead:'<circle cx="14" cy="4" r="2"/><path d="m10 21 2-7-3-3 3-4 4 4h4M5 13l4-4M12 14l5 7M21 12v9"/>',
     me:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>',
     wave:'<path d="M2 10q2.5-2 5 0t5 0t5 0t5 0M2 16q2.5-2 5 0t5 0t5 0t5 0"/>',
     period:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',

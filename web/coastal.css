@@ -17,7 +17,7 @@ button,a,summary{touch-action:manipulation}
 .dock{background:var(--paper);display:flex;flex-direction:column;overflow:hidden;box-shadow:none}
 .railhead{display:block;padding:24px 24px 18px;border:0;flex:none}
 .coast-kicker{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--ocean);margin:0 0 12px}
-.railhead h1{font-size:32px;line-height:1.06;letter-spacing:-.055em;font-weight:600;margin:0 0 12px}
+.railhead h1{font-family:"Zilla Slab",Georgia,serif;font-size:32px;line-height:1.06;letter-spacing:-.035em;font-weight:700;margin:0 0 12px}
 .railhead .what{font-size:14px;line-height:1.5;color:var(--muted);margin:0}
 .review-note{font-size:12px;line-height:1.5;color:var(--muted);margin:12px 0 0;padding-left:10px;border-left:2px solid #93a7ad}
 .list-heading{display:flex;align-items:center;justify-content:space-between;padding:0 24px 8px;flex:none}
@@ -29,8 +29,8 @@ button,a,summary{touch-action:manipulation}
 .card{position:relative;flex:none;max-width:none;width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none;padding:17px 30px 17px 8px;scroll-snap-align:none}
 .card:after{content:'';position:absolute;right:12px;top:27px;width:7px;height:7px;border-right:1.5px solid var(--muted);border-top:1.5px solid var(--muted);transform:rotate(45deg)}
 .card:hover,.card[aria-current=true]{background:#edf3f3;border-radius:6px}
-.card .nm{font-size:16px;line-height:1.3;font-weight:600;letter-spacing:-.02em}
-.card .pill{font-size:14px;line-height:1.4;font-weight:600;letter-spacing:0;gap:10px;margin-top:6px}
+.card .nm{font-size:16px;line-height:1.3;font-weight:700;letter-spacing:-.02em}
+.card .pill{font-size:14px;line-height:1.4;font-weight:700;letter-spacing:0;gap:10px;margin-top:6px}
 .card .pill .sw{width:26px}
 .card .hours{font-size:12px;margin:5px 0 0 36px;color:var(--muted)}
 .card.void{background:transparent;border:0;border-bottom:1px dashed #becace;box-shadow:none}
@@ -110,8 +110,10 @@ button,a,summary{touch-action:manipulation}
  .fab{bottom:28px;right:24px}.compass{bottom:80px;right:24px}
 }
 @media(max-width:819px){
- :root{--header:72px}
- .topbar{padding:8px 12px;gap:8px}
+ /* Imagery fills the viewport under the iPhone status area. Keep the
+    interactive controls below the sensor housing on real devices. */
+ :root{--header:calc(72px + var(--safe-top))}
+ .topbar{padding:calc(8px + var(--safe-top)) max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));gap:8px}
  .brand{font-size:14px;gap:7px;line-height:1.15;max-width:none;white-space:normal}
  .brand img{width:44px;height:44px}
  .brand-text{max-width:90px}
@@ -320,7 +322,7 @@ body.map-overview .projected-number{display:none}
 .symbol.rip_current,.symbol.strong_current_area{background:#fff0f0;color:#a8283d}
 .statuscard{background:#edf4f6;color:var(--ink);border:1px solid #d9e4e8;box-shadow:none}
 .statuscard .eyebrow{color:var(--muted);margin:0}
-.statuscard .instr{color:var(--ink);font-weight:750;letter-spacing:-.02em;text-transform:none}
+.statuscard .instr{color:var(--ink);font-weight:700;letter-spacing:-.02em;text-transform:none}
 .statuscard .hours{color:var(--ink)}
 .statuscard .why{color:var(--ink)}
 .statuscard>.tile .symbol{border:0;box-shadow:none}
@@ -328,9 +330,9 @@ body.map-overview .projected-number{display:none}
 .sos911 .lead{color:var(--ink)}
 .sos911 .dial{color:#fff;background:#a62638;border:1px solid #a62638;text-decoration:none;font-weight:700}
 .sos911 .dial:hover{background:#84192a}
-.sheet .eyebrow{font-size:11px;font-weight:750;color:var(--muted)}
+.sheet .eyebrow{font-size:11px;font-weight:700;color:var(--muted)}
 .zone-lower{padding-top:4px}
-.sheet .escape{font-weight:650;color:var(--ink);margin-top:5px}
+.sheet .escape{font-weight:600;color:var(--ink);margin-top:5px}
 .sheet .trust{color:var(--muted)}
 .sheet .actions{margin-top:12px}
 .forecast{border-top:1px solid var(--line);padding:14px 16px 0}
@@ -423,7 +425,8 @@ body.map-overview .projected-number{display:none}
 .dock-handle{display:none}
 .cg-gps-marker{background:transparent;border:0}
 @media(max-width:819px){
- .topbar{height:var(--header);background:transparent;border:0;box-shadow:none;backdrop-filter:none;padding:8px 12px;align-items:flex-start}
+ .topbar{height:var(--header);background:transparent;border:0;box-shadow:none;backdrop-filter:none;
+  padding:calc(8px + var(--safe-top)) max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));align-items:flex-start}
  .brand{min-height:44px;padding:2px 9px 2px 3px;border:1px solid #ffffffb0;border-radius:999px;background:#ffffffed;box-shadow:0 2px 12px #071b2850}
  .brand img{width:38px;height:38px}
  .brand-text{font-size:13px;max-width:90px}
@@ -545,8 +548,8 @@ html,body{overscroll-behavior:none}
    of height to share. The beaches are what the rail is for, so the header
    shrinks and the forecast steps out; the beach sheet still carries weather. */
 @media(min-width:820px) and (max-height:500px){
- :root{--header:56px}
- .topbar{padding:4px 16px}
+ :root{--header:calc(56px + var(--safe-top))}
+ .topbar{padding:calc(4px + var(--safe-top)) max(16px, env(safe-area-inset-right, 0px)) 4px max(16px, env(safe-area-inset-left, 0px))}
  .brand img{width:40px;height:40px}
  .brand small,.region-label{display:none}
  .railhead{padding:10px 20px 2px}.railhead .what{display:none}
@@ -555,7 +558,8 @@ html,body{overscroll-behavior:none}
 }
 .panel-dragging,.panel-dragging *{user-select:none;-webkit-user-select:none}
 html,body{overflow:clip}
-/* Poppins runs wider than Inter; the negative tracking tuned for Inter crowds it. */
+/* Keep functional instructions untracked; the slab titles can carry a little
+   negative tracking without compressing Source Sans 3 safety text. */
 .statuscard .instr,.pill,.sheet .escape{letter-spacing:0}
 .sheet h2,.railhead h1{letter-spacing:-.02em}
 
@@ -653,3 +657,144 @@ html,body{overflow:clip}
 body.map-overview .station-marker{transform:scale(.62)}
 body.map-overview .station-marker .number{display:none}
 body.map-overview .projected-marker .symbol.rescue_station{box-shadow:0 1px 4px #102d3b90}
+
+/* Area guidance, access landmarks and regional forecasts. */
+.area-label{height:auto!important;text-align:center;white-space:nowrap;text-shadow:0 1px 3px #10232e,0 0 6px #10232e}
+.area-label strong{display:block;font-size:13px;line-height:18px}
+.area-risk{display:block;width:max-content;max-width:190px;margin:2px auto 0;padding:3px 7px;border-radius:6px;background:#fff;color:#213d4a;font-size:10px;line-height:14px;text-shadow:none;border-left:5px solid #687f8d;box-shadow:0 1px 4px #10232e55}
+.area-risk.high,.access-risk.high{border-color:#bb263e}.area-risk.moderate,.access-risk.moderate{border-color:#d09527}.area-risk.low,.access-risk.low{border-color:#25795e}
+.access-marker{display:grid;place-items:center;background:transparent;border:0;color:#fff}
+.access-marker span{display:grid;place-items:center;width:24px;height:24px;box-sizing:border-box;background:#176582;border:1.5px solid white;border-radius:50%;box-shadow:0 1px 3px #071d2d66}
+.access-marker svg{display:block;width:16px;height:16px}
+.access-marker:focus-visible{outline:2px solid #fff;outline-offset:-5px;border-radius:50%}
+.access-note,.forecast-scope{font-size:12px;line-height:1.6;color:#4a6572;margin:10px 0}
+.access-risk{border-left:5px solid #687f8d;background:#edf5f8;border-radius:10px;padding:12px 15px;margin:16px 0}
+.access-risk p{margin:6px 0 0;font-weight:700}
+.forecast-summary .forecast-current{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px}
+.forecast-current span{display:block;font-size:11px;color:#496371}.forecast-current strong{font-size:16px;white-space:nowrap}
+.forecast-open{border:0;background:#deedf4;color:#075d88;padding:10px;width:100%;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border-radius:0 0 8px 8px;min-height:44px}
+.forecast-summary .foot{padding:5px 8px;font-size:10px;margin:0}
+.area-forecast{margin:22px 0;padding:16px 0;background:#fff}
+.area-forecast h3{font-size:20px;line-height:1.3;margin:0 0 8px;color:#173949}
+.forecast-table-wrap{max-width:100%;overflow:auto;overscroll-behavior-x:contain;border-radius:10px;background:#eff5f8}
+.forecast-table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+.forecast-table th,.forecast-table td{padding:10px 8px;text-align:left;white-space:nowrap;border-bottom:1px solid #d9e5eb}
+.forecast-table thead th{background:#dcebf2;font-size:11px;color:#325564}.forecast-table tbody th{font-weight:500}
+.forecast-table td small{display:block;font-size:10px;color:#496371;margin-top:2px}
+.area-forecast .btn{margin-top:12px;min-height:44px}
+.qr-link{padding:14px;background:#edf5f8;border-radius:12px;margin:14px 0}.qr-link summary{cursor:pointer;font-weight:600;line-height:1.6}.qr-link label{display:block;font-size:12px;margin:14px 0}
+.qr-link input{display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:12px;border:1px solid #adc7d4;border-radius:8px;background:#fff;color:#173949;font-family:inherit;font-size:12px}.qr-link p{font-size:12px;line-height:1.5}
+@media(min-width:820px){
+ .sheet-body{overflow-y:auto}
+ .zone-detail{height:auto}
+ .zone-detail .area-forecast{order:3}
+ .zone-detail .sheet-weather{order:4}
+ .zone-detail>.footlink{order:5}
+}
+
+/* One reading hierarchy across beach panels. */
+.sheet .zone-detail{height:auto;gap:0}
+.sheet .zone-detail .zone-top{order:0}
+.sheet .zone-detail h2{font-size:28px;line-height:1.15;font-weight:600;letter-spacing:-.035em;margin:4px 42px 20px 0}
+.sheet .zone-detail .statuscard{grid-template-columns:32px minmax(0,1fr);gap:3px 10px;padding:14px;margin:0;background:#eff5f6;border:0;border-radius:12px}
+.sheet .zone-detail .statuscard>.tile,.sheet .zone-detail .statuscard>.tile .symbol{width:32px;height:32px}
+.sheet .zone-detail .statuscard>.tile svg{width:22px;height:22px}
+.sheet .zone-detail .statuscard>.eyebrow{font-size:10px;font-weight:500;line-height:1.4;letter-spacing:0;text-transform:none;color:#4f6571}
+.sheet .zone-detail .statuscard .instr{font-size:17px;font-weight:700;line-height:1.35;color:#163442}
+.sheet .zone-detail .statuscard.high{background:#faf0f1}
+.sheet .zone-detail .statuscard.moderate{background:#faf5e9}
+.sheet .zone-detail .statuscard .hours{font-size:11px;font-weight:500}
+.sheet .beach-context{font-size:13px;line-height:1.55;margin:14px 0 6px;color:#344f5d}
+.sheet .beach-caution,.sheet .zone-top>.caveat{font-size:12px;line-height:1.5;margin:6px 0;color:#344f5d}
+.sheet .beach-meta{font-size:10px;line-height:1.5;color:#647984;margin:10px 0}
+.beach-background{margin:12px 0;background:#f4f7f8;border-radius:10px;padding:0 12px}
+.beach-background summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:#244b60;list-style:none}
+.beach-background summary:after{content:'+';margin-left:auto;font-size:18px;font-weight:400}
+.beach-background[open] summary:after{content:'−'}
+.beach-background[open]{padding-bottom:14px}
+.sheet .beach-help .escape{font-size:13px;font-weight:500;line-height:1.65;margin:0 0 10px}
+.beach-help{margin:16px 0 12px;padding:16px;background:#f1f6f8;border-radius:12px}
+.sheet .beach-help h3{margin:0 0 10px;font-size:15px;line-height:1.4;font-weight:700;color:#163442}
+.help-call{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:#a62638;color:#fff;font-size:15px;font-weight:700;text-decoration:none}
+.help-call:hover{background:#84192a}
+#sos{background:#a62638;color:#fff;border-color:#a62638}
+#sos:hover{background:#84192a}
+.sheet .zone-detail .area-forecast{order:1;margin:20px 0 8px;padding:0;background:transparent}
+.sheet .zone-detail .zone-lower{order:2;margin:0}
+.sheet .zone-detail .footlink{order:3;margin-top:24px}
+.sheet .beach-background .trust,.sheet .beach-background .caveat{font-size:12px;line-height:1.6;margin:8px 0 12px}
+.sheet .beach-background .sheet-weather{display:block}
+.detail-text-link{font-size:12px;color:#126780}
+.sheet .beach-route{width:100%;margin-top:8px;font-size:12px}
+.forecast-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.area-forecast .forecast-heading h3{font-size:18px;font-weight:600;letter-spacing:-.02em;margin:0}
+.forecast-period{font-size:11px;line-height:1.4;margin:4px 0 0;color:#607580}
+.area-forecast .forecast-scope{font-size:10px;line-height:1.5;margin:8px 0;color:#607580}
+.area-forecast .forecast-limit{margin:5px 0 14px}
+.forecast-refresh{display:grid;place-items:center;flex:none;width:36px;height:36px;border:0;border-radius:50%;background:#edf4f7;color:#1a5c7c;cursor:pointer}
+.forecast-refresh svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.forecast-refresh:hover{background:#dbeaf0}.forecast-refresh:focus-visible{outline:2px solid #126780;outline-offset:2px}
+.forecast-refresh:disabled{opacity:.55;cursor:wait}
+.forecast-refresh[aria-busy=true] svg{animation:forecast-refresh-spin 1s linear infinite}
+@keyframes forecast-refresh-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.forecast-refresh[aria-busy=true] svg{animation:none}}
+.forecast-table-wrap{background:#f6f9fa;border-radius:10px}
+.forecast-table th,.forecast-table td{border:0;padding:9px 7px}
+.forecast-table thead th{background:#eaf1f4;font-size:10px;font-weight:600}
+.forecast-table tbody tr:nth-child(even){background:#edf3f5}
+.forecast-table tbody th{font-size:11px;color:#526c79}
+.forecast-table td{font-size:12px;font-weight:500;color:#214151}
+.forecast-table td small{font-size:10px;font-weight:400;color:#667d88}
+@media(max-width:819px){.forecast-refresh{width:44px;height:44px}.sheet .zone-detail h2{font-size:26px;margin-right:36px}}
+
+/* Keep mobile scrolling content below the fixed grab and close controls. */
+@media(max-width:819px){.sheet-body{margin-top:64px;padding-top:0;min-height:0}}
+
+.beach-overview{margin:24px 0 16px}
+.sheet .beach-overview h3{font-size:18px;line-height:1.4;font-weight:600;margin:0 0 8px;color:#163442}
+.sheet .beach-overview .beach-context{margin-top:0}
+
+/* Coast overview: open spacing, aligned forecast, solid risk labels. */
+.dock,.dock .card,.dock .forecast,.dock .dockrow{border:0}
+#sea.forecast-summary{display:grid;gap:12px;padding:16px;margin-bottom:12px;border:0;border-radius:12px}
+#sea .forecast-current{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0;margin:0;align-items:start}
+#sea .forecast-current>div{display:grid;gap:4px;align-content:start;min-width:0;text-align:left}
+#sea .forecast-current span{font-size:11px;line-height:16px;margin:0}
+#sea .forecast-current strong{display:block;font-size:16px;line-height:20px;margin:0;font-variant-numeric:tabular-nums}
+#sea .forecast-open{display:flex;align-items:center;justify-content:center;margin:0;padding:10px 12px;min-height:44px;border-radius:999px;line-height:1.4}
+#sea .foot{display:block;border:0;padding:0;margin:0;font-size:11px;line-height:1.5;white-space:normal;overflow:visible;text-align:left}
+.area-risk{border:0;padding:4px 8px;font-weight:700;background:#526675;color:#fff}
+.area-risk.high{background:#ad2439;color:#fff}
+.area-risk.moderate{background:#8a5b00;color:#fff}
+.area-risk.low{background:#21664f;color:#fff}
+
+/* Slightly larger icon artwork; anchors and control hit areas stay stable. */
+.symbol{scale:1.12}
+.access-marker span{width:27px;height:27px}
+.access-marker svg{width:18px;height:18px}
+.fab svg,.compass svg,.forecast-refresh svg,.dockrow .rf svg,.locate-first svg,.cg-gps-marker svg{scale:1.12;transform-origin:center}
+.card:after{width:8px;height:8px}
+.sheet .close{font-size:24px}
+.swim-advisory{margin:0 0 28px;padding:16px;border-radius:14px;background:#fff4d9;color:#4c370e}
+.swim-advisory .advisory-kicker{margin:0 0 7px;font-size:10px;line-height:1.4;font-weight:700;letter-spacing:.055em;text-transform:uppercase}
+.swim-advisory h3{margin:0;font-size:18px;line-height:1.3;color:inherit}
+.swim-advisory .advisory-summary{margin:9px 0;font-size:12px;line-height:1.55}
+.swim-advisory .advisory-data{margin:10px 0 0;font-size:10px;line-height:1.5}
+.advisory-reasons{margin-top:8px;font-size:11px;line-height:1.55}
+.advisory-reasons summary{padding:6px 0;min-height:32px;cursor:pointer;font-weight:700}
+.advisory-reasons ul{margin:8px 0;padding-left:17px}
+.advisory-reasons li+li{margin-top:7px}
+.advisory-reasons p{font-size:11px;line-height:1.55;margin:10px 0}
+.advisory-reasons a{color:inherit;text-decoration:underline}
+.advisory-reasons a:focus-visible,.advisory-reasons summary:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.swim-advisory.advisory-stop{background:#fbe9ec;color:#7d1426}
+
+/* Title and close travel together within the scroller, never above its text. */
+.sheet-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;min-height:32px}
+.sheet .sheet-heading h2{margin:0;padding:0;flex:1;min-width:0}
+.sheet .sheet-heading .close{position:relative;top:auto;right:auto;flex:0 0 32px;width:32px;height:32px;margin:0;padding:0;display:grid;place-items:center;font-size:20px;font-weight:400;line-height:1;overflow:visible;clip:auto;clip-path:none;white-space:normal;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink);z-index:auto}
+@media(max-width:819px){
+ .sheet-body{margin-top:28px}
+ .sheet .sheet-heading .close{flex-basis:44px;width:44px;height:44px;border:0;background:transparent;isolation:isolate}
+ .sheet .sheet-heading .close:before{content:'';position:absolute;inset:6px;border:1px solid var(--line);border-radius:50%;background:var(--paper);z-index:-1}
+}

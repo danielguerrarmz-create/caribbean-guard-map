@@ -7,7 +7,10 @@ A bilingual, mobile-first beach guide for Puerto Viejo to Manzanillo, Costa Rica
 - [Current release and verification](docs/handoffs/2026-09-22-map-production-release.md)
 - [Deployment and rollback](docs/deploy.md)
 - [Interface audit and brand system](docs/design/coastal-interface-audit.md)
+- [Current coast display and map type hierarchy](docs/design/2026-10-26-map-coast-and-type.md)
 - [Icon vocabulary and full-map source review](docs/design/icon-system-and-source-review.md)
+
+Review and refine the phone map first, then carry those decisions into desktop.
 
 ## Run and validate the map
 
@@ -57,7 +60,7 @@ Useful entry points:
 | `tools/fetch_osm_roads.py` | Explicit OpenStreetMap road-data refresh |
 | `web/geometry.js`, `web/data/zones-geometry.json` | Beach geometry and shoreline stroke rules |
 | `web/sw.js` | Offline cache and update handling |
-| `web/vendor/`, `web/fonts/` | Self-hosted Leaflet and Inter |
+| `web/vendor/`, `web/fonts/` | Self-hosted Leaflet, Zilla Slab and Source Sans 3 |
 | `web/tiles/` | Generated satellite imagery; not versioned |
 | `tools/` | Extraction, geographic processing, checks and packaging |
 
