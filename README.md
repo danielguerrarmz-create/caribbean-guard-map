@@ -6,7 +6,7 @@ This repository contains the map only. The organization website is maintained in
 
 ## Start here
 
-- [Current release and verification](docs/handoffs/2026-09-22-map-production-release.md)
+- [Current release and verification](docs/handoffs/2026-10-27-map-only-repo-and-deploy.md)
 - [Deployment and rollback](docs/deploy.md)
 - [Interface audit and brand system](docs/design/coastal-interface-audit.md)
 - [Current coast display and map type hierarchy](docs/design/2026-10-26-map-coast-and-type.md)

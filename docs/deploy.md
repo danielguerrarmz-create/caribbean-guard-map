@@ -33,7 +33,7 @@ Install the official Vercel CLI and sign in if needed. From the repository root:
 
 ```powershell
 Set-Location web
-vercel link --yes --team team_XOr1KdFeEvqhDcHZMsmeoLA6 --project prj_it5kQJM4XVWkmDu3NjEzGOfCcRc3
+vercel link --yes --scope team_XOr1KdFeEvqhDcHZMsmeoLA6 --project prj_it5kQJM4XVWkmDu3NjEzGOfCcRc3
 vercel project inspect caribbean-guard-map --scope team_XOr1KdFeEvqhDcHZMsmeoLA6
 vercel deploy --prod --yes --scope team_XOr1KdFeEvqhDcHZMsmeoLA6
 ```
@@ -41,6 +41,8 @@ vercel deploy --prod --yes --scope team_XOr1KdFeEvqhDcHZMsmeoLA6
 Omit `--prod` to create a preview instead. The team scope is required with this account. Record the resulting deployment URL, deployment ID, source commit, production alias and validation in the release handoff. Do not record tokens or authentication files.
 
 Do not replace this with a Git-only deployment without adding imagery generation to that build: Git does not contain the tiles.
+
+The former repository-root Vercel project, `caribbean-guard-map-6sqm` (`prj_i3YkWI1Es8e3D1vHSlcO67TSq2Mn`), is a second map-only mirror. To update it after the primary release, link the same `web/` folder to that project, deploy production, verify `https://caribbean-guard-map-6sqm.vercel.app/`, then link `web/` back to the primary project. `web/vercel.json` selects a static build in both projects. The root Git integration skips builds because it cannot package ignored tiles.
 
 ## Verify after publishing
 
