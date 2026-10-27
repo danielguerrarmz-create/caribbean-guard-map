@@ -1573,7 +1573,7 @@ const T = {
       unassessedLocation:"La línea gris es aproximada: no marca los límites de la playa ni una entrada segura.",
       /* stations */
       station:"Estación de Rescate",
-      stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo recorrido. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
+      stationScope:"Estas cuatro estaciones tienen fichas detalladas para el tramo recorrido. Los demás símbolos de equipo muestran ubicaciones del mapa de 2026 o puntos aportados por AJ. Los puntos de AJ fueron reportados como instalados; no confirman el contenido ni la disponibilidad actual del equipo.",
       stationHolds:"Estructura fija con implementos de flotación para rescate: tubos y torpedos, caja de mecate de 200 metros, salvavidas, chaleco y silbato. Si alguien es arrastrado por el mar, cualquier persona cerca tiene con qué ayudar.",
       /* chrome */
       call:"Llamar al 911", route:"Cómo llegar",
@@ -1739,7 +1739,7 @@ const T = {
       unassessedWhy:"No beach-specific swimming guidance has been reviewed here.",
       unassessedLocation:"The grey line is approximate: it does not mark the beach limits or a safe entry.",
       station:"Rescue Station",
-      stationScope:"These are the four stations that appear inside the surveyed stretch. Caribbean Guard mentions nine along the whole coast. We do not know where the others are, so do not count on these being all of them.",
+      stationScope:"These four stations have detailed panels for the surveyed stretch. Other equipment symbols show locations from the 2026 map or pins supplied by AJ. AJ's pins were reported as installed; they do not confirm the equipment's contents or current availability.",
       stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
       call:"Call 911", route:"Directions",
       locating:"Finding your location...",
@@ -3749,8 +3749,8 @@ function openRipReference(ref){
       ${survivor}
       <p class="caveat">${placement}</p>
       <p class="caveat">${es
-        ? 'Las flechas y el estado de las estaciones del mapa siguen el documento de 2026. Esta imagen sirve para entender el lugar, no para ubicar una corriente, cuerda o equipo con GPS.'
-        : 'The map’s arrows and station status follow the 2026 document. This image helps explain the area; it does not locate a current, rope, or equipment by GPS.'}</p>
+        ? 'Las flechas siguen el documento de 2026. Las ubicaciones de equipo también incluyen puntos posteriores aportados por AJ. Esta imagen sirve para entender el lugar, no para ubicar una corriente, cuerda o equipo con GPS.'
+        : 'The arrows follow the 2026 document. Equipment locations also include later pins supplied by AJ. This image helps explain the area; it does not locate a current, rope, or equipment by GPS.'}</p>
       <p class="defer">${T[lang].defer}</p>
       ${sheetFoot()}`;
   };
@@ -3819,7 +3819,7 @@ function renderLegendPerm(){
       ${CGSymbols.badge(icon, id.startsWith('places_')?'place-badge':'')}<span>${es?esName:enName}</span></label>`).join('')}</div></section>`).join('')}
     <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Las corrientes en movimiento marcan resaca según el mapa de Caribbean Guard; su dirección no está medida.':'Zoom in for detail. Moving currents mark rips from the Caribbean Guard map; their direction is not measured.'}</p>
     <details class="key-data"><summary>${es?'Fuentes y precisión':'Sources and accuracy'}</summary>
-      <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
+      <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los puntos de equipo aportados por AJ fueron reportados como instalados; no se verificó su disponibilidad actual. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Equipment pins supplied by AJ were reported as installed; current availability was not verified. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
     </details></div>`;
   el.querySelector('.key-toggle').onclick = () => {
     if(legendExpanded && !desktop() && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
@@ -4590,7 +4590,11 @@ function sourcePopup(f){
     const cat=def?(es?def[2]:def[3]):'';
     return `<strong>${sourceEsc(label)}</strong><br><small>${cat?sourceEsc(cat)+' · ':''}${note}</small>`;
   }
-  const note=proposed ? (es?'Propuesto, no disponible':'Proposed, not available')
+  const note=p.registration==='aj_google_maps_pin'
+    ? (es?'Ubicación aportada por AJ; equipo reportado como instalado.':'Location supplied by AJ; equipment reported as installed.')
+      +(p.identity_match==='spatial_inference'
+        ? (es?' Número inferido por cercanía.':' Number inferred from proximity.') : '')
+    : proposed ? (es?'Propuesto, no disponible':'Proposed, not available')
     : p.kind==='unclassified_facility' ? (es?'Servicio no identificado':'Service unknown')
     : (es?'Posición aproximada':'Approximate position');
   return `<strong>${sourceEsc(names[es?0:1])}${p.number?' '+sourceEsc(p.number):''}</strong><br><small>${note}</small>`;
@@ -4618,7 +4622,8 @@ function drawProjectedAnnotations(gj){
         ? sourcePlaceLabel(f.properties,lang==='es')
         : (projectedNames[kind]?.[lang==='es'?0:1]||'Annotation');
       const marker=L.marker([lat,lon],{title:markerTitle,
-        icon:L.divIcon({className:'projected-marker '+(kind==='location'?'projected-place':''),
+        icon:L.divIcon({className:'projected-marker '+(kind==='location'?'projected-place':
+          kind==='rescue_station' && f.properties.registration==='aj_google_maps_pin' && !f.properties.number?'aj-unnumbered':''),
           iconSize:[30,30],iconAnchor:[15,15],html:CGSymbols.badge(symbol)+(f.properties.number?`<span class="projected-number">${sourceEsc(f.properties.number)}</span>`:'')})
       }).addTo(group).bindPopup(()=>sourcePopup(f));
       projectedDetail.push({layer:marker,kind});

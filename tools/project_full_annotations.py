@@ -1,9 +1,11 @@
-"""Project supplied PDF annotations onto the GPS map from four common stations.
+"""Project PDF annotations, then apply AJ's later rescue-equipment pins.
 
 The PDF has no geographic CRS. This is a provisional affine registration, not
-surveyed positioning. Keep its provenance and uncertainty with every feature.
+surveyed positioning. AJ's Google Maps pins replace nearby station positions
+without asserting that the pins are independently field surveyed.
 """
 import json
+from math import hypot
 from pathlib import Path
 
 import numpy as np
@@ -32,6 +34,7 @@ ROAD_KINDS = {"main_road", "side_road", "pedestrian"}
 MATCHES = ROOT / "tools/data/place-matches.json"
 OSM_PLACES = ROOT / "tools/data/osm-place-candidates.json"
 CATEGORIES = ROOT / "tools/data/place-categories.json"
+AJ_RESCUE_POSITIONS = ROOT / "tools/data/aj-rescue-positions.json"
 METRES_PER_DEGREE = np.array([M_PER_DEG_LON, M_PER_DEG_LAT])
 
 
@@ -166,6 +169,57 @@ def main():
             props["category"] = cat["category"]
             props["display_name"] = cat["name"] or (matched["name"] if matched else f.get("name")) or "Sin nombre"
 
+    # AJ's later pins supersede the PDF's estimated positions. Match only one
+    # numbered station per pin at close range; an unmatched pin has no inferred
+    # station number. Preserve the old kind for provenance when a proposed
+    # station is now reported as installed.
+    aj = json.loads(AJ_RESCUE_POSITIONS.read_text(encoding="utf8"))
+    pins = aj["pins"]
+    if len(pins) != 12 or [p["index"] for p in pins] != list(range(1, 13)):
+        raise ValueError("Expected all 12 AJ pins in their supplied order")
+    if len({p["url"] for p in pins}) != len(pins):
+        raise ValueError("Duplicate AJ source URL")
+    if len({tuple(p["coordinates"]) for p in pins}) != len(pins):
+        raise ValueError("Duplicate AJ coordinate")
+    by_id = {f["id"]: f for f in features}
+    matched_ids = set()
+    for pin in pins:
+        lon, lat = pin["coordinates"]
+        if not (-83 < lon < -82 and 9 < lat < 10):
+            raise ValueError(f"AJ pin {pin['index']} is outside the map region")
+        if not pin["url"].startswith("https://maps.app.goo.gl/"):
+            raise ValueError(f"AJ pin {pin['index']} has an unexpected source URL")
+        match_id = pin["match_id"]
+        if match_id:
+            if match_id in matched_ids or match_id not in by_id:
+                raise ValueError(f"Duplicate or unknown AJ station match: {match_id}")
+            match = by_id[match_id]
+            if match["properties"]["kind"] not in {"rescue_station", "proposed_rescue_station"}:
+                raise ValueError(f"AJ match is not a rescue station: {match_id}")
+            old_lon, old_lat = match["geometry"]["coordinates"]
+            distance = hypot((lon-old_lon)*M_PER_DEG_LON, (lat-old_lat)*M_PER_DEG_LAT)
+            if distance > 75:
+                raise ValueError(f"AJ pin {pin['index']} is {distance:.0f} m from {match_id}")
+            matched_ids.add(match_id)
+            match["geometry"]["coordinates"] = [lon, lat]
+            props = match["properties"]
+            props["prior_kind"] = props["kind"]
+            props["kind"] = "rescue_station"
+            props["aj_match_distance_m"] = round(distance, 1)
+            feature = match
+        else:
+            feature = {"type": "Feature", "id": f"aj:rescue_station/{pin['index']:02}",
+                       "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                       "properties": {"kind": "rescue_station", "number": None,
+                                      "name": None, "source_page": None}}
+            features.append(feature)
+        props = feature["properties"]
+        props.update({"registration": "aj_google_maps_pin", "source_url": pin["url"],
+                      "source_index": pin["index"], "equipment_status": "installed_reported",
+                      "position_source": "AJ supplied Google Maps pin",
+                      "identity_match": "spatial_inference" if match_id else "unnumbered",
+                      "field_surveyed": False, "needs_confirmation": False})
+
     output = {"type": "FeatureCollection", "properties": {
         "source": source["source"], "source_sha256": source["sha256"],
         "registration": "Affine PDF-page to WGS84, using existing station numbers 3.2, 3.3, 3.5 and 3.6",
@@ -175,6 +229,9 @@ def main():
         "place_alignment": f"{len(fixed)} named places use OSM coordinates. Other place marks are estimates from the PDF page fitted to those places and four GPS stations; still provisional.",
         "access_place_controls": {n: match_refs[n] for n in match_refs},
         "fixed_place_count": len(fixed),
+        "aj_rescue_pin_count": len(pins), "aj_numbered_matches": len(matched_ids),
+        "additional_source": aj["source"],
+        "aj_position_note": "Pins supplied by AJ as installed equipment; station numbers inferred from proximity. Exact coordinates as supplied, not independently surveyed or checked for current usability.",
         "page_to_lonlat": matrix.tolist(), "feature_count": len(features)},
         "features": features}
     OUTPUT.write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":"))+"\n", encoding="utf8")

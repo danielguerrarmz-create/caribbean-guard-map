@@ -6,7 +6,7 @@ This repository contains the map only. The organization website is maintained in
 
 ## Start here
 
-- [Current release and verification](docs/handoffs/2026-10-27-status-card-icon-alignment.md)
+- [Latest rescue-equipment coordinates and verification](docs/handoffs/2026-10-27-aj-rescue-coordinates.md)
 - [Deployment and rollback](docs/deploy.md)
 - [Interface audit and brand system](docs/design/coastal-interface-audit.md)
 - [Current coast display and map type hierarchy](docs/design/2026-10-26-map-coast-and-type.md)
@@ -44,7 +44,8 @@ Useful entry points:
 | `web/symbols.js` | Shared SVG status, hazard and facility pictograms |
 | `web/data/cg-hazards.geojson` | Existing geographic hazards with supported source corrections |
 | `web/data/full-map-source.json` | Extracted PDF features, labels, source fingerprint and page coordinates |
-| `web/data/full-map-geographic.geojson` | Provisional GPS placement of document annotations |
+| `web/data/full-map-geographic.geojson` | Provisional document annotations plus AJ-supplied rescue coordinates |
+| `tools/data/aj-rescue-positions.json` | Twelve source links, exact supplied coordinates and cautious station matches |
 | `web/data/osm-roads.geojson` | Geographic roads and paths from OpenStreetMap |
 | `tools/project_full_annotations.py` | Reproducible page-to-GPS projection |
 | `tools/fetch_osm_roads.py` | Explicit OpenStreetMap road-data refresh |
@@ -56,11 +57,11 @@ Useful entry points:
 
 ## Data provenance and limits
 
-The geographic map retains the earlier annotation coordinates. The complete user-supplied `08102026_FULL MAP DRAFT.pdf` supports renumbering four stations to 3.2, 3.3, 3.5 and 3.6; station 3.3 is proposed. It also identifies the shaded bay as an area of strong currents. Equipment symbols do not establish staffing or current availability.
+The complete user-supplied `08102026_FULL MAP DRAFT.pdf` supports renumbering four stations to 3.2, 3.3, 3.5 and 3.6; station 3.3 is proposed. It also identifies the shaded bay as an area of strong currents. AJ later supplied 12 Google Maps pins reported as installed rescue equipment. Five close numbered marks use those supplied positions, including 1.1 and 2.2, which the older map called proposed. Their number matches are inferred from proximity. Seven pins remain unnumbered. The pins do not verify staffing, equipment contents or current usability.
 
 The source extraction contains 314 vectors/symbols, including 53 headed rip-current paths, 11 existing and 18 proposed rescue-equipment symbols. These counts are document features, not field-verified services. Two station symbols share number 4.1, and four facility symbols remain undefined.
 
-The GPS map shows 153 document hazards, equipment and place features with provisional positions. Four nearby station numbers anchor the initial transform, while places also use four named OpenStreetMap location controls spread across the coast. Roads and paths come directly from a bounded OpenStreetMap geographic extract rather than the document projection. This is not proof of public access, condition or passability, and the provisional document marks must not be used for navigation or rescue dispatch. See the [source review](docs/design/icon-system-and-source-review.md) before changing geographic data. `needs_confirmation: true` must remain until an accountable review supports changing it.
+The generated GPS layer contains 147 projected document features and seven additional AJ-only points. Five of the projected station positions are replaced by AJ's supplied coordinates. Four nearby station numbers anchor the initial document transform, while places also use four named OpenStreetMap location controls spread across the coast. Roads and paths come directly from a bounded OpenStreetMap geographic extract rather than the document projection. This is not proof of public access, condition or passability, and the provisional document marks must not be used for navigation or rescue dispatch. See the [source review](docs/design/icon-system-and-source-review.md) before changing geographic data. AJ's pins are reported positions, not independently surveyed locations; the other provisional features retain their confirmation flags.
 
 ## Regenerate the full-map extraction
 

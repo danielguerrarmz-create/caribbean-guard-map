@@ -1,0 +1,20 @@
+{
+  "source": "AJ Google Maps pins supplied by Daniel on 2026-10-27",
+  "status": "installed equipment, confirmed by Daniel from AJ on 2026-10-27",
+  "coordinate_order": "longitude, latitude",
+  "matching_rule": "One-to-one nearest numbered 2026 station within 75 metres; other pins remain unnumbered",
+  "pins": [
+    {"index": 1, "url": "https://maps.app.goo.gl/g4UKi6KAoYrbHjif9?g_st=i", "coordinates": [-82.774681, 9.659829], "match_id": "pdf:proposed_rescue_station/334"},
+    {"index": 2, "url": "https://maps.app.goo.gl/VUiEW15C895MoacL6?g_st=i", "coordinates": [-82.773114, 9.658682], "match_id": "pdf:rescue_station/333"},
+    {"index": 3, "url": "https://maps.app.goo.gl/oQXqdp8o1LpF1NgA9?g_st=i", "coordinates": [-82.771783, 9.657806], "match_id": null},
+    {"index": 4, "url": "https://maps.app.goo.gl/LPSgvFn1M193dvaZ7?g_st=i", "coordinates": [-82.769121, 9.656622], "match_id": null},
+    {"index": 5, "url": "https://maps.app.goo.gl/7LWYRn9pcbKtrDVM8?g_st=i", "coordinates": [-82.765578, 9.655148], "match_id": "pdf:rescue_station/332"},
+    {"index": 6, "url": "https://maps.app.goo.gl/KSqGYrc4VF3yicpU9?g_st=i", "coordinates": [-82.764055, 9.654753], "match_id": null},
+    {"index": 7, "url": "https://maps.app.goo.gl/XJyqQGRVwc8zpVUm7?g_st=i", "coordinates": [-82.761217, 9.654149], "match_id": null},
+    {"index": 8, "url": "https://maps.app.goo.gl/YkgzbDxSYfZuR39n9?g_st=i", "coordinates": [-82.756581, 9.654887], "match_id": null},
+    {"index": 9, "url": "https://maps.app.goo.gl/T7vUTq2KajDpF7qY7?g_st=i", "coordinates": [-82.739543, 9.652781], "match_id": "pdf:proposed_rescue_station/282"},
+    {"index": 10, "url": "https://maps.app.goo.gl/5CwFxEYd512Sj7NZ6?g_st=i", "coordinates": [-82.733608, 9.648687], "match_id": null},
+    {"index": 11, "url": "https://maps.app.goo.gl/UWGfauUkE6GfeVkP9?g_st=i", "coordinates": [-82.738316, 9.651622], "match_id": null},
+    {"index": 12, "url": "https://maps.app.goo.gl/i3sPAFLWZPSs4eXu5?g_st=i", "coordinates": [-82.736116, 9.650193], "match_id": "pdf:rescue_station/278"}
+  ]
+}

@@ -204,6 +204,7 @@ button,a,summary{touch-action:manipulation}
 .projected-place .symbol svg{width:14px;height:14px}
 body.map-overview .projected-marker:not(.projected-place) .symbol{width:22px;height:22px;margin:4px}
 body.map-overview .projected-marker:not(.projected-place) .symbol svg{width:16px;height:16px}
+body.map-overview .projected-marker.aj-unnumbered{display:none!important}
 body.map-overview .projected-number{display:none}
 .key-section-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
 .key-short{display:none}
