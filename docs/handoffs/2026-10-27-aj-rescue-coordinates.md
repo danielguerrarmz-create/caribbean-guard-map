@@ -39,12 +39,20 @@ Daniel confirmed that AJ's pins mark currently installed equipment. A Google Map
 
 The 12 short links were resolved again on 2026-10-27 and each redirect coordinate matched the registry. The generator, copy check, inline JavaScript syntax check, offline build (545 asset references), and `git diff --check` passed. A before/after GeoJSON comparison found exactly five modified existing features, seven added features, and no deletions.
 
+## Production release
+
+- Daniel authorized updating the map-only repository and dedicated Vercel link on 2026-10-27. `master` advanced to source commit `4c574ed` with this change and the previously reviewed rip-current reference images. No PR was created and the organization website repository was untouched.
+- Git-triggered Vercel builds remain disabled because satellite tiles are ignored by Git. The complete `web/` directory was uploaded through the documented Vercel CLI path to project `prj_it5kQJM4XVWkmDu3NjEzGOfCcRc3`.
+- Previous production deployment: `dpl_3PbG5rnQYkM1Dw4SuaK3TxQUBRwB`.
+- New production deployment: `dpl_9wsZZJ8EAzHtaKMueq446KrKhMPN`, Ready, at [the dedicated map alias](https://web-five-beta-p7wt9cgwmf.vercel.app/).
+- Live HTTP checks matched the local bytes for the main document, CSS, symbols, service worker, geographic data, reference-image registry, one reference image and the logo. Representative satellite tiles were available and matched local bytes. The live geographic data contained 12 AJ features, five numbered.
+- The desktop browser showed the coast and equipment markers. After accepting the map's update prompt, a numbered AJ marker's popup correctly said that AJ supplied its location, reported it installed, and that the number was inferred by proximity. A mobile visual walkthrough was not repeated for this release.
+
 ## What's left
 
 - Obtain AJ's labels for the seven unnumbered pins and confirm the five inferred station-number matches, especially 1.1 and 2.2.
 - Obtain field verification if the map is to claim surveyed accuracy, equipment contents, or current usability.
-- Visual browser QA of the local preview remains pending. A fresh attempt on 2026-10-27 was rejected by the saved browser permission for `http://127.0.0.1:5174/`; the agent did not bypass it. Data, copy, syntax, and offline-build checks passed.
-- No commit, PR, push, merge, or deployment was made for this update.
+- Localhost browser QA remained blocked by the saved browser permission; the deployed desktop view and popup were verified after release. A real-phone check of the update and offline behavior is still open.
 
 ## Files touched
 
