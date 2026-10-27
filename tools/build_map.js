@@ -1,4 +1,4 @@
-// Copy the offline map intact: Vite's site build targets the separate NGO site.
+// Validate and package the standalone offline map.
 import { cpSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';

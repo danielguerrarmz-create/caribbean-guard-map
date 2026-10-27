@@ -3,11 +3,11 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Caribbean Guard: organization website (site/, Next.js) and mobile-first coastal safety map (web/)",
+  "description": "Caribbean Guard mobile-first coastal safety map",
   "scripts": {
-    "dev": "npm --prefix site run dev",
-    "build": "npm --prefix site run build",
-    "setup": "npm ci && npm --prefix site ci",
+    "dev": "vite web --host 127.0.0.1 --port 5174",
+    "build": "node tools/build_map.js",
+    "setup": "npm ci",
     "dev:map": "vite web --host 127.0.0.1 --port 5174",
     "build:map": "node tools/build_map.js",
     "check:map": "node tools/check_copy.js"

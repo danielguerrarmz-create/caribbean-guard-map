@@ -2,6 +2,8 @@
 
 A bilingual, mobile-first beach guide for Puerto Viejo to Manzanillo, Costa Rica. The interface presents beach guidance, lifeguard information, rescue-equipment annotations and a regional forecast. It does not report observed live swimming conditions.
 
+This repository contains the map only. The organization website is maintained in [TommasoRibaudo/caribbeanguard-org](https://github.com/TommasoRibaudo/caribbeanguard-org).
+
 ## Start here
 
 - [Current release and verification](docs/handoffs/2026-09-22-map-production-release.md)
@@ -16,28 +18,17 @@ Review and refine the phone map first, then carry those decisions into desktop.
 
 ```powershell
 npm ci
-npm run dev:map
+npm run dev
 ```
 
 Open `http://127.0.0.1:5174/`. The map runs from `web/`. For phone testing on the same network, run `npm run dev:map -- --host 0.0.0.0` and use the printed network URL.
 
 ```powershell
 npm run check:map
-npm run build:map
+npm run build
 ```
 
-Packaging writes `dist-map/` and requires locally generated imagery. `web/tiles/` is excluded from Git. On a fresh checkout, run `python tools/build_tiles.py` before packaging or deploying; this requires its Python dependencies and network access. The default `npm run dev` and `npm run build` target the organization website in `site/`, not the map.
-
-## The organization website (`site/`)
-
-`site/` is the live caribbeanguard.org Next.js site, imported as a git subtree of [TommasoRibaudo/caribbeanguard-org](https://github.com/TommasoRibaudo/caribbeanguard-org) with its history. That upstream repository is never edited from here. The only local change is the **Mapa** tab in `site/src/components/layout/Header.tsx`, which links to `MAP_URL` (`site/src/lib/map.ts`).
-
-```powershell
-npm run setup                     # installs root and site dependencies
-$env:NEXT_PUBLIC_MAP_URL = "http://127.0.0.1:5174/"; npm run dev   # site on :3000, Mapa opens the local map
-```
-
-Pull later upstream changes with `git subtree pull --prefix=site https://github.com/TommasoRibaudo/caribbeanguard-org.git master`. `npm run build` writes the static export to `site/out/`.
+Packaging writes `dist-map/` and requires locally generated imagery. `web/tiles/` is excluded from Git. On a fresh checkout, run `python tools/build_tiles.py` before packaging or deploying; this requires Pillow and network access. Git-triggered Vercel builds are intentionally skipped because they cannot include the ignored imagery. Publish the complete `web/` directory to the existing map project as described in [the deployment guide](docs/deploy.md).
 
 Useful entry points:
 
@@ -48,7 +39,6 @@ Useful entry points:
 
 | Path | Purpose |
 |---|---|
-| `site/` | Organization website (Next.js static export, upstream subtree) |
 | `web/index.html` | Leaflet map, beach records, interactions and bilingual copy |
 | `web/coastal.css` | Responsive layout and visual tokens |
 | `web/symbols.js` | Shared SVG status, hazard and facility pictograms |
@@ -86,8 +76,6 @@ The first command regenerates page-space JSON. The second applies the documented
 
 ## Publishing and maintenance
 
-Deploy the existing Vercel project from `web/` using the team scope in [the deployment guide](docs/deploy.md). Git push alone does not upload the ignored imagery. The original logo is unchanged.
+Deploy the existing Vercel map project from `web/` using the team scope in [the deployment guide](docs/deploy.md). Git push alone does not upload the ignored imagery. The original logo is unchanged.
 
 Keep guidance, review status and proposal status explicit. Never convert lower-risk guidance into a claim that today's water is safe. Browser viewport checks do not replace field review, real-device offline testing, accessibility testing or imagery-rights review.
-
-\n
