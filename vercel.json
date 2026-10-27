@@ -1,20 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npm --prefix site ci",
-  "buildCommand": "npm --prefix site run build",
-  "outputDirectory": "site/out",
-  "cleanUrls": true,
-  "redirects": [
-    {
-      "source": "/mapa",
-      "destination": "https://web-five-beta-p7wt9cgwmf.vercel.app/",
-      "permanent": false
-    },
-    {
-      "source": "/mapa/",
-      "destination": "https://web-five-beta-p7wt9cgwmf.vercel.app/",
-      "permanent": false
-    }
-  ]
+  "ignoreCommand": "exit 0",
+  "buildCommand": "npm run build:map",
+  "outputDirectory": "dist-map"
 }

@@ -219,6 +219,44 @@ def seg_dist(p, a, b):
     return math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy))
 
 
+def remove_offset_loops(pts):
+    """Trim self-crossing offset curls at their intersection, in chain order.
+
+    A normal offset can fold over itself around tight concave shore bends.
+    Smoothing that fold merely rounds the loop into a visible hook. Remove
+    the crossed excursion before smoothing, without moving unaffected points.
+    Coordinates are local metres; the original OSM trace is never modified.
+    """
+    def crossing(a, b, c, d):
+        rx, ry = b[0] - a[0], b[1] - a[1]
+        sx, sy = d[0] - c[0], d[1] - c[1]
+        den = rx * sy - ry * sx
+        if abs(den) < 1e-9:
+            return None
+        qx, qy = c[0] - a[0], c[1] - a[1]
+        t = (qx * sy - qy * sx) / den
+        u = (qx * ry - qy * rx) / den
+        if 0 <= t <= 1 and 0 <= u <= 1:
+            return (a[0] + t * rx, a[1] + t * ry)
+        return None
+
+    out = []
+    for point in pts:
+        if out and math.dist(out[-1], point) < 1e-7:
+            continue
+        # The earliest crossed segment discards the entire intervening loop.
+        for i in range(max(0, len(out) - 2)):
+            hit = crossing(out[i], out[i + 1], out[-1], point)
+            if hit is not None:
+                out = out[:i + 1]
+                if math.dist(out[-1], hit) > 1e-7:
+                    out.append(hit)
+                break
+        if not out or math.dist(out[-1], point) > 1e-7:
+            out.append(point)
+    return out
+
+
 def simplify(pts, tol):
     """Douglas-Peucker, iterative so a long trace cannot blow the stack."""
     if len(pts) < 3:
@@ -327,7 +365,7 @@ def main():
 
     line = [to_m(p) for p in chain()]
     line = resample(line, RESAMPLE_M)
-    line = offset(line, SEAWARD_M)
+    line = remove_offset_loops(offset(line, SEAWARD_M))
 
     zones = read_zones()
     cuts = resolve_joints(zones)
@@ -379,6 +417,7 @@ def main():
         "simplify_m": SIMPLIFY_M,
         "chaikin_passes": CHAIKIN_PASSES,
         "final_simplify_m": FINAL_SIMPLIFY_M,
+        "offset_loops_removed": True,
         "zones": out,
         "provisional": provisional,
     }

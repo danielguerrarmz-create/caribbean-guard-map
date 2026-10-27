@@ -30,60 +30,26 @@
      A fallback would put the CDN back in the threat model to buy nothing: if the
      local copy is shipped anyway, ship only the local copy. -->
 <link rel="stylesheet" href="vendor/leaflet.css">
-<!-- POPPINS since 2026-09-23 (Daniel's call): the map now speaks in the same
-     typeface as caribbeanguard.org. Self hosted, 400 / 600 / 800, latin subset
-     (Spanish accents and inverted marks included), 24 KB for all three, less
-     than the 71 KB of Inter it replaces. SIL OFL, see fonts/POPPINS-OFL.txt.
-     The history below is kept because the hierarchy argument still holds.
-     Inter, self hosted, 400 / 600 / 800, latin subset, 71 KB in total.
-     It replaced Atkinson Hyperlegible on 2026-09-17. Atkinson is a better
-     letterform-by-letterform font for a low vision reader, and it was chosen
-     for that; it shipped in two weights, and two weights cannot build a
-     hierarchy across six levels. Daniel's finding was that the page had none.
-     Inter is a text-first grotesque with a tall x-height and open apertures,
-     which is most of what the low vision case actually needs at 15 px in
-     midday sun, and three weights let every level carry a weight signal as
-     well as a size.
-     Self hosted for the same reason Leaflet is: this map must work with no
-     signal, and a Google Fonts request cannot be precached by our worker.
-     Only the two weights the FIRST PAINT uses are preloaded. 800 draws the
-     instruction on every card, 600 draws every beach name; 400 draws body copy
-     that is below the fold in the dock and inside a sheet that is not open yet,
-     so preloading it would compete for the same connection as the two that are
-     on screen. -->
-<link rel="preload" href="fonts/poppins-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/poppins-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Approved website/map pairing. The Latin subsets include Spanish accents
+     and inverted punctuation. Source Sans 3 handles every safety instruction;
+     Zilla Slab marks identity and title levels only. Both are local offline
+     assets, with OFL licenses in fonts/. -->
+<link rel="preload" href="fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/zilla-slab-latin-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  /* INTER, THREE WEIGHTS, SELF-HOSTED, LATIN SUBSET.
-     It replaces Atkinson Hyperlegible, which shipped at 400 and 700 only.
-     Daniel's finding 2026-09-17 was "no clear hierarchy in any of the text
-     areas", and two weights is half of why: with only regular and bold, a name,
-     an instruction and a caption can differ in SIZE alone, and this page's
-     sizes ran 22 / 18 / 15 / 13 / 12, a 1.47x spread from the largest thing on
-     the sheet to the body under it. Nothing could dominate anything.
-     Three weights (400 / 600 / 800) plus the wider scale below give every level
-     two signals instead of one.
-     The latin subset is U+0000 to U+024F, which carries every accent Spanish
-     needs and the inverted marks, so the ES copy renders from our own bytes and
-     never falls back. Still no glyph outside it may be used anywhere on this
-     page: see the ø / ½ / » notes below, which stay true.
-     71 KB across three files against 35 KB across two. That is 36 KB more in
-     the service worker's CRITICAL precache, which is 36 KB somebody waits for
-     on a two-bar signal before the map will save. Accepted by Daniel on
-     2026-09-17 as the price of a readable hierarchy. */
+  /* Keep the title family out of functional safety text. Source Sans 3's
+     variable file supplies 400 to 700 without synthetic bolding. */
   @font-face{
-    font-family:"Poppins"; font-style:normal; font-weight:400;
-    font-display:swap; src:url(fonts/poppins-latin-400-normal.woff2) format("woff2");
+    font-family:"Source Sans 3"; font-style:normal; font-weight:400 700;
+    font-display:swap; src:url(fonts/source-sans-3-latin.woff2) format("woff2");
   }
   @font-face{
-    font-family:"Poppins"; font-style:normal; font-weight:600;
-    font-display:swap; src:url(fonts/poppins-latin-600-normal.woff2) format("woff2");
+    font-family:"Zilla Slab"; font-style:normal; font-weight:600;
+    font-display:swap; src:url(fonts/zilla-slab-latin-600.woff2) format("woff2");
   }
   @font-face{
-    /* Bold, the heaviest weight caribbeanguard.org uses, answers every 700
-       and 800 on this page so the map never out-shouts the brand. */
-    font-family:"Poppins"; font-style:normal; font-weight:700 800;
-    font-display:swap; src:url(fonts/poppins-latin-700-normal.woff2) format("woff2");
+    font-family:"Zilla Slab"; font-style:normal; font-weight:700;
+    font-display:swap; src:url(fonts/zilla-slab-latin-700.woff2) format("woff2");
   }
   :root{
     /* Two tiers on purpose.
@@ -122,13 +88,15 @@
     --station:#f39c12;
     --sheet-r:10px;
     --safe-pad: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
     --dock-h: 96px;    /* set from JS; the fab and compass stack above the dock */
     /* 8 px grid and a 16 px gutter, used everywhere below rather than eyeballed
        values, so a card, a chip and a sheet all sit on the same rhythm. */
     --gut:16px;
-    /* THE TYPE SCALE. Six sizes, no seventh, and 12 px is still the FLOOR.
+    /* BASE TYPE SCALE. The coastal layout below uses smaller rail and detail
+       sizes where space is tight; the role and family order stays the same.
        30 sheet heading / 21 instruction / 17 beach name / 15 body /
-       13 secondary / 12 the floor.
+       13 secondary / 12 the base floor.
 
        WHAT CHANGED AND WHY. It was 22 / 18 / 15 / 13 / 12. The heading was
        1.22x the instruction and 1.47x the body, so the three things a reader
@@ -138,7 +106,7 @@
        it without pushing the body below the floor.
 
        SIZE IS NEVER THE ONLY SIGNAL. Every level also carries a weight and a
-       colour: 800 ink for the instruction, 600 ink for names, 400 ink for body,
+       colour: 700 ink for the instruction, 600 ink for names, 400 ink for body,
        400 muted for secondary. Hat 4's original blocker stands and is stricter
        now: what you must obey is the largest AND heaviest thing in its
        container, and nothing optional may outrank it on either. */
@@ -147,7 +115,7 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden;
-    font-family:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    font-family:"Source Sans 3",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
                 "Helvetica Neue",sans-serif;
     font-size:var(--t-body); line-height:1.3;
     -webkit-font-smoothing:antialiased;
@@ -255,11 +223,13 @@
      controls on the right are the ones a reader needs in a hurry, and the
      tagline is the only thing on this bar that nothing depends on. */
   .brand{pointer-events:auto;text-decoration:none;
-    font-weight:800;letter-spacing:.01em;color:var(--ink);font-size:var(--t-body);
+    font-family:"Zilla Slab",Georgia,serif;font-weight:700;
+    letter-spacing:.01em;color:var(--ink);font-size:var(--t-body);
     line-height:1.15;white-space:nowrap;
     min-width:0;overflow:hidden;
     padding:4px 0;min-height:44px;display:flex;flex-direction:column;justify-content:center}
-  .brand small{display:block;font-weight:600;font-size:var(--t-min);
+  .brand small{display:block;font-family:"Source Sans 3",Arial,sans-serif;
+    font-weight:600;font-size:var(--t-min);
     color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
   @media (max-width:429px){
     /* Two lines, not one. At 13 px on one line the wordmark still needs about
@@ -390,7 +360,7 @@
      and the box around the instruction looked exactly like the box around the
      caption. What survives is the part that carries meaning: the tier colour as
      a bar on the left, and the swatch, which is a sample of the real stroke.
-     The instruction now sits on the card's own ground at 21 px / 800.
+     The instruction now sits on the card's own ground at 21 px / 700.
 
      THE SOLID LEFT BAR WENT WITH IT, and that is the de-duplication rather than
      a second deletion. The bar and the swatch were the same colour token saying
@@ -399,7 +369,7 @@
      reason a stroke sample is on a card at all. One tier mark per instruction. */
   .pill{display:flex;align-items:center;gap:11px;margin-top:7px;
     background:none;border:0;border-radius:0;padding:0;
-    font-size:var(--t-instr);font-weight:800;line-height:1.15;
+    font-size:var(--t-instr);font-weight:700;line-height:1.15;
     letter-spacing:-.01em;text-transform:uppercase;color:var(--ink)}
   /* Three, and only three. There were three more, for the void card, a station
      and a neutral title, which is how a component that means "do this" came to
@@ -505,7 +475,8 @@
      target is not a target. */
   .draghead{flex:0 0 auto;padding-bottom:4px;cursor:grab;touch-action:none}
   .sheet-body{overflow-y:auto;padding:4px var(--gut) 24px;-webkit-overflow-scrolling:touch}
-  .sheet h2{margin:4px 0 1px;font-size:var(--t-h2);line-height:1.08;font-weight:800;
+  .sheet h2{margin:4px 0 1px;font-family:"Zilla Slab",Georgia,serif;
+    font-size:var(--t-h2);line-height:1.08;font-weight:600;
     letter-spacing:-.025em;padding-right:56px}
   /* THE HEADING TAKES FOCUS AND DRAWS NO RING, and those are two decisions.
      Moving focus here is what makes the sheet announce itself: hat 4 tapped a
@@ -631,7 +602,7 @@
     border-radius:4px;background:var(--tier);margin:0 0 10px}
   .statuscard .eyebrow{color:rgba(255,255,255,.72);margin-bottom:4px}
   .statuscard .instr{display:block;margin:0 0 8px;font-size:var(--t-instr);
-    font-weight:800;line-height:1.15;letter-spacing:-.01em;text-transform:uppercase;
+    font-weight:700;line-height:1.15;letter-spacing:-.01em;text-transform:uppercase;
     color:#fff}
   .statuscard .why{margin:0;color:rgba(255,255,255,.88);font-size:var(--t-body);
     line-height:1.5}
@@ -672,7 +643,7 @@
     margin:0 0 9px;color:#fff}
   .sos911 .dial{display:flex;align-items:center;justify-content:center;
     min-height:48px;border-radius:4px;background:var(--high);color:#fff;
-    font-size:var(--t-instr);font-weight:800;letter-spacing:.01em;
+    font-size:var(--t-instr);font-weight:700;letter-spacing:.01em;
     text-decoration:none}
 
   /* THE WHY LOST ITS BOX TOO, for the same reason the card's instruction did.
@@ -690,7 +661,7 @@
      has to recall in the water gets its own line. */
   .escape{display:flex;gap:10px;align-items:flex-start;margin:0 0 20px;
     font-size:var(--t-body);line-height:1.45;font-weight:600;color:var(--ink)}
-  .escape .ic{flex:0 0 auto;color:var(--muted);font-weight:800}
+  .escape .ic{flex:0 0 auto;color:var(--muted);font-weight:700}
 
   /* ONE line, last, grey, 13 px. Everything this map does not know, in the one
      place a reader has already got the instruction and is deciding whether to
@@ -738,7 +709,7 @@
      which is where a reader who has just been told what to do in a rip current
      is. The other two stay a 2-up row below the trust line, where they belong,
      because neither is urgent. */
-  .btn.call{width:100%;margin:0 0 2px;font-size:var(--t-instr);font-weight:800;
+  .btn.call{width:100%;margin:0 0 2px;font-size:var(--t-instr);font-weight:700;
     letter-spacing:.01em;min-height:54px}
   /* Hat 5, finding 10: a safety instrument with no correction channel keeps a
      known error forever, and there was no contact anywhere in 2,291 lines.
@@ -964,7 +935,6 @@
        there was no title and nothing saying what the thing was. -->
   <div class="railhead">
     <h1 id="coast-title">Playas del Caribe Sur</h1>
-    <p class="what" id="rail-what">Puerto Viejo · Manzanillo</p>
   </div>
 
   <div class="dockrow">
@@ -1015,7 +985,6 @@
     <button class="card" data-id="cg:zone/punta-uva" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Punta Uva</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
     <button class="card unassessed" data-id="cg:beach/playa-grande" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Grande</span><span class="beach-status">SIN EVALUAR</span></span></button>
     <button class="card unassessed" data-id="cg:beach/manzanillo" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Manzanillo</span><span class="beach-status">SIN EVALUAR</span></span></button>
-    <button class="card void" data-id="void" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">El resto de la costa</span><span class="beach-status">Sin describir</span></span></button>
   </div>
 
   <!-- Desktop only: the same legend the chip opens as a sheet on a phone. -->
@@ -1042,9 +1011,11 @@
 <!-- The map's linework, from workstream A. A classic script defining window.CGGeom
      and nothing else: it captures window.L at definition time, so it must load
      AFTER Leaflet and BEFORE this file. Stroke widths, dash ratios, the 40 m end
-     taper, the outlined rip arrow and label collision all live in there now, so
+     shoreline strokes, rip arrows and label collision live in there now, so
      the card swatch and the map read ONE table instead of two copies. -->
 <script src="geometry.js"></script>
+<script src="forecast.js"></script>
+<script src="advisory.js"></script>
 <script src="symbols.js"></script>
 <script>
 /* ============================================================
@@ -1433,7 +1404,7 @@ const POSTS = [
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null}
-];
+].filter(post => !post.proposed);
 
 /* The four character classes, and the three visual tiers they map onto.
 
@@ -1599,7 +1570,7 @@ const T = {
       voidRule:"Que no haya nada dibujado en un tramo no quiere decir que ese tramo sea seguro. Quiere decir que nadie lo ha mirado.",
       unassessedStatus:"Sin evaluar",
       unassessedWhy:"Aún no hay indicaciones de seguridad para nadar en esta playa.",
-      unassessedLocation:"El área gris es aproximada: no marca los límites de la playa ni una entrada segura.",
+      unassessedLocation:"La línea gris es aproximada: no marca los límites de la playa ni una entrada segura.",
       /* stations */
       station:"Estación de Rescate",
       stationScope:"Estas son las cuatro estaciones que aparecen dentro del tramo recorrido. Caribbean Guard menciona nueve en toda la costa. No sabemos dónde están las otras, así que no cuentes con que estas sean todas.",
@@ -1636,6 +1607,9 @@ const T = {
       areaWhy:"El mapa completo aportado identifica esta zona como un área de fuertes corrientes. La anotación describe un peligro del lugar; no es una observación de las condiciones de hoy.",
       /* the saved copy */
       savedNever:"No guardado en este teléfono",
+      previewNoStore:"La copia sin conexión está desactivada en esta vista local.",
+      previewWhy:"Esta vista local siempre carga el mapa y sus líneas actuales para revisión. La versión publicada conserva la copia sin conexión.",
+      bandFailed:"No se pudieron cargar las franjas de color de la costa. Las líneas de seguridad siguen visibles.",
       savedAt:when=>`Guardado en este teléfono · ${when}`,
       savedNoStore:"Este navegador no guarda la página",
       savedRefreshing:"Actualizando...",
@@ -1763,7 +1737,7 @@ const T = {
       voidRule:"A stretch with nothing drawn on it is not a stretch that is safe. It is a stretch nobody has looked at.",
       unassessedStatus:"Not assessed",
       unassessedWhy:"No beach-specific swimming guidance has been reviewed here.",
-      unassessedLocation:"The grey area is approximate: it does not mark the beach limits or a safe entry.",
+      unassessedLocation:"The grey line is approximate: it does not mark the beach limits or a safe entry.",
       station:"Rescue Station",
       stationScope:"These are the four stations that appear inside the surveyed stretch. Caribbean Guard mentions nine along the whole coast. We do not know where the others are, so do not count on these being all of them.",
       stationHolds:"A fixed structure holding rescue flotation: tubes and torpedoes, a 200 m rope box, a life ring, a vest and a whistle. If somebody is pulled out to sea, anyone nearby has something to help with.",
@@ -1781,6 +1755,9 @@ const T = {
       areaTitle:"Area of strong currents",
       areaWhy:"The supplied full map identifies this as an area of strong currents. This annotation describes a local hazard, not an observation of today's conditions.",
       savedNever:"Not saved on this phone",
+      previewNoStore:"Offline saving is off in this local preview.",
+      previewWhy:"This local preview always loads the current map and linework for review. The published map still saves an offline copy.",
+      bandFailed:"The coastal color bands could not load. Safety lines remain visible.",
       savedAt:when=>`Saved on this phone · ${when}`,
       savedNoStore:"This browser does not save the page",
       savedRefreshing:"Refreshing...",
@@ -2064,7 +2041,7 @@ function hoursLine(z){
 const BB = L.latLngBounds(IMG_BOUNDS);
 const SAFE = L.latLngBounds(IMG_SAFE);
 const map = L.map("map",{
-  zoomControl:false, attributionControl:true,
+  zoomControl:false, attributionControl:true, zoomAnimation:false,
   maxBounds:BB.pad(0.02), maxBoundsViscosity:1.0,
   maxZoom:18, zoomSnap:0.25, tap:true
 });
@@ -2478,7 +2455,7 @@ function hideLabelsUnderStations(){
    single beach and the card already says where you are. */
 function restyleLabels(){
   const z = map.getZoom();
-  const zones  = z >= 11.5 && z < 16.5;
+  const zones  = z >= 11.5;
   const places = z >= 12.5;
   const sea    = z <= 14.5;
   /* The zoom rules above are this file's ruling and CGGeom.placeLabels never
@@ -2583,8 +2560,13 @@ L.control.scale({metric: true, imperial: false, position: "bottomleft",
    asked for must not be the thing that lags. */
 let refitTimer = null, refitTrailing = null, rotateUntil = 0;
 function runRefit(){
+  map.stop();
   measureDock(false);   // update --dock-h, do not let it fit as well
   fitCoast({keepView:true});
+  // A full view reset updates SVG clipping bounds as well as tiles when the
+  // responsive dock changes the viewport. A pan-only update can leave custom
+  // vector panes clipped against their previous phone-sized bounds.
+  map.setView(map.getCenter(),map.getZoom(),{animate:false,reset:true});
 }
 function refit(delay){
   // A rotation also emits `resize`, in either order and sometimes twice. While
@@ -2668,16 +2650,6 @@ window.addEventListener("load", ()=>refit(0));
 
 let zonesReady = false;
 
-/* The dimming of the zones you did NOT ask about.
-   cgSetStyle() handles weight, dash and halo weight but deliberately not
-   opacity, because opacity is not a property of the stroke vocabulary. So it is
-   applied over the top, after the weights, and it reaches the halo too. Only a
-   beach with a bulletin signed today has a halo, and dimming a beach nobody is
-   looking at is the intent in both cases. */
-function dimGroup(g, op){
-  g.eachLayer(l=>{ if(l.setStyle) l.setStyle({opacity:op}); });
-}
-
 function restyleZones(){
   // fitCoast() emits zoomend during startup, before the zone layers exist.
   // `typeof layers === "undefined"` does NOT guard this: typeof still throws on
@@ -2689,11 +2661,11 @@ function restyleZones(){
     const st = CGGeom.zoneStroke(tierOf(z), z0);
     const halo = todayHalo(z);
     g.cgSetStyle({
-      weight: st.weight * (g.cgCurrent ? 1.25 : 1),
+      weight: st.weight,
       dashArray: st.dashArray,
       halo: halo ? {color: halo, weight: st.halo} : null
     });
-    dimGroup(g, g.cgCurrent === false && anyCurrent ? .55 : 1);
+    // Keep adjacent zones equally opaque so their shared endpoints meet cleanly.
   });
 }
 let anyCurrent = false;
@@ -2716,10 +2688,7 @@ function drawZones(){
        claims stay legible and the character stroke stays on top. */
     const halo = todayHalo(z);
 
-    /* No casing, and now no blunt ends either. The stroke tapers to 40% over
-       its last 40 m at each end, so a zone stops rather than being cut off, and
-       the halo tapers with it: a full-width halo under a tapering line puts the
-       blunt end straight back. */
+    // One continuous stroke with all casings beneath all coastal ink.
     const g = CGGeom.taperedPolyline(z.line, {
       color: COLOR[tierOf(z)],
       weight: st.weight,
@@ -2755,6 +2724,7 @@ const geomReady = fetch("data/zones-geometry.json")
     // Provisional extents for the beaches Caribbean Guard has not bounded.
     UNASSESSED_BEACHES.forEach(b => { b.line = (g.provisional && g.provisional[b.id]) || []; });
     drawZones();
+    drawAmbientBands();
     restyleLabels();
     renderDistances();      // nearest point of each beach, now that lines exist
   })
@@ -2820,7 +2790,7 @@ restyleLabels();
    how the duplicate went unnoticed for as long as it did. */
 function joinStations(gj){
   gj.features.forEach(f=>{
-    if(f.properties.kind !== "rescue_station") return;
+    if(f.properties.kind !== "rescue_station" || f.id === "cg:station/est2") return;
     const p = POSTS.find(x=>x.id === f.id);
     if(!p){ console.warn("[cg] station in the data with no copy here:", f.id); return; }
     const ll = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
@@ -3086,6 +3056,19 @@ function placeControls(visible, settled){
 
 const sheet = document.getElementById("sheet");
 const sheetBody = document.getElementById("sheet-body");
+const sheetClose = document.getElementById("sheet-close");
+function setSheetContent(html){
+  // Keep one live button/listener, inside the same scrolling title row.
+  sheetClose.remove();
+  sheetBody.innerHTML=html;
+  const title=sheetBody.querySelector('#sheet-title');
+  if(title){
+    const heading=document.createElement('div');
+    heading.className='sheet-heading';
+    title.before(heading);
+    heading.append(title,sheetClose);
+  }else sheetBody.prepend(sheetClose);
+}
 const dockEl = document.getElementById("dock");
 let lastRender = null;    // () => void, replays the open sheet in the new language
 let lastFocus = null;     // what to give focus back to on close
@@ -3169,7 +3152,7 @@ function openSheet(html, render){
   // Every sheet starts with no address; openers that have one set it after.
   sheetAddress("");
   if(!reopening) lastFocus = (active && active !== document.body) ? active : null;
-  sheetBody.innerHTML = html;
+  setSheetContent(html);
   sheetBody.scrollTop = 0;
   sheet.classList.remove("no-close");
   clearTimeout(sheetTimer);
@@ -3236,9 +3219,10 @@ window.addEventListener("popstate", e => {
   const z = ZONES.find(x => localId(x.id) === q.get("z"));
   const b = UNASSESSED_BEACHES.find(x => localId(x.id) === q.get("b"));
   const p = POSTS.find(x => localId(x.id) === q.get("p"));
+  const access = accessPoints.find(x=>x.id===q.get("a"));
   restoringHistory = true;
   try{
-    if(z) openZone(z); else if(b) openUnassessedBeach(b); else if(p) openPost(p);
+    if(access) openAccess(access); else if(z) openZone(z); else if(b) openUnassessedBeach(b); else if(p) openPost(p);
     // A sheet with no address (legend, saved copy) cannot be rebuilt from a URL.
     // Stepping back out keeps the stack free of a dead copy of the map.
     else history.back();
@@ -3246,6 +3230,7 @@ window.addEventListener("popstate", e => {
 });
 
 function closeSheet(opts = {}){
+  clearAccessPath();
   clearBand();
   if(!sheet.classList.contains("open") || sheetClosing) return;
   // Leaving through the UI pops our own history entry; the popstate that
@@ -3415,43 +3400,10 @@ function trustLine(z){
   return `<p class="trust"><b>${head}</b> ${t.defer}</p>`;
 }
 
-/* THE ORDER INSIDE THE SHEET, top to bottom. It is a lifeguard sign now, and a
-   sign has four parts:
-
-     name and sub          where you are
-     INSTRUCTION           what to do. 21 px / 800, the largest and heaviest
-                           thing on the sheet, above the fold at PEEK
-     hours                 only Cocles has a post, and only while it qualifies
-                           the instruction on screen
-     why                   ONE short sentence. What the sea does here.
-     exceptions            the tide rule at Chiquita, the east channel at Punta
-                           Uva, the lower-risk rider. Kept because each one
-                           CHANGES the instruction on a specific part of a
-                           specific beach; an exception is not a detail.
-     ESCAPE                what to do if a current has you. The only sentence
-                           on this page a frightened swimmer has to recall.
-     911                   the one action worth a full-width button
-     trust line            see above
-     actions               Cómo llegar · Reportar un error
-
-   WHAT LEFT, AND WHY. Daniel's finding 2026-09-17: "There is FAR TOO MUCH
-   INFORMATION. It should be simplified to the deepest possible. Think about
-   lifeguard signs used worldwide and use that type of language."
-
-   - the `facts` bullet list (two or three per beach). A sign does not carry a
-     bulleted annex. The one fact per beach that changed what a swimmer would
-     do has been folded into the why sentence; the rest described the place
-     rather than instructing anyone.
-   - the Autor / Revisado row, the TODAY line, the absence boxes: one trust
-     line, above.
-   - the boxed deferral: same sentence, same words, no box. It was boxed to
-     stop it reading as one more caveat. With the caveats gone there is nothing
-     left for it to be confused with.
-
-   The escape sentence is UNTOUCHED and still renders on all five beaches,
-   including Playa Negra. Playa Negra is the calmest stretch on this coast and
-   it is still the sea. */
+/* Reading order: beach instruction, essential guidance and emergency calling,
+   forecast, then sources. Emergency guidance is never collapsed. */
 function openZone(z){
+  clearAccessPath();
   const render = ()=>{
     const t = T[lang], c = z.character;
     const rider = c.class === "lower-risk"
@@ -3463,48 +3415,46 @@ function openZone(z){
     const mid = z.at.join(",");
     return `
     <div class="zone-detail">
-    <div class="zone-top">
-    <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
-    <div class="statuscard ${tierOf(z)}">
-      <span class="tile" aria-hidden="true">${CGSymbols.badge(c.class)}</span>
-      <span class="eyebrow">${t.ebWhatToDo}</span>
-      <span class="instr">${t[c.class]}</span>
-      ${hoursLine(z)}
-      <p class="why">${c.why[lang]}</p>
-      <div class="sos911">
-        <span class="lead">${t.sosLead}</span>
-        <a class="dial" href="tel:911">${t.call}</a>
+      <div class="zone-top">
+        <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
+        <div class="statuscard ${tierOf(z)}">
+          <span class="tile" aria-hidden="true">${CGSymbols.badge(c.class)}</span>
+          <span class="eyebrow">${dangerLabel(z)}</span>
+          <span class="instr">${t[c.class]}</span>${hoursLine(z)}
+        </div>
+        ${c.class==='lower-risk'?`<p class="beach-caution">${lang==='es'?'Menor riesgo no significa que sea seguro.':'Lower risk does not mean safe.'}</p>`:''}
+        ${caveats}
+        <section class="beach-help" aria-labelledby="beach-help-title">
+          <h3 id="beach-help-title">${lang==='es'?'Si te arrastra una corriente':'If a current pulls you out'}</h3>
+          <p class="escape">${t.escapeRip}</p>
+          <a class="help-call" href="tel:911">${t.call}</a>
+        </section>
       </div>
-    </div>
-    ${rider}${caveats}
-    </div>
-    <div class="zone-lower">
-    <span class="eyebrow">${t.ebRip}</span>
-    <p class="escape">${t.escapeRip}</p>
-    <span class="eyebrow">${t.ebWhoSays}</span>
-    ${trustLine(z)}
-    <div class="actions">
-      <a class="btn" target="_blank" rel="noopener"
-         href="https://www.google.com/maps/dir/?api=1&destination=${mid}">${t.route}</a>
-      <a class="btn" href="${reportHref(t.reportSubject + ": " + z.name.es)}">${t.report}</a>
-    </div>
-    </div>
-    ${renderWeatherPanel()}
-    ${sheetFoot()}
+      ${renderForecastPanel(z.id)}
+      <div class="zone-lower">
+        <section class="beach-overview" aria-labelledby="beach-overview-title">
+          <h3 id="beach-overview-title">${lang==='es'?'Sobre esta playa':'About this beach'}</h3>
+          <p class="beach-context">${c.why[lang]}</p>
+          <p class="beach-meta">${!c.reviewed?(lang==='es'?'Sin revisión local. ':'Not locally reviewed. '):''}${lang==='es'?'Sin condiciones en vivo.':'No live conditions.'}</p>
+        </section>
+        <details class="beach-background"><summary>${lang==='es'?'Fuentes y revisión':'Sources and review'}</summary>
+          ${rider}${trustLine(z)}${renderWeatherPanel()}
+          <a class="detail-text-link" href="${reportHref(t.reportSubject + ': ' + z.name.es)}">${t.report}</a>
+        </details>
+        <a class="btn beach-route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${mid}">${t.route}</a>
+      </div>
+      ${sheetFoot()}
     </div>`;
   };
-  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); requestAnimationFrame(fitZoneDetail); });
+  openSheet(render(), ()=>{ setSheetContent(render()); requestAnimationFrame(fitZoneDetail); });
   requestAnimationFrame(fitZoneDetail);
   markCurrent(z.id);
   // Before the geometry lands there is one point to fly to rather than a line.
-  flyClear(z.line.length ? L.latLngBounds(z.line).pad(0.55)
-                         : L.latLngBounds([z.at]).pad(0.02));
-  /* AFTER flyClear, not before: showBand() reads map.getZoom(), and on a deep
-     link that zoom is still the whole-coast landing view for the length of the
-     flight. flyToBounds fires zoomend when it lands, and the zoomend handler
-     above redraws the band at the zoom it actually arrived at. On a deep link
-     z.line is empty here as well; drawZones() calls this again when the
-     geometry fetch resolves. */
+  flyClear(z.line.length ? L.latLngBounds(z.line).pad(0.08)
+                         : L.latLngBounds([[z.at[0]-.003,z.at[1]-.003],[z.at[0]+.003,z.at[1]+.003]]));
+  /* Keep the selected band's stronger wash through the flight. On a deep link,
+     the geometry fetch may still be pending; drawZones() calls this again when
+     the coast arrives. */
   showBand(z);
   sheetAddress("z=" + localId(z.id));
 }
@@ -3531,13 +3481,14 @@ function openVoid(){
     </div>
     ${sheetFoot()}`;
   };
-  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  openSheet(render(), ()=>{ setSheetContent(render()); });
   markCurrent(null);
   clearBand();
   sheetAddress("");
 }
 
 function openUnassessedBeach(beach){
+  clearAccessPath();
   const render = ()=>{
     const t = T[lang];
     return `
@@ -3545,220 +3496,102 @@ function openUnassessedBeach(beach){
     <p class="why">${t.unassessedWhy}</p>
     <p class="caveat">${t.unassessedLocation}</p>
     <p class="defer">${t.defer}</p>
+    ${renderForecastPanel(beach.id)}
     <div class="actions">
       <a class="btn" href="${reportHref(t.reportSubject + ": " + beach.name)}">${t.report}</a>
       <a class="btn primary" href="tel:911">${t.call}</a>
     </div>
     ${sheetFoot()}`;
   };
-  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  openSheet(render(), ()=>{ setSheetContent(render()); });
   markCurrent(beach.id);
   clearBand();
   showBand(beach);
-  flyClear(L.latLngBounds([beach.at]).pad(0.004), {maxZoom:15});
+  flyClear(beach.line.length ? L.latLngBounds(beach.line).pad(.08) : L.latLngBounds([[beach.at[0]-.003,beach.at[1]-.003],[beach.at[0]+.003,beach.at[1]+.003]]), {maxZoom:16});
   sheetAddress("b=" + localId(beach.id));
 }
 
 /* Fly so the subject lands in the strip the sheet is NOT covering. Without this
    Leaflet centres on the full map, the sheet then eats the bottom 60% of the
    screen, and the zone you just asked about ends up pushed off the top edge. */
-/* ---------- THE BEACH EXTENT BAND ----------
-   Daniel, 2026-09-17: "When zooming into the beach after selecting it, draw a
-   boundary showing what the beach area is."
-
-   THE BOUNDARY IS DRAWN ON THE WATER, NOT ON THE LAND, and that is the whole
-   design. The zone line describes water: it is the coastline pushed 25 m out to
-   sea, and the four tiers are all instructions about going IN. A closed polygon
-   around the sand as well would draw a line across somebody's garden and across
-   the road, on imagery accurate to 75 m in the west and 150 m in the east, and
-   a reader takes a hard edge as a survey. Nobody surveyed the back of these
-   beaches, so nothing is drawn there.
-
-   So: the GPS-aligned zone line offset back 25 m to the shoreline, and that
-   line pushed 95 m seaward, joined into one polygon. Lightly filled in the tier
-   colour, with only a subtle dashed stroke on the seaward side,
-   sides, because the seaward edge is not a boundary either: the hazard does not
-   stop at 120 m, that is just how far out this beach is still this beach.
-
-   THE ENDS ARE THE PART THAT IS A CLAIM, so the ends get the only strokes: one
-   perpendicular tick at each end, at full tier colour. They mark where Cocles
-   stops and Chiquita starts, which IS a decision somebody made and the one
-   thing a reader needs when the instruction changes between two stretches of
-   the same sand.
-
-   It is drawn under the zone lines and above the tiles (pane "shadowPane"), so
-   it can never dilute the stroke that carries the instruction.
-
-   The full band is 120 METRES from shore and stays in metres. It does not grow a pixel floor at
-   low zoom, because the band is a claim about how far out this beach is and a
-   band that silently widens to stay visible is a claim that changes with the
-   zoom. Wide enough to read as an area,
-   narrow enough that two neighbouring bands never merge into one wash.
-
-   BAND_MIN_ZOOM IS 13, NOT 14, AND THE PHONE IS WHY. A deep link to Cocles on a
-   390 px phone with the sheet at PEEK fits a 3.1 km beach at z13.75, so a
-   floor of 14 removed the band on the exact device and the exact path this was
-   built for: scan the QR on the sand, and the boundary you were promised is
-   not drawn. At z13 the band is 6.7 px, which the dashed seaward edge and the
-   two end caps still carry. At z12 it is 3.4 px, which is a muddier line and
-   not an area, so that is where it stops. */
-// The OSM zone stroke is 25 m seaward of the mapped shoreline. Fill from the
-// shoreline to 120 m offshore, instead of beginning 25 m out and ending at 145 m.
-var BAND_INNER_M = -25;
-var BAND_M = 95;
-var BAND_MIN_ZOOM = 13;
-let bandLayer = null, bandZone = null;
-
-/* ITS OWN PANE, AT z-index 350, AND NOT ONE OF LEAFLET'S.
-   The band has to sit above the imagery and below the zone stroke, and neither
-   stock pane is that slot. overlayPane (400) is where the strokes are, and a
-   layer added to it after them draws on top, which would put a 16% wash over
-   the one mark on this map that must not be diluted. shadowPane (500) is worse,
-   it is above them by construction. tilePane (200) is below the imagery's own
-   transformed tile containers and a vector renderer put there is moved by them.
-   350 is the gap between tilePane and overlayPane, which is exactly the
-   relationship this band has to both. pointer-events off: the band is a
-   read-only mark and the zone's invisible 44 px hit line must keep the tap. */
-var BAND_PANE = "cgBandPane";
-map.createPane(BAND_PANE);
-map.getPane(BAND_PANE).style.zIndex = 350;
-map.getPane(BAND_PANE).style.pointerEvents = "none";
-
-/* SEAMLESS JOINTS (Daniel, 2026-09-23). Each band used to take its normal from
-   its own neighbouring points only, so at a joint the west band's last normal
-   and the east band's first normal pointed different ways and the two areas
-   overlapped in a wedge. Now the normal at every point is taken over a window
-   of points that runs ACROSS the joint into the neighbouring beach, so both
-   bands compute the identical edge there and meet on one line. The window also
-   smooths the offset where the coast turns tightly. */
-const NORMAL_WINDOW = 3;
-function bandNeighbours(z){
-  const same = (p, q) => Math.abs(p[0]-q[0]) < 1e-6 && Math.abs(p[1]-q[1]) < 1e-6;
-  const all = [...ZONES, ...UNASSESSED_BEACHES].filter(o => o !== z && o.line && o.line.length);
-  const first = z.line[0], last = z.line[z.line.length - 1];
-  return {
-    west: all.find(o => same(o.line[o.line.length - 1], first)),
-    east: all.find(o => same(o.line[0], last))
-  };
-}
-function seawardEdge(z){
-  // Metres per degree at this coast; the same frame tools/osm_coastline.py uses.
-  const mLat = 111132, mLon = 111320 * Math.cos(9.645 * Math.PI / 180);
-  const toM = p => [p[1] * mLon, p[0] * mLat];
-  const nb = bandNeighbours(z);
-  const before = nb.west ? nb.west.line.slice(-1 - NORMAL_WINDOW, -1) : [];
-  const after = nb.east ? nb.east.line.slice(1, 1 + NORMAL_WINDOW) : [];
-  const ext = [...before, ...z.line, ...after].map(toM);
-  const off = before.length;
-  const inner = [], out = [];
-  for(let j = 0; j < z.line.length; j++){
-    const i = j + off;
-    const a = ext[Math.max(0, i - NORMAL_WINDOW)], b = ext[Math.min(ext.length - 1, i + NORMAL_WINDOW)];
-    const dx = b[0] - a[0], dy = b[1] - a[1];
-    const len = Math.hypot(dx, dy) || 1;
-    // The LEFT normal, which is seaward: the line runs west to east and the
-    // open sea is on its left. tools/osm_coastline.py offsets the same way and
-    // for the same reason; if one of them ever flips, both must.
-    const p = ext[i];
-    inner.push([p[0] - dy / len * BAND_INNER_M, p[1] + dx / len * BAND_INNER_M]);
-    out.push([p[0] - dy / len * BAND_M, p[1] + dx / len * BAND_M]);
+/* The colored coast bands are generated from one continuous corridor, then cut
+   at shared beach joints. The old per-vertex normal offsets folded over
+   themselves at Cocles, Chiquita, Punta Uva, and Salsa Brava. The source lines
+   still supply the thin safety stroke and the tap target above these bands. */
+var bandZone=null;
+var bandLayer=null;
+const openBeach=z=>z.character?openZone(z):openUnassessedBeach(z);
+const BAND_PANE='cgBandPane';
+map.createPane(BAND_PANE).style.zIndex=350;
+map.getPane(BAND_PANE).style.pointerEvents='none';
+const bandFeatures=new Map();
+let bandsReady=false;
+const bandColor=z=>z.character?COLOR[tierOf(z)]:'#9aa7b0';
+const bandShape=(feature,style)=>L.geoJSON(feature,{pane:BAND_PANE,style,interactive:false});
+function drawBand(z,selected,group){
+  const features=bandFeatures.get(z.id);
+  if(!features)return;
+  const col=bandColor(z),provisional=!z.character;
+  bandShape(features.band,{stroke:false,fill:true,fillColor:col,
+    fillOpacity:selected ? .14 : (provisional ? .18 : .08)}).addTo(group);
+  bandShape(features.offshore,{color:col,weight:1,opacity:selected ? .55 : .35,
+    dashArray:'5 7',fill:false}).addTo(group);
+  if(selected){
+    features.caps.forEach(cap=>bandShape(cap,{color:col,weight:2,opacity:.9,
+      dashArray:provisional?'4 4':null,fill:false}).addTo(group));
   }
-  return {inner, outer: out,
-          ll: q => [q[1] / mLat, q[0] / mLon]};
 }
-
-function bandPolygon(z){
-  const e = seawardEdge(z);
-  return e.inner.concat(e.outer.slice().reverse()).map(e.ll);
-}
-
-/* The end caps ARE the band's own end edges now, so a cap and the neighbour's
-   band edge are the same line rather than two lines at two angles. */
-function endTicks(z){
-  const e = seawardEdge(z), n = e.inner.length;
-  return [[e.inner[0], e.outer[0]].map(e.ll), [e.inner[n - 1], e.outer[n - 1]].map(e.ll)];
-}
-
-/* PROVISIONAL AREAS ARE GREY (Daniel, 2026-09-23). Playa Grande and
-   Manzanillo have no Caribbean Guard boundary, so their extent is cut from the
-   mapped coastline and drawn in the absence colour, with DASHED ends: the ends
-   of a reviewed beach are a decision somebody made and are solid; these are
-   not. Grey is outside the hazard palette, so it can never read as a tier. */
-const PROVISIONAL_GREY = "#9aa7b0";
-const isProvisional = z => !z.character;
-const bandColour = z => isProvisional(z) ? PROVISIONAL_GREY : COLOR[tierOf(z)];
-const openBeach = z => isProvisional(z) ? openUnassessedBeach(z) : openZone(z);
-
 function clearBand(){
-  if(bandLayer){ bandLayer.remove(); bandLayer = null; }
-  const had = bandZone;
-  bandZone = null;
-  if(had && typeof drawAmbientBands === "function") drawAmbientBands();
-}
-
-function showBand(z){
-  clearBand();
-  if(!z || !z.line.length || map.getZoom() < BAND_MIN_ZOOM) { bandZone = z || null; return; }
-  const col = bandColour(z), prov = isProvisional(z);
-  const edge = seawardEdge(z);
-  bandLayer = L.layerGroup([
-    L.polygon(bandPolygon(z), {
-      pane:BAND_PANE, stroke:false, fill:true, fillColor:col, fillOpacity:.14,
-      interactive:true, bubblingMouseEvents:false
-    }).on("click", () => openBeach(z)),
-    /* THE SEAWARD EDGE IS DASHED AND THE END CAPS ARE SOLID, and the difference
-       between those two strokes is the whole claim this band makes.
-       The ends are a decision somebody took: Cocles stops here and Chiquita
-       starts, on the same continuous sand, and that is what a reader needs when
-       the instruction changes under their feet. Solid.
-       The seaward edge is not a decision and not a survey. The hazard does not
-       stop 120 m out; that is simply how far out this beach is still this
-       beach. A fill alone was invisible over brown reef imagery at 16%, so the
-       edge has to be drawn, and a dashed edge is the honest way to draw an
-       extent nobody measured. There is no landward edge at all: nothing on this
-       map is entitled to draw a line across somebody's garden. */
-    L.polyline(edge.outer.map(edge.ll), {
-      pane:BAND_PANE, color:col, weight:1, opacity:.55, dashArray:"5 7",
-      interactive:false
-    }),
-    ...endTicks(z).map(t => L.polyline(t, {
-      pane:BAND_PANE, color:col, weight:2, opacity:.9, lineCap:"butt",
-      dashArray: prov ? "4 4" : null, interactive:false
-    }))
-  ]).addTo(map);
-  bandZone = z;
+  if(bandLayer){bandLayer.remove();bandLayer=null;}
+  bandZone=null;
   drawAmbientBands();
 }
-
-/* THE BEACH AREAS SHOW ON ZOOM, NOT ONLY ON SELECTION (Daniel, 2026-09-23).
-   Zoomed in to a beach, every zone in view draws its band at a lighter
-   strength, so a reader sees where each beach's water is before choosing one.
-   Tapping the band opens that beach; zooming alone never opens a panel. The
-   selected beach keeps the full-strength band above. */
-var AMBIENT_MIN_ZOOM = 14;
-const ambientBands = L.layerGroup().addTo(map);
+function showBand(z){
+  if(bandLayer){bandLayer.remove();bandLayer=null;}
+  bandZone=z||null;
+  drawAmbientBands();
+  if(!z||!bandsReady)return;
+  bandLayer=L.layerGroup().addTo(map);
+  drawBand(z,true,bandLayer);
+}
+const ambientBands=L.layerGroup().addTo(map);
+const provisionalLines=[];
 function drawAmbientBands(){
   ambientBands.clearLayers();
-  if(!zonesReady || map.getZoom() < AMBIENT_MIN_ZOOM) return;
-  const view = map.getBounds().pad(0.2);
-  [...ZONES, ...UNASSESSED_BEACHES].forEach(z => {
-    if(!z.line.length || (bandZone && bandZone.id === z.id)) return;
-    if(!view.intersects(L.latLngBounds(z.line))) return;
-    const col = bandColour(z), prov = isProvisional(z);
-    const edge = seawardEdge(z);
-    L.polygon(bandPolygon(z), {pane:BAND_PANE, stroke:false, fill:true,
-      fillColor:col, fillOpacity: prov ? .18 : .08, interactive:true, bubblingMouseEvents:false})
-      .on("click", () => openBeach(z)).addTo(ambientBands);
-    L.polyline(edge.outer.map(edge.ll), {pane:BAND_PANE, color:col, weight:1,
-      opacity:.35, dashArray:"5 7", interactive:false}).addTo(ambientBands);
-  });
+  if(zonesReady&&bandsReady){
+    const view=map.getBounds().pad(.2);
+    [...ZONES,...UNASSESSED_BEACHES].forEach(z=>{
+      if(!z.line.length||z.id===bandZone?.id||!view.intersects(L.latLngBounds(z.line)))return;
+      drawBand(z,false,ambientBands);
+    });
+  }
+  if(!zonesReady)return;
+  if(!provisionalLines.length){
+    UNASSESSED_BEACHES.forEach(z=>{
+      if(!z.line.length)return;
+      const line=CGGeom.taperedPolyline(z.line,{color:'#83949a',weight:3},map).addTo(map);
+      provisionalLines.push(line);
+      L.polyline(z.line,{weight:32,opacity:0}).addTo(map).on('click',()=>openUnassessedBeach(z));
+    });
+  }
+  provisionalLines.forEach(line=>line.cgSetStyle({weight:CGGeom.zoneStroke('low',map.getZoom()).weight}));
 }
-map.on("zoomend moveend", drawAmbientBands);
-
-// The band appears and disappears with zoom on its own, because a reader who
-// pinches out past z14 with a sheet open should not be left with a wash they
-// cannot resolve, and one who pinches back in should get it back.
-map.on("zoomend", ()=>{ if(bandZone) showBand(bandZone); });
+map.on('zoomend moveend',drawAmbientBands);
+fetch('data/coast-bands.geojson')
+  .then(r=>r.ok?r.json():Promise.reject(r.status))
+  .then(gj=>{
+    gj.features.forEach(feature=>{
+      const id=feature.properties.id;
+      if(!bandFeatures.has(id))bandFeatures.set(id,{caps:[]});
+      const entry=bandFeatures.get(id);
+      if(feature.properties.kind==='cap')entry.caps.push(feature);
+      else entry[feature.properties.kind]=feature;
+    });
+    bandsReady=true;
+    drawAmbientBands();
+    if(bandZone)showBand(bandZone);
+  })
+  .catch(error=>{console.warn('[cg] coast bands did not load:',error);say(T[lang].bandFailed,60000);});
 
 function flyClear(bounds, opts){
   map.setMaxBounds(null); // Restore the appropriate coverage after the flight.
@@ -3769,17 +3602,18 @@ function flyClear(bounds, opts){
     // right. Padding by both is what keeps the coast out from under the panel.
     const rail = document.querySelector(".dock")?.offsetWidth || 360;
     const panel = 0; // The detail sheet replaces the left rail.
-    map.flyToBounds(bounds, Object.assign({
-      duration:.7, maxZoom:17,
+    map.fitBounds(bounds, Object.assign({
+      animate:false, maxZoom:17,
       paddingTopLeft:[rail + 24, headH + 16],
       paddingBottomRight:[panel + 24, 32]
     }, opts||{}));
     return;
   }
   // The stop it is heading for, not where it is: it starts below the screen.
+  if(open && sheetPanel.stop !== 'peek') sheetStop('peek');
   const sheetH = open ? sheetPanel.visibleOf(sheetPanel.stop) : 0;
-  map.flyToBounds(bounds, Object.assign({
-    duration:.7, maxZoom:17,
+  map.fitBounds(bounds, Object.assign({
+    animate:false, maxZoom:17,
     paddingTopLeft:[24, headH + 16],
     paddingBottomRight:[24, sheetH + 16]
   }, opts||{}));
@@ -3811,7 +3645,7 @@ function openPost(p){
     </div>
     ${sheetFoot()}`;
   };
-  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  openSheet(render(), ()=>{ setSheetContent(render()); });
   flyClear(L.latLngBounds([p.ll]).pad(0.002), {maxZoom:16.5});
   sheetAddress("p=" + localId(p.id));
 }
@@ -3863,7 +3697,7 @@ function openLegend(){
     <div class="legend">${legendHTML()}</div>
     <p class="defer">${T[lang].defer}</p>
     ${sheetFoot()}`;
-  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  openSheet(render(), ()=>{ setSheetContent(render()); });
   // A legend is a reading task, not a glance, so it opens past PEEK.
   sheetStop("half");
 }
@@ -3874,7 +3708,6 @@ const PLACE_CATEGORIES = ['stay','eat','shop','landmark','other'];
 const sourceLayerDefs = [
   ['hazards','rip_current','Corrientes de resaca','Rip currents','safety'],
   ['rescue','rescue_station','Equipo de rescate','Rescue equipment','safety'],
-  ['proposals','proposed_rescue_station','Propuestas / sin identificar','Proposed / unknown','safety'],
   ['places_stay','place_stay','Hospedaje','Places to stay','places'],
   ['places_eat','place_eat','Comer y beber','Food and drink','places'],
   ['places_shop','place_shop','Tiendas y servicios','Shops and services','places'],
@@ -3921,7 +3754,7 @@ function renderLegendPerm(){
       <div class="source-layer-grid">${sourceLayerDefs.filter(d=>d[4]===sec).map(([id,icon,esName,enName])=>`<label>
       <input type="checkbox" data-source-layer="${id}" ${sourceLayerState[id]?'checked':''}>
       ${CGSymbols.badge(icon, id.startsWith('places_')?'place-badge':'')}<span>${es?esName:enName}</span></label>`).join('')}</div></section>`).join('')}
-    <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Los símbolos punteados son propuestas. Las corrientes en movimiento marcan resaca según el mapa de Caribbean Guard; su dirección no está medida.':'Zoom in for detail. Dashed symbols are proposed. Moving currents mark rips from the Caribbean Guard map; their direction is not measured.'}</p>
+    <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Las corrientes en movimiento marcan resaca según el mapa de Caribbean Guard; su dirección no está medida.':'Zoom in for detail. Moving currents mark rips from the Caribbean Guard map; their direction is not measured.'}</p>
     <details class="key-data"><summary>${es?'Fuentes y precisión':'Sources and accuracy'}</summary>
       <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
     </details></div>`;
@@ -4128,19 +3961,7 @@ function buildPicker(){
       <span class="beach-copy"><span class="nm">${b.name}</span>
       <span class="beach-status">${t.unassessedStatus}</span></span>
     </button>`).join("");
-  /* The absence, listed as a peer of the presences, and a DIFFERENT SPECIES of
-     card: dashed, hatched, and carrying no status pill at all. Hat 1 skimmed
-     straight past the most defensible thing on the page because it had the same
-     size, shape and row as a beach and was only greyer. Still last, because it
-     is the rest. */
-  const voidCard = `<button class="card void" data-id="void" aria-current="false">
-      ${CGSymbols.badge('unknown', 'beach-symbol')}
-      <span class="beach-copy">
-      <span class="nm">${t.voidName}</span>
-      <span class="vd">${t.voidStatus}</span>
-      </span>
-    </button>`;
-  document.getElementById("picker").innerHTML = cards + voidCard;
+  document.getElementById("picker").innerHTML = cards;
   document.querySelectorAll(".card").forEach(c=>{
     c.setAttribute("aria-current", c.dataset.id === selected);
     c.onclick = c.dataset.id === "void" ? openVoid
@@ -4294,7 +4115,7 @@ function measureDock(mayFit = true){
   // `mayFit` is false when the caller is about to fit anyway, as refit() is.
   // Without it a resize fits twice, and the first of the two runs against a
   // dock height that has not been laid out yet.
-  if(!mayFit || !zonesReady) return;
+  if(!mayFit || !zonesReady || sheet.classList.contains("open")) return;
   if(first || Math.abs(map.getZoom() - map.getMinZoom()) < 0.01) fitCoast();
 }
 
@@ -4443,9 +4264,9 @@ function setLang(l){
   document.getElementById("btn-es").setAttribute("aria-pressed",l==="es");
   document.getElementById("btn-en").setAttribute("aria-pressed",l==="en");
   document.getElementById("tagline").textContent = t.tagline;
-  document.getElementById("rail-what").textContent = "Puerto Viejo · Manzanillo";
   document.getElementById("rail-beaches").textContent = t.ebBeaches;
   renderSea();
+  refreshDangerLabels();
   document.getElementById("sos-word").textContent = t.sosWord;
   document.getElementById("locate-first-label").textContent = t.locateFirst;
   document.getElementById("legend-open").textContent = t.legendTitle;
@@ -4584,8 +4405,89 @@ function openAnnot(kind, f){
     </div>
     ${sheetFoot()}`;
   };
-  openSheet(render(), ()=>{ sheetBody.innerHTML = render(); });
+  openSheet(render(), ()=>{ setSheetContent(render()); });
 }
+
+function dangerLabel(beach, compact=false){
+  const es=lang==='es';
+  if(!beach?.character)return es?'Sin evaluar':'Not assessed';
+  const tier=tierOf(beach);
+  if(compact)return tier==='high'?(es?'Riesgo alto':'High risk'):tier==='moderate'?(es?'Riesgo moderado':'Moderate risk'):(es?'Precaución':'Caution');
+  return (es?'Riesgo de referencia: ':'Reference risk: ')+(tier==='high'?(es?'alto':'high'):tier==='moderate'?(es?'moderado':'moderate'):(es?'precaución':'caution'));
+}
+function refreshDangerLabels(){
+  [...zoneLabels,...unassessedLabels].forEach((marker,i)=>{
+    const beach=[...ZONES,...UNASSESSED_BEACHES][i];
+    const name=beach.character?beach.name[lang]:beach.name;
+    marker.setIcon(L.divIcon({className:'lbl zone area-label',iconSize:[190,42],iconAnchor:[95,21],
+      html:`<strong>${sourceEsc(name)}</strong><span class="area-risk ${beach.character?tierOf(beach):'unknown'}">${dangerLabel(beach,true)}</span>`}));
+    marker.fire('add');
+  });
+  restyleLabels();
+}
+const accessPoints=[], accessMarkers=[];
+map.createPane('cgAccessPane');
+map.getPane('cgAccessPane').style.zIndex=450;
+map.getPane('cgAccessPane').style.pointerEvents='none';
+let selectedAccessPath=null;
+function accessName(point){
+  const beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===point.beach);
+  const name=beach?.character?beach.name[lang]:beach?.name;
+  return `${lang==='es'?'Sendero':'Path'} · ${name||point.id}`;
+}
+function clearAccessPath(){if(selectedAccessPath){selectedAccessPath.remove();selectedAccessPath=null;}}
+function openAccess(point){
+  clearAccessPath();
+  const beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===point.beach);
+  const render=()=>{
+    const es=lang==='es',name=accessName(point),qr=new URL('/mapa',location.origin);
+    qr.searchParams.set('a',point.id);
+    return `<h2 id="sheet-title" tabindex="-1">${sourceEsc(name)}</h2>
+      <p class="access-note">${es?'Punto de acceso cartografiado. Posición y acceso público pendientes de confirmación en campo.':'Mapped access point. Position and public access await field confirmation.'}</p>
+      <div class="access-risk ${beach?.character?tierOf(beach):'unknown'}"><strong>${dangerLabel(beach)}</strong>
+      <p>${beach?.character?T[lang][beach.character.class]:(es?'No hay evaluación de esta playa.':'No assessment is available for this beach.')}</p></div>
+      <p>${es?'Las flechas muestran corrientes de resaca del mapa fuente, no mediciones de hoy. La señalización y los guardavidas en la playa tienen prioridad.':'Arrows show rip currents from the source map, not measurements today. Beach signs and lifeguards take priority.'}</p>
+      <div class="actions"><button class="btn" data-area="${point.beach}">${es?'Ver toda la playa':'View the whole beach'}</button><a class="btn" href="tel:911">${es?'Llamar al 911':'Call 911'}</a></div>
+      ${renderForecastPanel(beach?.id)}
+      <details class="qr-link"><summary>${es?'Enlace para el QR de este acceso':'QR link for this access point'}</summary>
+      <label>${es?'Enlace de esta versión':'Link to this version'}<input readonly value="${sourceEsc(qr.href)}" aria-label="${es?'Enlace QR':'QR link'}"></label>
+      <button class="btn" data-copy-access>${es?'Copiar enlace':'Copy link'}</button>
+      <p>${es?'Demostración. Confirma el lugar y el dominio final antes de imprimir el QR.':'Demonstration. Confirm the location and final domain before printing the QR.'}</p></details>
+      <p class="access-note"><a href="${point.source}" target="_blank" rel="noopener">OpenStreetMap</a> · ${sourceEsc(point.id)}</p>${sheetFoot()}`;
+  };
+  openSheet(render(),()=>{setSheetContent(render());});
+  const path=point.path.map(([lon,lat])=>[lat,lon]);
+  selectedAccessPath=L.layerGroup([
+    L.polyline(path,{pane:'cgAccessPane',color:'#fff',weight:6,opacity:1,interactive:false}),
+    L.polyline(path,{pane:'cgAccessPane',color:'#086a9a',weight:3.5,opacity:1,interactive:false}),
+    L.circleMarker([point.point[1],point.point[0]],{pane:'cgAccessPane',radius:15,color:'#fff',weight:2,fillColor:'#086a9a',fillOpacity:1,interactive:false})
+  ]).addTo(map);
+  if(beach)showBand(beach);
+  flyClear(L.latLngBounds(path).pad(.18),{maxZoom:17});
+  sheetAddress('a='+point.id);
+}
+function updateAccessMarkers(){
+  const show=map.getZoom()>=14.5;
+  for(const marker of accessMarkers){const node=marker.getElement();if(node)node.style.display=show?'':'none';}
+}
+const accessReady=fetch('data/access-points.json').then(r=>{if(!r.ok)throw new Error('Access registry unavailable');return r.json();}).then(data=>{
+  accessPoints.push(...data.entries);
+  for(const point of accessPoints){
+    const marker=L.marker([point.point[1],point.point[0]],{zIndexOffset:600,title:accessName(point),
+      icon:L.divIcon({className:'access-marker',iconSize:[44,44],iconAnchor:[22,22],
+        html:`<span aria-hidden="true">${CGSymbols.svg('trailhead')}</span>`})
+    }).addTo(sourceLayers.access).bindTooltip(()=>accessName(point),{direction:'top'}).on('click',()=>openAccess(point));
+    accessMarkers.push(marker);
+  }
+  updateAccessMarkers();
+}).catch(error=>{console.warn(error);});
+map.on('zoomend',updateAccessMarkers);
+document.addEventListener('click',async event=>{
+  const area=event.target.closest('[data-area]');
+  if(area){const beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===area.dataset.area);if(beach){clearAccessPath();openBeach(beach);}}
+  const copy=event.target.closest('[data-copy-access]');
+  if(copy){const input=copy.closest('details').querySelector('input');try{await navigator.clipboard.writeText(input.value);copy.textContent=lang==='es'?'Enlace copiado':'Link copied';}catch{input.focus();input.select();copy.textContent=lang==='es'?'Selecciona y copia el enlace':'Select and copy the link';}}
+});
 
 /* The newer full PDF is registered provisionally from four shared equipment
    markers. It is drawn on this GPS map only; there is no second map view. */
@@ -4632,6 +4534,7 @@ function drawProjectedAnnotations(gj){
     location:'places_other'};
   for(const f of gj.features){
     const kind=f.properties.kind;
+    if(kind.startsWith('proposed') || kind==='unclassified_facility') continue;
     const group=sourceLayers[kind==='location' ? 'places_'+(f.properties.category||'other') : categories[kind]];
     if(!group)continue;
     if(f.id==='pdf:location/408')continue; // Coincident duplicate of source mark 406.
@@ -4656,7 +4559,9 @@ function drawProjectedAnnotations(gj){
   }
   map.on('zoomend',()=>{
     const zoom=map.getZoom(), show=zoom>=15;
-    const separation=zoom<16?56:zoom<17?30:0;
+    // Keep close document marks legible even at beach zoom. Their original
+    // invisible hit paths remain available; only redundant arrow ink is hidden.
+    const separation=zoom<16?56:36;
     document.body.classList.toggle('map-overview',!show);
     const used=[];
     projectedArrows.forEach(({arrow,pts,hit})=>{
@@ -4669,7 +4574,8 @@ function drawProjectedAnnotations(gj){
         arrow.cgRedraw(map,pts,{});
       }else{
         sourceLayers.hazards.removeLayer(arrow);
-        sourceLayers.hazards.removeLayer(hit);
+        if(show){if(!sourceLayers.hazards.hasLayer(hit))hit.addTo(sourceLayers.hazards);}
+        else sourceLayers.hazards.removeLayer(hit);
       }
     });
     projectedDetail.forEach(({layer,kind})=>{
@@ -4689,6 +4595,10 @@ fetch('data/full-map-geographic.geojson')
   .catch(error=>console.warn('Full document annotations unavailable',error));
 
 const osmRoadLayers = [];
+for(const [name,z] of [['cgRoadCasing',370],['cgRoadInk',371]]){
+  map.createPane(name).style.zIndex=z;
+  map.getPane(name).style.pointerEvents='none';
+}
 function osmRoadPopup(feature){
   const es=lang==='es', p=feature.properties;
   const kind=p.road_class==='main'?(es?'Carretera principal':'Main road'):
@@ -4696,24 +4606,27 @@ function osmRoadPopup(feature){
   return `<strong>${sourceEsc(p.name||kind)}</strong><br><small>${es?'OpenStreetMap · acceso sin verificar':'OpenStreetMap · access unverified'}</small>`;
 }
 function updateOsmRoadVisibility(){
-  const z=map.getZoom(), detailed=z>=15;
-  osmRoadLayers.forEach(({layer,roadClass})=>layer.setStyle({
-    opacity:roadClass==='main'?(detailed?.68:.46):(detailed?.48:0),
-    weight:roadClass==='main'?(detailed?2.2:1.3):roadClass==='path'?1.1:1.4
-  }));
+  const z=map.getZoom(), detailed=z>=14.5;
+  osmRoadLayers.forEach(({layer,casing,roadClass,hit})=>{
+    const visible=roadClass==='main'||detailed;
+    const weight=roadClass==='main'?(detailed?3:1.6):roadClass==='path'?1.6:1.8;
+    layer.setStyle({opacity:visible?1:0,weight});
+    casing.setStyle({opacity:visible?1:0,weight:weight+1.6});
+    if(visible&&!sourceLayers.access.hasLayer(hit))hit.addTo(sourceLayers.access);
+    if(!visible)sourceLayers.access.removeLayer(hit);
+  });
 }
 function drawOsmRoads(gj){
   for(const feature of gj.features){
     const p=feature.properties, roadClass=p.road_class;
     const pts=feature.geometry.coordinates.map(([lon,lat])=>[lat,lon]);
+    const casing=L.polyline(pts,{pane:'cgRoadCasing',color:'#314e5b',weight:4.6,opacity:1,lineCap:'round',lineJoin:'round',smoothFactor:.5,interactive:false}).addTo(sourceLayers.access);
     const layer=L.polyline(pts,{
-      color:roadClass==='main'?'#a7d5de':roadClass==='path'?'#d5e8e5':'#b9d8df',
-      weight:roadClass==='main'?2.2:roadClass==='path'?1.1:1.4,
-      opacity:roadClass==='main'?.68:.48,
-      dashArray:roadClass==='path'?'4 5':null,
-      lineCap:'round',lineJoin:'round'
-    }).addTo(sourceLayers.access).bindPopup(()=>osmRoadPopup(feature));
-    osmRoadLayers.push({layer,roadClass});
+      pane:'cgRoadInk',color:roadClass==='path'?'#f3f6f5':'#deedf0', weight:3,opacity:1,smoothFactor:.5,
+      dashArray:roadClass==='path'?'4 5':null,lineCap:'round',lineJoin:'round',interactive:false
+    }).addTo(sourceLayers.access);
+    const hit=L.polyline(pts,{weight:20,opacity:0}).addTo(sourceLayers.access).bindPopup(()=>osmRoadPopup(feature));
+    osmRoadLayers.push({layer,casing,roadClass,hit});
   }
   updateOsmRoadVisibility();
 }
@@ -4862,29 +4775,31 @@ fetch("data/cg-hazards.geojson")
    not allowed to say what the sea is doing, which is the same sentence at the
    bottom of every beach sheet.
 
-   AND IT COMPUTES NO VERDICT. No provider publishes a rip current index for
-   Costa Rica, so a swim / no-swim line here would be Caribbean Guard asserting a
-   threshold that nobody at Caribbean Guard has signed. Daniel's ruling
-   2026-09-17: show the numbers, let the four tiers carry the instruction. When
-   the guards give us wave heights they actually close a beach at, that belongs
-   on the TODAY axis with a name on it, not in this strip. */
+   Wave/swell values remain context, without unvalidated numerical swim rules.
+   The experimental advisory added 2026-10-15 preserves standing restrictions
+   and flags regional thunderstorm forecasts. It never grants clearance.
+   See docs/handoffs/2026-10-15-live-swimming-advisory.md for policy and sources. */
 const SEA_URL = "https://marine-api.open-meteo.com/v1/marine" +
   "?latitude=9.647&longitude=-82.727" +
-  "&current=wave_height,wave_period,wave_direction,sea_surface_temperature" +
+  "&current=wave_height,wave_period,wave_direction,sea_surface_temperature,swell_wave_height,swell_wave_period,swell_wave_direction" +
+  "&hourly=swell_wave_height,swell_wave_period,swell_wave_direction&timeformat=unixtime&forecast_days=2" +
   "&timezone=America%2FCosta_Rica";
 const SEA_STALE_H = 3;
 const seaEl = document.getElementById("sea");
-let seaData = null;
+let seaData = null, seaHourly = null, windHourly = null;
+let marineFetchedAt=0, windFetchedAt=0, forecastBusy=false, forecastFailed=false, forecastAttemptAt=0;
 
 /* One land-weather model point for the region. Open-Meteo currently resolves
    all five beach coordinates to the same default grid cell, so repeating the
    request per beach would imply precision the model does not have. This panel
-   is weather context only; it never changes the swimming instruction. */
+   supplies weather context and the experimental regional storm advisory.
+   It cannot establish local lightning, rip currents or lifeguard presence. */
 const WEATHER_URL = "https://api.open-meteo.com/v1/forecast" +
   "?latitude=9.65&longitude=-82.74" +
-  "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code" +
+  "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code" +
+  "&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code" +
   "&cell_selection=nearest&timezone=America%2FCosta_Rica" +
-  "&timeformat=unixtime&forecast_days=1";
+  "&timeformat=unixtime&forecast_days=2";
 const WEATHER_STALE_H = 3;
 let weatherData = null;
 
@@ -4923,23 +4838,10 @@ function refreshWeatherPanel(){
   if(panel){ panel.outerHTML = renderWeatherPanel(); requestAnimationFrame(fitZoneDetail); }
 }
 function fitZoneDetail(){
-  const detail = sheetBody.querySelector('.zone-detail');
-  if(!detail) return;
-  detail.classList.remove('compact-weather','weather-hidden');
-  if(window.innerWidth < 820 || window.innerHeight <= 760) return;
-  if(detail.scrollHeight > detail.clientHeight + 2) detail.classList.add('compact-weather');
-  if(detail.scrollHeight > detail.clientHeight + 2) detail.classList.add('weather-hidden');
+  // The detail now scrolls naturally; supporting weather lives in a disclosure.
+  sheetBody.querySelector('.zone-detail')?.classList.remove('compact-weather','weather-hidden');
 }
 window.addEventListener('resize', ()=>requestAnimationFrame(fitZoneDetail));
-fetch(WEATHER_URL, {cache:"no-store"})
-  .then(r => r.ok ? r.json() : Promise.reject(r.status))
-  .then(d => {
-    const c = d && d.current;
-    if(!c || c.temperature_2m == null) throw new Error("no weather values");
-    weatherData = c;
-    refreshWeatherPanel();
-  })
-  .catch(err => console.warn("[cg] regional weather did not load:", err));
 
 function seaDir(deg){
   const d = T[lang].seaDirs;
@@ -4947,54 +4849,144 @@ function seaDir(deg){
 }
 
 function renderSea(){
-  if(!seaData){ seaEl.hidden = true; return; }
-  const t = T[lang], c = seaData;
-  /* The model's own hour, parsed as LOCAL. Open-Meteo returns "2026-09-17T12:00"
-     with no zone because we asked for America/Costa_Rica, and new Date() on a
-     bare string like that is local in every browser that matters. Appending "Z"
-     here, or asking for UTC, would print a reading three hours off on the one
-     line whose whole job is saying when. */
-  const at = new Date(c.time.replace(" ", "T"));
-  const ageH = (Date.now() - at.getTime()) / 3600000;
-  const stale = ageH > SEA_STALE_H;
-  const hhmm = at.toLocaleTimeString(lang === "es" ? "es-CR" : "en-GB",
-                                     {hour:"2-digit", minute:"2-digit", hourCycle:"h23"});
-  const col = (kind, val, lbl) =>
-    `<div class="col"><span class="tile" aria-hidden="true">${CGSymbols.svg(kind)}</span>
-       <span class="val">${val}</span><span class="lbl">${lbl}</span></div>`;
-  seaEl.className = "sea" + (stale ? " stale" : "");
-  seaEl.hidden = false;
-  seaEl.innerHTML = `
-    <div class="cols" style="--from:${Math.round(((c.wave_direction % 360) + 360) % 360)}deg">
-      ${col("wave",   c.wave_height.toFixed(1) + " m", t.seaWave)}
-      ${col("period", Math.round(c.wave_period) + " s", t.seaPeriod)}
-      ${col("from",   seaDir(c.wave_direction), t.seaFrom)}
-      ${col("temp",   Math.round(c.sea_surface_temperature) + "°C", t.seaTemp)}
-    </div>
-    <p class="foot">${stale ? t.seaStale(SEA_STALE_H) + " " : ""}${t.seaLine} · <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · <span class="stamp">${hhmm}</span></p>`;
+  const es=lang==='es', marine=CGForecast.current(seaData), wind=CGForecast.current(weatherData);
+  const metric=(label,value)=>`<div><span>${label}</span><strong>${value}</strong></div>`;
+  seaEl.hidden=false;
+  seaEl.className='sea forecast-summary';
+  seaEl.innerHTML=`<div class="forecast-current">
+    ${metric('Swell',CGForecast.format(marine?.swell_wave_height,' m',1))}
+    ${metric(es?'Viento':'Wind',CGForecast.format(wind?.wind_speed_10m,' km/h'))}
+    ${metric(es?'Ráfagas':'Gusts',CGForecast.format(wind?.wind_gusts_10m,' km/h'))}
+    </div><button class="forecast-open" data-forecast>${es?'Oleaje y viento · 24 horas':'Swell and wind · 24 hours'}</button>
+    <p class="foot">${es?'Modelo regional, no condiciones de cada playa.':'Regional model, not individual beach conditions.'}</p>`;
 }
+function direction(value){return Number.isFinite(value)?seaDir(value):'-';}
+function renderSwimAdvisory(beachId){
+  const es=lang==='es', beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===beachId);
+  const a=CGAdvisory.evaluate({beachClass:beach?.character?.class, marine:seaData,weather:weatherData,
+    weatherHourly:windHourly,marineFetchedAt,weatherFetchedAt:windFetchedAt});
+  const titles=es?{'avoid-water':'No entres al agua','lifeguard-required':'Confirma que hay guardavidas',unassessed:'Falta evaluación local','check-locally':'Consulta las condiciones en la playa'}
+    :{'avoid-water':'Stay out of the water','lifeguard-required':'Confirm lifeguards are on duty',unassessed:'Local assessment needed','check-locally':'Check conditions at the beach'};
+  const reasons=es?{
+    'standing-no-swim':'La guía de esta playa indica no entrar al agua. El pronóstico no cambia esa indicación.',
+    'regional-thunderstorm':'El modelo prevé tormenta en la región durante las próximas 3 horas. No es una detección local de rayos.',
+    'lifeguard-required':'Esta playa requiere supervisión. El horario publicado no confirma que haya guardavidas hoy.',
+    'beach-unassessed':beach?'Esta playa aún no tiene una evaluación local.':'El pronóstico regional no evalúa una playa concreta.',
+    'marine-incomplete':'Faltan datos recientes y completos de oleaje.',
+    'weather-incomplete':'Faltan datos recientes y completos de viento o tormentas.',
+    'local-observation-missing':'No hay observaciones actuales de las corrientes ni confirmación de guardavidas.',
+    'wave-wind-policy-unvalidated':'No hay umbrales de oleaje y viento validados para estas playas.'
+  }:{
+    'standing-no-swim':'This beach’s reference guidance says to stay out. A forecast does not override it.',
+    'regional-thunderstorm':'The model forecasts thunderstorms in the region within 3 hours. This is not local lightning detection.',
+    'lifeguard-required':'This beach requires supervision. Published hours do not confirm lifeguards are present today.',
+    'beach-unassessed':beach?'This beach has no local assessment yet.':'A regional forecast does not assess a particular beach.',
+    'marine-incomplete':'Recent, complete wave data is unavailable.',
+    'weather-incomplete':'Recent, complete wind or thunderstorm data is unavailable.',
+    'local-observation-missing':'There are no current rip-current observations or confirmed lifeguards.',
+    'wave-wind-policy-unvalidated':'Wave and wind thresholds have not been validated for these beaches.'
+  };
+  return `<section class="swim-advisory ${a.decision==='avoid-water'?'advisory-stop':''}" aria-label="${es?'Orientación para nadar':'Swimming guidance'}">
+    <p class="advisory-kicker">${es?'Orientación experimental':'Experimental guidance'}</p>
+    <h3>${titles[a.decision]}</h3>
+    <p class="advisory-summary">${a.thunderstorm?reasons['regional-thunderstorm']:(es?'La seguridad para nadar no está confirmada. Sigue la señalización y a los guardavidas.':'Swimming safety is not confirmed. Follow beach signs and lifeguards.')}</p>
+    ${a.thunderstorm?`<p class="advisory-summary"><strong>${es?'Si oyes truenos, sal del agua y busca refugio en un edificio cerrado o vehículo de techo rígido.':'If you hear thunder, leave the water and shelter in an enclosed building or hard-topped vehicle.'}</strong></p>`:''}
+    <p class="advisory-data">${es?'Datos del modelo: ':'Model data: '}${a.coverage==='available'?(es?'recientes':'recent'):(es?'incompletos o sin actualizar':'incomplete or out of date')}</p>
+    <details class="advisory-reasons"><summary>${es?'Por qué y qué falta':'Why and what is missing'}</summary>
+      <ul>${a.reasons.map(reason=>`<li>${reasons[reason]}</li>`).join('')}</ul>
+      <p>${es?'Si oyes truenos, sal del agua y busca un edificio cerrado o un vehículo de techo rígido. Espera al menos 30 minutos desde el último trueno. El modelo no cuenta ese tiempo.':'If you hear thunder, leave the water and shelter in an enclosed building or hard-topped vehicle. Wait at least 30 minutes after the last thunder. The model cannot time this for you.'}</p>
+      <p>${es?'Sin conexión automática con alertas oficiales ni datos de calidad del agua.':'Official alerts and water-quality data are not connected.'}</p>
+      <p class="advisory-time">${es?'Hora del modelo (CR)':'Model time (CR)'}: ${es?'mar':'sea'} ${a.inputs.marineAt?CGForecast.time(a.inputs.marineAt,lang):'-'}; ${es?'tiempo':'weather'} ${a.inputs.weatherAt?CGForecast.time(a.inputs.weatherAt,lang):'-'}.</p>
+      <p class="advisory-sources"><a href="https://www.ilsf.org/safety-tips/" target="_blank" rel="noopener">ILS</a> · <a href="https://www.weather.gov/safety/lightning-tips" target="_blank" rel="noopener">NWS</a> · <a href="https://miocimar.ucr.ac.cr/" target="_blank" rel="noopener">MIO CIMAR</a></p>
+    </details>
+  </section>`;
+}
+function renderForecastPanel(beachId=''){
+  const es=lang==='es', rows=CGForecast.rows(CGForecast.freshHourly(seaHourly,marineFetchedAt),CGForecast.freshHourly(windHourly,windFetchedAt)), f=CGForecast.format;
+  const available=rows.some(r=>r.swell!==null||r.wind!==null);
+  return `<section class="area-forecast" data-beach="${sourceEsc(beachId||'')}" aria-label="${es?'Pronóstico de oleaje y viento':'Swell and wind forecast'}">
+    ${renderSwimAdvisory(beachId)}
+    <div class="forecast-heading"><div><h3>${es?'Oleaje y viento':'Swell and wind'}</h3>
+      <p class="forecast-period">${es?'24 horas · hora de Costa Rica':'24 hours · Costa Rica time'}</p></div>
+      <button class="forecast-refresh" data-refresh-forecast aria-label="${es?'Actualizar pronóstico':'Refresh forecast'}" title="${es?'Actualizar pronóstico':'Refresh forecast'}" ${forecastBusy?'disabled aria-busy="true"':''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M19 11a7 7 0 1 0-1 6"/></svg></button></div>
+    <p class="forecast-scope forecast-limit">${es?'Modelo regional. No mide resacas.':'Regional model. No rip-current readings.'}</p>
+    ${available?`<div class="forecast-table-wrap" tabindex="0" role="region" aria-label="${es?'Tabla de pronóstico':'Forecast table'}"><table class="forecast-table">
+    <thead><tr><th>${es?'Hora':'Time'}</th><th>Swell</th><th>${es?'Viento':'Wind'}</th><th>${es?'Ráfaga':'Gust'}</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><th scope="row">${CGForecast.time(r.time,lang)}</th><td>${f(r.swell,' m',1)}<small>${f(r.period,' s')} · ${direction(r.swellFrom)}</small></td><td>${f(r.wind,' km/h')}<small>${direction(r.windFrom)}</small></td><td>${f(r.gust,' km/h')}</td></tr>`).join('')}</tbody></table></div>`
+    :`<p role="status">${forecastBusy?(es?'Cargando pronóstico…':'Loading forecast…'):(es?'Pronóstico no disponible. Comprueba tu conexión e inténtalo de nuevo.':'Forecast unavailable. Check your connection and try again.')}</p>`}
+    <p class="forecast-scope">${es?'Dirección de origen · - sin datos.':'Direction of origin · - no data.'} <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></p>
+    ${marineFetchedAt||windFetchedAt?`<p class="forecast-scope">${es?'Consultado':'Retrieved'}: swell ${marineFetchedAt?CGForecast.time(marineFetchedAt,lang):'-'}; ${es?'viento':'wind'} ${windFetchedAt?CGForecast.time(windFetchedAt,lang):'-'}.</p>`:''}
+    ${forecastFailed?`<p role="status" class="forecast-scope">${es?'No se pudieron actualizar todos los datos. Revisa la hora de consulta.':'Some data could not be refreshed. Check the retrieval time.'}</p>`:''}
 
-/* NETWORK-FIRST WITH A CACHED FALLBACK, and no precache entry.
-   The service worker must never hold this: a precached sea state would be
-   served from disk on a visit weeks later and would look current. The fetch is
-   allowed to fail silently and the strip simply does not render, because a
-   coast with no sea strip reads as "no reading", which is true, while a strip
-   with an old number reads as a reading, which is not. That is the same
-   argument as the geometry fetch above, inverted: geometry failing is worth
-   shouting about because a coast with no strokes looks safe; the sea failing is
-   not, because the four tiers do not depend on it. */
-fetch(SEA_URL, {cache:"no-store"})
-  .then(r => r.ok ? r.json() : Promise.reject(r.status))
-  .then(d => {
-    const c = d && d.current;
-    if(!c || c.wave_height == null){ throw new Error("no marine values"); }
-    seaData = c;
-    renderSea();
-    measureDock();
-  })
-  .catch(err => console.warn("[cg] sea state did not load:", err));
+    </section>`;
+}
+function refreshForecastPanel(){
+  document.querySelectorAll('.area-forecast').forEach(panel=>{
+    const scroll=sheetBody.scrollTop, focused=panel.contains(document.activeElement);
+    const whyOpen=panel.querySelector('.advisory-reasons')?.open, whyFocused=panel.querySelector('.advisory-reasons summary')===document.activeElement;
+    const beachId=panel.dataset.beach;
+    panel.outerHTML=renderForecastPanel(beachId);
+    const why=sheetBody.querySelector('.advisory-reasons');
+    if(why)why.open=whyOpen;
+    sheetBody.scrollTop=scroll;
+    if(whyFocused)why?.querySelector('summary')?.focus({preventScroll:true});
+    else if(focused&&!forecastBusy)sheetBody.querySelector('[data-refresh-forecast]')?.focus({preventScroll:true});
+  });
+}
+function openForecast(){
+  clearAccessPath(); clearBand(); sheetAddress("");
+  const render=()=>`<h2 id="sheet-title" tabindex="-1">${lang==='es'?'Pronóstico de la costa':'Coastal forecast'}</h2>${renderForecastPanel()}${sheetFoot()}`;
+  openSheet(render(),()=>{setSheetContent(render());});
+}
+document.addEventListener('click',event=>{
+  if(event.target.closest('[data-forecast]'))openForecast();
+  if(event.target.closest('[data-refresh-forecast]'))refreshForecast();
+});
+async function refreshForecast(){
+  if(forecastBusy)return;
+  forecastBusy=true;forecastFailed=false;forecastAttemptAt=Date.now();refreshForecastPanel();
+  const requests=[[SEA_URL,d=>{seaData=d.current;seaHourly=d.hourly;marineFetchedAt=Date.now()/1000;}],
+    [WEATHER_URL,d=>{weatherData=d.current;windHourly=d.hourly;windFetchedAt=Date.now()/1000;}]];
+  const results=await Promise.allSettled(requests.map(async([url,save])=>{
+    const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(12000)});
+    if(!response.ok)throw new Error('Forecast unavailable');
+    const data=await response.json();
+    if(!Array.isArray(data?.hourly?.time))throw new Error('Missing forecast series');
+    save(data);
+  }));
+  forecastBusy=false;forecastFailed=results.some(result=>result.status==='rejected');
+  renderSea();refreshForecastPanel();refreshWeatherPanel();measureDock();
+}
+setInterval(()=>{
+  renderSea();refreshForecastPanel();
+  if(!document.hidden&&Date.now()-forecastAttemptAt>15*60*1000)refreshForecast();
+},60000);
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden){renderSea();refreshForecastPanel();if(Date.now()-forecastAttemptAt>15*60*1000)refreshForecast();}
+});
+// Requests bypass the offline map cache. Model advisories never grant clearance.
+refreshForecast();
 
-const SW_SUPPORTED = "serviceWorker" in navigator;
+
+/* A saved production worker can control localhost too. It can serve yesterday's
+   geometry and styles during a design review even while Vite serves new files.
+   Do not register a worker on the local preview; release the old one once and
+   reload so the next document and assets come from the dev server. */
+const LOCAL_PREVIEW = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const SW_SUPPORTED = "serviceWorker" in navigator && !LOCAL_PREVIEW;
+if(LOCAL_PREVIEW && "serviceWorker" in navigator){
+  navigator.serviceWorker.getRegistration(location.href).then(reg=>{
+    if(!reg) return;
+    return reg.unregister().then(removed=>{
+      if(!removed || !navigator.serviceWorker.controller) return;
+      // Avoid a reload loop if a browser keeps the old controller for this tab.
+      const key = "cg-local-preview-sw-reload";
+      if(sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+      location.reload();
+    });
+  }).catch(()=>{});
+}
 const standalone = () => window.matchMedia("(display-mode: standalone)").matches ||
                          navigator.standalone === true;
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -5032,6 +5024,7 @@ function renderSaved(state){
   savedTxt.textContent =
       state === "refreshing" ? t.savedRefreshing
     : state === "failed"     ? t.savedFailed
+    : LOCAL_PREVIEW          ? t.previewNoStore
     : !SW_SUPPORTED          ? t.savedNoStore
     : savedAt                ? t.savedAt(fmtStamp(savedAt))
     : t.savedNever;
@@ -5053,7 +5046,9 @@ function isAndroid(){ return /Android/i.test(navigator.userAgent || ""); }
 function openSaved(){
   const t = T[lang];
   const ok = SW_SUPPORTED && savedAt;
-  const status = ok ? t.savedOkLine(fmtStamp(savedAt)) : (SW_SUPPORTED ? t.savedNever : t.savedNoStore);
+  const status = LOCAL_PREVIEW ? t.previewNoStore
+    : ok ? t.savedOkLine(fmtStamp(savedAt))
+    : (SW_SUPPORTED ? t.savedNever : t.savedNoStore);
   const steps = list => `<ol class="saved-steps">${list.map(x => `<li>${x}</li>`).join("")}</ol>`;
   let how = "";
   if(standalone()){
@@ -5068,7 +5063,7 @@ function openSaved(){
   const html = `
     <h2 id="sheet-title" tabindex="-1">${t.savedTitle}</h2>
     <p class="saved-status ${ok ? "is-ok" : ""}">${status}</p>
-    <p class="why">${SW_SUPPORTED ? t.savedShort : t.savedNoSw}</p>
+    <p class="why">${LOCAL_PREVIEW ? t.previewWhy : SW_SUPPORTED ? t.savedShort : t.savedNoSw}</p>
     ${how}`;
   openSheet(html, openSaved);
   sheet.classList.add("no-close");
@@ -5171,7 +5166,7 @@ if(SW_SUPPORTED){
 }
 renderSaved();
 
-/* ---------- QR deep links:  ?z=cocles   or   ?p=est2 ----------
+/* ---------- QR deep links: ?z=cocles, ?p=est1, ?a=osm-458862734 ----------
    The URL carries the LOCAL part of the namespaced id, not the whole id. QR codes
    go on aluminium bolted to a post and are the least revisable thing this project
    will produce, so the shortest stable form wins and ?z=cocles keeps working. */
@@ -5189,10 +5184,10 @@ renderSaved();
   const z=ZONES.find(x=>localId(x.id)===q.get("z"));
   const b=UNASSESSED_BEACHES.find(x=>localId(x.id)===q.get("b"));
   const p=POSTS.find(x=>localId(x.id)===q.get("p"));
-  /* Open from the full-coast view rather than jumping straight in. The fly is
-     what tells someone who just scanned a QR code where on the coast they are. */
-  if(z){ setTimeout(()=>openZone(z),350); }
-  else if(b){ setTimeout(()=>openUnassessedBeach(b),350); }
+  // Fit immediately so late startup layout updates cannot interrupt a QR flight.
+  if(q.has("a")){ Promise.all([geomReady,accessReady]).then(()=>{ const point=accessPoints.find(x=>x.id===q.get("a")); if(point)openAccess(point); else say(lang==='es'?'Acceso no encontrado. Elige una playa.':'Access point not found. Choose a beach.',10000); }); }
+  else if(z){ geomReady.then(()=>openZone(z)); }
+  else if(b){ geomReady.then(()=>openUnassessedBeach(b)); }
   else if(p){ setTimeout(()=>openPost(p),350); }
 
   /* The install nudge, which is what "Guarde esta página" was reaching for. It

@@ -1,12 +1,12 @@
 # Deploying the safety map
 
-## Website and map are separate Vercel projects
+## Map-only repository
 
-The organization website at `https://caribbean-guard-map-6sqm.vercel.app/` is deployed from the repository root. Since 23 September 2026 it is the Next.js site in `site/` (a subtree of the live caribbeanguard.org repository); root `vercel.json` installs and builds it and serves `site/out`. Its `/mapa/` route redirects to the safety map project at `https://web-five-beta-p7wt9cgwmf.vercel.app/`. Deploying the website does not publish map changes or its ignored satellite tiles. Deploy the website from the repository root and the map from `web/` when both have changed. Verify the website route and the map's worker version after both releases.
+The organization website lives in [TommasoRibaudo/caribbeanguard-org](https://github.com/TommasoRibaudo/caribbeanguard-org). This repository contains the map in `web/`. Its generated satellite tiles are ignored by Git, so a Git-triggered Vercel build cannot publish a complete map. Root `vercel.json` skips those builds. The release process uploads `web/` with its local tiles to the existing map project.
 
 ## Existing target
 
-The map is a static Vercel project. Deploy **`web/`**, not the repository root or the `site/` website.
+The map is a static Vercel project. Deploy **`web/`**, not the repository root.
 
 - Project: `caribbean-guard-map`
 - Project ID: `prj_it5kQJM4XVWkmDu3NjEzGOfCcRc3`
@@ -14,7 +14,7 @@ The map is a static Vercel project. Deploy **`web/`**, not the repository root o
 - Existing production alias: https://web-five-beta-p7wt9cgwmf.vercel.app
 - Current deployment record: [22 September map release](handoffs/2026-09-22-map-production-release.md)
 
-The local `web/.vercel/project.json` may still contain the historical name `web`; its project ID is authoritative. Do not create another project to resolve the stale name. `.vercel/` is ignored and must not be committed.
+Link `web/` to the existing project by ID before deploying. The Vercel deployment metadata may show the historical name `web`; its project ID and production alias are authoritative. Do not create another project to resolve the stale name. `.vercel/` is ignored and must not be committed.
 
 ## Prepare
 
@@ -25,7 +25,7 @@ npm run check:map
 npm run build:map
 ```
 
-Packaging validates every service-worker asset reference before copying the map into `dist-map/`. The production CLI command below uses the source `web/` folder, including its local tiles. `npm run build` targets the separate organization site and is not the map deployment command.
+Packaging validates every service-worker asset reference before copying the map into `dist-map/`. The production CLI command below uses the source `web/` folder, including its local tiles.
 
 ## Publish to the existing project
 
@@ -33,6 +33,7 @@ Install the official Vercel CLI and sign in if needed. From the repository root:
 
 ```powershell
 Set-Location web
+vercel link --yes --team team_XOr1KdFeEvqhDcHZMsmeoLA6 --project prj_it5kQJM4XVWkmDu3NjEzGOfCcRc3
 vercel project inspect caribbean-guard-map --scope team_XOr1KdFeEvqhDcHZMsmeoLA6
 vercel deploy --prod --yes --scope team_XOr1KdFeEvqhDcHZMsmeoLA6
 ```

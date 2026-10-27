@@ -10,8 +10,8 @@ overlay measures 372x125 CSS px, which is 1116x375 device px at DPR 3. A 1000 px
 wide overview is already at that effective resolution, so anything wider is
 resolution nobody can see.
 
-    docs/site-revamp/04-map-integration.md specced 1000x335 q70 and it was never
-    exported; the repo shipped 1200x402 at 88,718 B until 2026-08-06.
+    The earlier 1000x335 q70 target was not exported; the repo shipped
+    1200x402 at 88,718 B until 2026-08-06.
 
 Alpha is mandatory. The source is a rotated quad resampled north-up, so the four
 corners are transparent wedges. Flatten them and the map grows black triangles.
