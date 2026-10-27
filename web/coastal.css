@@ -64,7 +64,7 @@ button,a,summary{touch-action:manipulation}
 .sheet .sub{font-weight:400;line-height:1.5;margin:8px 0 20px}
 .sheet .close{box-shadow:none;top:10px;right:28px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink)}
 .statuscard{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:10px;row-gap:4px;align-items:center;background:#2d6781;border-radius:10px;padding:16px;border-left:0}
-.statuscard>.tile{grid-column:1;grid-row:1 / span 3;margin:0;width:44px;height:44px;align-self:start}
+.statuscard>.tile{grid-column:1;grid-row:1 / span 3;margin:0;width:44px;height:44px;align-self:center}
 .statuscard>.eyebrow{grid-column:2;grid-row:1;margin:0}
 .statuscard .instr{grid-column:2;grid-row:2;font-size:18px;line-height:1.23;margin:0}
 .statuscard .why,.statuscard .sos911{grid-column:1 / -1}
