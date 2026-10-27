@@ -147,7 +147,7 @@ for (const label of labels) {
    reason it is allowed to be published at all, and it is the one hat 5 said he
    would want read aloud in an inquiry. A sheet that omits it is a sheet that
    claims to be the last word. */
-const SHEETS = ["openZone", "openVoid", "openPost", "openAnnot", "openLegend"];
+const SHEETS = ["openZone", "openVoid", "openPost", "openAnnot", "openLegend", "openRipReference"];
 
 /* A renderer may satisfy this DIRECTLY, by interpolating t.defer itself, or
    INDIRECTLY, by calling trustLine(), which is the one line the beach sheet was

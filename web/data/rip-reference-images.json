@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "source": "Five annotated JPEGs supplied in Downloads/Rip Currents",
+  "authority": "Illustrative reference only. The 2026 full-map data remains the authority for mapped rip-current geometry and rescue-station status.",
+  "note": "Points locate a named coastal area, not a rip-current origin or a rescue destination. Four photographs do not share enough stable image features with the current satellite tiles for a defensible pixel-level registration.",
+  "features": [
+    {
+      "id": "jaguar",
+      "name": {"es": "Jaguar Rescue Center / El Rincón Porteño", "en": "Jaguar Rescue Center / El Rincón Porteño"},
+      "image": "reference/rip-currents/jaguar-rescue-center.jpg",
+      "original_file": "Jaguar Rescue Center - El Rincon Porteno.jpg",
+      "point": [-82.724013, 9.643499],
+      "placement": "Area reference from the 2026 station 3.1 position, snapped to the OSM shoreline; not an image registration.",
+      "alignment": "area_only"
+    },
+    {
+      "id": "aguas",
+      "name": {"es": "Imagen titulada Aguas Claras", "en": "Image titled Aguas Claras"},
+      "image": "reference/rip-currents/aguas-claras.jpg",
+      "original_file": "Aguas Claras.jpg",
+      "point": [-82.712538, 9.642104],
+      "placement": "Image center snapped to the OSM shoreline. SIFT registration to the map's z17 tiles found 2,221 inliers; this is a fit to the imagery, not independent geographic accuracy. The image extends east of the Aguas Claras landmark into the Chiquita coast.",
+      "alignment": "imagery_matched",
+      "image_footprint": [[-82.7179626, 9.6452857], [-82.7076898, 9.6452918], [-82.7076717, 9.6382053], [-82.7179687, 9.6382079]]
+    },
+    {
+      "id": "merlin",
+      "name": {"es": "Calle Merlin / Punta Cocles", "en": "Calle Merlin / Punta Cocles"},
+      "image": "reference/rip-currents/calle-merlin-punta-cocles.jpg",
+      "original_file": "Calle Merlin - Punta Cocles.jpg",
+      "point": [-82.716278, 9.642126],
+      "placement": "Area reference from the Merlin label in the 2026 full map, snapped to the OSM shoreline; not an image registration.",
+      "alignment": "area_only"
+    },
+    {
+      "id": "paradise",
+      "name": {"es": "Paradise Trail", "en": "Paradise Trail"},
+      "image": "reference/rip-currents/paradise-trail.jpg",
+      "original_file": "Paradise Trail Area.jpg",
+      "point": [-82.711885, 9.641654],
+      "placement": "Area reference from the Paradise label in the 2026 full map, snapped to the OSM shoreline; not an image registration.",
+      "alignment": "area_only"
+    },
+    {
+      "id": "shawandha",
+      "name": {"es": "Entrada Shawandha / Gypsea Trail", "en": "Shawandha entrance / Gypsea Trail"},
+      "image": "reference/rip-currents/shawandha-gypsea-trail.jpg",
+      "original_file": "Entrada Shawandha - Gypsea Trail.jpg",
+      "point": [-82.709551, 9.64065],
+      "placement": "Area reference from the Gypsea / Shawandha label in the 2026 full map, snapped to the OSM shoreline; not an image registration.",
+      "alignment": "area_only",
+      "survivor_line": "The dotted line in this image denotes a rope with flotation devices. Its pictured position is not registered to GPS and the image does not confirm that it is installed or usable today."
+    }
+  ]
+}

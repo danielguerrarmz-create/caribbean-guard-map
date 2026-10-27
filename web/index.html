@@ -3674,6 +3674,7 @@ let hasLocations = false;
    The station's dark outline is the one the marker carries: #f39c12 alone does
    not clear 3:1 over Caribbean water. */
 const markRip = () => CGSymbols.badge("rip_current");
+const markReference = () => CGSymbols.badge("source_image");
 const markStation = () => CGSymbols.badge("rescue_station");
 const markArea = () => CGSymbols.badge("strong_current_area");
 const markMe = () => CGSymbols.badge("me");
@@ -3686,6 +3687,7 @@ function legendHTML(){
        <span class="txt"><span class="cur">${a}</span><span class="oth">${b}</span></span></div>`;
   return `<h3>${t.legendMap}</h3>
     ${row(markRip(), t.legendRip, u.legendRip)}
+    ${row(markReference(), lang==='es'?'Imagen de referencia':'Reference image', lang==='es'?'Reference image':'Imagen de referencia')}
     ${row(markStation(), t.legendStation, u.legendStation)}
     ${row(markArea(), t.legendArea, u.legendArea)}
     ${hasLocations ? row(markPlaces(), t.legendPlaces, u.legendPlaces) : ""}
@@ -3707,6 +3709,7 @@ function openLegend(){
 const PLACE_CATEGORIES = ['stay','eat','shop','landmark','other'];
 const sourceLayerDefs = [
   ['hazards','rip_current','Corrientes de resaca','Rip currents','safety'],
+  ['references','source_image','Imágenes de referencia','Reference images','safety'],
   ['rescue','rescue_station','Equipo de rescate','Rescue equipment','safety'],
   ['places_stay','place_stay','Hospedaje','Places to stay','places'],
   ['places_eat','place_eat','Comer y beber','Food and drink','places'],
@@ -3719,6 +3722,66 @@ const LEGEND_SECTIONS = [['safety','Seguridad','Safety'],['places','Lugares','Pl
 
 const sourceLayerState = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,true]));
 const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerGroup().addTo(map)]));
+const ripReferenceMarkers = [];
+function openRipReference(ref){
+  const render = ()=>{
+    const es = lang === 'es';
+    const areaOnly = ref.alignment !== 'imagery_matched';
+    const placement = areaOnly
+      ? (es ? 'Ubicación aproximada por el nombre del lugar. La foto no está ajustada píxel por píxel al mapa.'
+            : 'Approximate placement by place name. The photograph is not aligned pixel by pixel to this map.')
+      : (es ? 'La foto se ajustó a la imagen satelital. Su título cubre un tramo que se extiende al este de Aguas Claras; no señala una entrada precisa.'
+            : 'The photograph was matched to the satellite imagery. Despite its title, it covers coast east of Aguas Claras and does not mark a precise access point.');
+    const survivor = ref.survivor_line ? `<section class="reference-note">
+      <h3>${es?'Línea de supervivencia':'Survivor line'}</h3>
+      <p>${es
+        ? 'La línea punteada de esta imagen representa una cuerda grande con flotadores. Ofrece un último punto de apoyo a una persona arrastrada por una resaca y marca un límite que no se debe cruzar nadando. No delimita una zona segura. La imagen no confirma que esté instalada o utilizable hoy.'
+        : 'The dotted line in this image represents a large rope with flotation devices. It is intended as a last point to hold for someone pulled by a rip current and marks a boundary not to swim beyond. It does not define a safe swimming area. The image does not confirm that it is installed or usable today.'}</p>
+    </section>` : '';
+    return `<h2 id="sheet-title" tabindex="-1">${sourceEsc(ref.name[lang])}</h2>
+      ${titleChip(CGSymbols.badge('source_image'), es?'Imagen de referencia':'Reference image')}
+      <figure class="rip-reference-figure">
+        <a href="${sourceEsc(ref.image)}" target="_blank" rel="noopener" aria-label="${es?'Abrir imagen completa':'Open full image'}"><img src="${sourceEsc(ref.image)}" alt="${sourceEsc(ref.survivor_line
+          ? (es?'Imagen aérea con corrientes de resaca rojas y una línea de supervivencia punteada':'Aerial image with red rip currents and a dotted survivor line')
+          : (es?'Imagen aérea anotada con corrientes de resaca':'Annotated aerial image showing rip currents'))}" loading="eager"></a>
+        <figcaption>${es?'Imagen aportada para esta revisión; no representa las condiciones de hoy.':'Image supplied for this review; it does not show today’s conditions.'}</figcaption>
+      </figure>
+      ${survivor}
+      <p class="caveat">${placement}</p>
+      <p class="caveat">${es
+        ? 'Las flechas y el estado de las estaciones del mapa siguen el documento de 2026. Esta imagen sirve para entender el lugar, no para ubicar una corriente, cuerda o equipo con GPS.'
+        : 'The map’s arrows and station status follow the 2026 document. This image helps explain the area; it does not locate a current, rope, or equipment by GPS.'}</p>
+      <p class="defer">${T[lang].defer}</p>
+      ${sheetFoot()}`;
+  };
+  openSheet(render(), ()=>setSheetContent(render()));
+  const [lon,lat] = ref.point;
+  flyClear(L.latLngBounds([[lat,lon]]).pad(0.002), {maxZoom:17});
+}
+function drawRipReferences(data){
+  data.features.forEach(ref=>{
+    const [lon,lat] = ref.point;
+    const marker = L.marker([lat,lon], {
+      title:ref.name[lang], keyboard:true, zIndexOffset:-100,
+      icon:L.divIcon({className:'rip-reference-marker', iconSize:[34,34], iconAnchor:[17,17],
+        html:CGSymbols.badge('source_image')})
+    }).on('click',()=>openRipReference(ref));
+    ripReferenceMarkers.push({marker,ref});
+  });
+  const update = ()=>{
+    const show = map.getZoom() >= 15;
+    ripReferenceMarkers.forEach(({marker})=>{
+      if(show && !sourceLayers.references.hasLayer(marker)) marker.addTo(sourceLayers.references);
+      if(!show && sourceLayers.references.hasLayer(marker)) sourceLayers.references.removeLayer(marker);
+    });
+  };
+  map.on('zoomend',update);
+  update();
+}
+fetch('data/rip-reference-images.json')
+  .then(r=>r.ok?r.json():Promise.reject(r.status))
+  .then(drawRipReferences)
+  .catch(error=>console.warn('Rip-current reference images unavailable',error));
 let legendExpanded = false;
 let legendClosingTimer = null;
 let legendParked = false;
@@ -4291,6 +4354,10 @@ function setLang(l){
   buildPicker();
   renderSaved();
   renderLegendPerm();
+  ripReferenceMarkers.forEach(({marker,ref})=>{
+    marker.options.title = ref.name[l];
+    if(marker._icon) marker._icon.title = ref.name[l];
+  });
   if(stationsReady){
     Object.entries(postMarkers).forEach(([id, m])=>{
       const post = POSTS.find(x=>x.id === id);

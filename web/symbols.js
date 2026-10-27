@@ -13,6 +13,7 @@
     proposed_rescue_station:'<circle cx="12" cy="12" r="9" stroke-dasharray="3 2.5"/><circle cx="12" cy="12" r="4"/><path d="m5.8 5.8 3.4 3.4m5.6 5.6 3.4 3.4"/>',
     proposed_cg_station:'<path d="M4 20V9l8-6 8 6v11Z" stroke-dasharray="3 2.5"/><path d="M9 14h6m-3-3v6"/>',
     rip_current:'<path d="M3 19q2-1.6 4 0t4 0t4 0t4 0t4 0M12 15V4m-4 4 4-4 4 4"/>',
+    source_image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m5 17 4.5-4.5 3 3 2.5-2.5 4 4"/>',
     strong_current_area:'<path d="M12 3 21 20H3Z"/><path d="M7 16q2-1.6 4 0t4 0t2 0M12 8v4"/>',
     location:'<path d="M18.5 10c0 4.5-6.5 10.5-6.5 10.5S5.5 14.5 5.5 10a6.5 6.5 0 1 1 13 0Z"/><circle cx="12" cy="10" r="2"/>',
     /* Place categories (2026-09-23). Shape carries the category; colour stays
