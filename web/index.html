@@ -1016,6 +1016,8 @@
 <script src="geometry.js"></script>
 <script src="forecast.js"></script>
 <script src="advisory.js"></script>
+<!-- The lifeguard post clock, in Costa Rica time whatever the phone says. -->
+<script src="lifeguard.js"></script>
 <script src="symbols.js"></script>
 <script>
 /* ============================================================
@@ -1648,6 +1650,12 @@ const T = {
       geomFailed:"No se pudieron cargar las zonas. No confíes en este mapa sin ellas.",
       /* the post's clock, rendered next to the instruction */
       postClosed:"ahora sin guardavidas",
+      /* The post's hours are Costa Rica hours. Said, because a visitor's phone
+         may still be on New York or Madrid time. */
+      postZone:"(hora local de Costa Rica)",
+      /* A SOLO CON GUARDAVIDAS beach while its post is closed. The instruction
+         itself changes, because the old one could not be obeyed. */
+      offDuty:"NO ENTRES: AHORA NO HAY GUARDAVIDAS",
       /* legend */
       legendTitle:"Leyenda",
       legendDo:"Qué hacer",
@@ -1780,6 +1788,8 @@ const T = {
       escapeRip:"If a current pulls you out: do not swim against it, float, and swim parallel to the beach until you are out of it.",
       geomFailed:"The beach zones did not load. Do not trust this map without them.",
       postClosed:"no lifeguards right now",
+      postZone:"(Costa Rica local time)",
+      offDuty:"DON'T GO IN: NO LIFEGUARDS ON DUTY NOW",
       legendTitle:"Legend",
       legendDo:"What to do",
       legendMap:"On the map",
@@ -2016,26 +2026,53 @@ function provenance(rec, inline){
    Renders only for a zone that has one. The closed state is appended in ink,
    never in red: a post that has gone home is not a hazard tier, and colouring
    it like one would be the third colour claim on a card that already carries
-   two. Reads the device clock, which is the only clock a phone on the sand has.
-   Deliberately no timezone handling: the reader and the post are in the same
-   place, so local is the correct and only sensible reading.
+   two.
 
-   IT COMPUTES ONCE, AT RENDER, AND THAT IS ACCEPTED. A page left open across
-   17:00 keeps showing the card as it was when it was drawn, until something
-   else re-renders it: a language switch, a tap on a card, a refresh. Nobody
-   stands on the sand with this page open and untouched for the twenty minutes
-   either side of the boundary, and the alternative is a timer that repaints
-   every card on a safety map on a schedule, which is a live-updating behaviour
-   this file does not otherwise have and cannot test cheaply. Reviewed and
-   accepted 2026-09-17. If a bulletin-signing surface ever lands and the cards
-   start refreshing on their own, fold this into that loop rather than adding a
-   second one. */
-function hoursLine(z){
+   COSTA RICA TIME, NOT THE PHONE'S. This used to read the device clock on the
+   reasoning that the reader and the post are in the same place. They are not:
+   a visitor who lands at 16:00 with a phone still on New York or Madrid time
+   was told the post was closed while a guard was on the tower, or (the
+   dangerous way round) told nothing while the post was shut. The clock now
+   lives in lifeguard.js, in America/Costa_Rica, and the hours say so.
+
+   THE INSTRUCTION FOLLOWS THE CLOCK. On a SOLO CON GUARDAVIDAS beach with the
+   post closed, the instruction becomes T.offDuty, so the only instruction on
+   screen is one a reader can obey. The closed suffix is then dropped from the
+   hours line because the instruction already says it.
+
+   IT REFRESHES. refreshPostClock() runs from the forecast loop (every minute
+   and on visibilitychange) and patches the status card and the list card in
+   place, only when the on duty state has actually flipped, so a reader's
+   scroll position and focus are never disturbed by a repaint. */
+function instructionKey(z, when){
+  return CGLifeguard.instructionKey(z.character.class, z.post, when);
+}
+function hoursLine(z, when){
   const p = z.post;
   if(!p) return "";
-  const t = T[lang], h = new Date().getHours();
-  const closed = (h < p.from || h >= p.to) ? ` · ${t.postClosed}` : "";
-  return `<span class="hours"><b>${p[lang]}</b>${closed}</span>`;
+  const t = T[lang];
+  const closed = !CGLifeguard.onDuty(p, when) && instructionKey(z, when) !== "offDuty"
+    ? ` · ${t.postClosed}` : "";
+  return `<span class="hours"><b>${p[lang]}</b> ${t.postZone}${closed}</span>`;
+}
+function statusCardInner(z, when){
+  const t = T[lang], c = z.character;
+  return `<span class="tile" aria-hidden="true">${CGSymbols.badge(c.class)}</span>
+          <span class="eyebrow">${dangerLabel(z)}</span>
+          <span class="instr">${t[instructionKey(z, when)]}</span>${hoursLine(z, when)}`;
+}
+const postState = new Map();   // zone id -> on duty when last drawn
+function refreshPostClock(when = Date.now()){
+  ZONES.forEach(z=>{
+    if(!z.post) return;
+    const on = CGLifeguard.onDuty(z.post, when);
+    if(postState.get(z.id) === on) return;
+    postState.set(z.id, on);
+    const status = document.querySelector(`.card[data-id="${z.id}"] .beach-status`);
+    if(status) status.textContent = T[lang][instructionKey(z, when)];
+    const card = document.querySelector(`.statuscard[data-zone="${z.id}"]`);
+    if(card) card.innerHTML = statusCardInner(z, when);
+  });
 }
 /* ---------- map ---------- */
 const BB = L.latLngBounds(IMG_BOUNDS);
@@ -3417,10 +3454,8 @@ function openZone(z){
     <div class="zone-detail">
       <div class="zone-top">
         <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
-        <div class="statuscard ${tierOf(z)}">
-          <span class="tile" aria-hidden="true">${CGSymbols.badge(c.class)}</span>
-          <span class="eyebrow">${dangerLabel(z)}</span>
-          <span class="instr">${t[c.class]}</span>${hoursLine(z)}
+        <div class="statuscard ${tierOf(z)}" data-zone="${z.id}">
+          ${statusCardInner(z)}
         </div>
         ${c.class==='lower-risk'?`<p class="beach-caution">${lang==='es'?'Menor riesgo no significa que sea seguro.':'Lower risk does not mean safe.'}</p>`:''}
         ${caveats}
@@ -4007,7 +4042,7 @@ function cardHTML(z){
       ${CGSymbols.badge(z.character.class, "beach-symbol")}
       <span class="beach-copy">
       <span class="nm">${z.name[lang]}</span>
-      <span class="beach-status">${t[z.character.class]}</span>
+      <span class="beach-status">${t[instructionKey(z)]}</span>
       </span>
     </button>`;
 }
@@ -5030,11 +5065,11 @@ async function refreshForecast(){
   renderSea();refreshForecastPanel();refreshWeatherPanel();measureDock();
 }
 setInterval(()=>{
-  renderSea();refreshForecastPanel();
+  refreshPostClock();renderSea();refreshForecastPanel();
   if(!document.hidden&&Date.now()-forecastAttemptAt>15*60*1000)refreshForecast();
 },60000);
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden){renderSea();refreshForecastPanel();if(Date.now()-forecastAttemptAt>15*60*1000)refreshForecast();}
+  if(!document.hidden){refreshPostClock();renderSea();refreshForecastPanel();if(Date.now()-forecastAttemptAt>15*60*1000)refreshForecast();}
 });
 // Requests bypass the offline map cache. Model advisories never grant clearance.
 refreshForecast();
