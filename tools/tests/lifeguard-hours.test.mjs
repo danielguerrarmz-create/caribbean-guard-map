@@ -92,3 +92,12 @@ test('the page renders through the Costa Rica clock and refreshes it', () => {
   assert.match(WORKER, /"lifeguard\.js",/);
   assert.doesNotMatch(WORKER, /cg-map-v50-aj-rescue-pins/, 'offline cache version bumped');
 });
+
+test('the access point sheet shows the same clock-aware instruction as the beach', () => {
+  assert.doesNotMatch(HTML, /T\[lang\]\[[\w?.]*character\??\.class\]/, 'no instruction keyed on class alone');
+  const access = HTML.slice(HTML.indexOf('function openAccess('), HTML.indexOf('function updateAccessMarkers('));
+  assert.match(access, /T\[lang\]\[instructionKey\(beach\)\]/);
+  const refresh = HTML.slice(HTML.indexOf('function refreshPostClock('), HTML.indexOf('/* ---------- map ---------- */'));
+  assert.match(refresh, /\.access-risk\[data-zone=/, 'an open access sheet is patched when the post flips');
+  assert.doesNotMatch(WORKER, /cg-map-v51-lifeguard-cr-time/, 'offline cache version bumped');
+});
