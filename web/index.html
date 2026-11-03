@@ -2041,7 +2041,8 @@ function provenance(rec, inline){
    hours line because the instruction already says it.
 
    IT REFRESHES. refreshPostClock() runs from the forecast loop (every minute
-   and on visibilitychange) and patches the status card and the list card in
+   and on visibilitychange) and patches the status card, the list card and an
+   open access point sheet in
    place, only when the on duty state has actually flipped, so a reader's
    scroll position and focus are never disturbed by a repaint. */
 function instructionKey(z, when){
@@ -2072,6 +2073,8 @@ function refreshPostClock(when = Date.now()){
     if(status) status.textContent = T[lang][instructionKey(z, when)];
     const card = document.querySelector(`.statuscard[data-zone="${z.id}"]`);
     if(card) card.innerHTML = statusCardInner(z, when);
+    const access = document.querySelector(`.access-risk[data-zone="${z.id}"] p`);
+    if(access) access.textContent = T[lang][instructionKey(z, when)];
   });
 }
 /* ---------- map ---------- */
@@ -4546,8 +4549,8 @@ function openAccess(point){
     qr.searchParams.set('a',point.id);
     return `<h2 id="sheet-title" tabindex="-1">${sourceEsc(name)}</h2>
       <p class="access-note">${es?'Punto de acceso cartografiado. Posición y acceso público pendientes de confirmación en campo.':'Mapped access point. Position and public access await field confirmation.'}</p>
-      <div class="access-risk ${beach?.character?tierOf(beach):'unknown'}"><strong>${dangerLabel(beach)}</strong>
-      <p>${beach?.character?T[lang][beach.character.class]:(es?'No hay evaluación de esta playa.':'No assessment is available for this beach.')}</p></div>
+      <div class="access-risk ${beach?.character?tierOf(beach):'unknown'}" data-zone="${beach?.id}"><strong>${dangerLabel(beach)}</strong>
+      <p>${beach?.character?T[lang][instructionKey(beach)]:(es?'No hay evaluación de esta playa.':'No assessment is available for this beach.')}</p></div>
       <p>${es?'Las flechas muestran corrientes de resaca del mapa fuente, no mediciones de hoy. La señalización y los guardavidas en la playa tienen prioridad.':'Arrows show rip currents from the source map, not measurements today. Beach signs and lifeguards take priority.'}</p>
       <div class="actions"><button class="btn" data-area="${point.beach}">${es?'Ver toda la playa':'View the whole beach'}</button><a class="btn" href="tel:911">${es?'Llamar al 911':'Call 911'}</a></div>
       ${renderForecastPanel(beach?.id)}
