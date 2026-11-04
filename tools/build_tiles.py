@@ -278,7 +278,7 @@ def write_sw_lists():
 
 
 def audit_precache():
-    """Every precache entry must exist on disk, and every icon must be listed.
+    """Every precache entry must exist, and every installed-app icon must be listed.
 
     The tile lists between the markers are generated and cannot drift. The rest of
     CRITICAL and OPTIONAL is hand written -- the document, Leaflet, the geometry,
@@ -292,7 +292,8 @@ def audit_precache():
     where somebody is already running a script and reading its output.
     """
     web = os.path.join(ROOT, "web")
-    src = open(os.path.join(web, "sw.js"), encoding="utf-8").read()
+    with open(os.path.join(web, "sw.js"), encoding="utf-8") as stream:
+        src = stream.read()
     problems = []
     listed = set()
     for name in ("CRITICAL", "OPTIONAL"):
@@ -302,19 +303,20 @@ def audit_precache():
             problems.append(f"sw.js has no hand written {name} array")
             continue
         for url in re.findall(r'"([^"]+)"', m.group(1)):
-            listed.add(url)
+            # Queries version HTTP cache keys, not local filenames.
+            asset = url.split("?", 1)[0]
+            listed.add(asset)
             if url == "./":
                 continue
-            if not os.path.exists(os.path.join(web, url.replace("/", os.sep))):
+            if not os.path.exists(os.path.join(web, asset.replace("/", os.sep))):
                 problems.append(f"{name} lists {url}, which is not on disk")
 
-    icons = os.path.join(web, "icons")
-    if os.path.isdir(icons):
-        for f in sorted(os.listdir(icons)):
-            if f"icons/{f}" not in listed:
-                problems.append(f"web/icons/{f} is on disk and precached by neither tier")
+    # Source icon collections and unused design exports are not runtime requests.
+    # Validate declared assets above and launcher icons below; do not force every
+    # file or directory in icons/ into the offline download.
     try:
-        mf = json.load(open(os.path.join(web, "manifest.json"), encoding="utf-8"))
+        with open(os.path.join(web, "manifest.json"), encoding="utf-8") as stream:
+            mf = json.load(stream)
         for i in mf.get("icons", []):
             if i["src"] not in listed:
                 problems.append(f"manifest.json names {i['src']}, which is precached by neither tier")
