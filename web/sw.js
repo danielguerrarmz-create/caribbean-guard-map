@@ -746,8 +746,10 @@ self.addEventListener("fetch", e=>{
       try{
         const res = await timed(fetch(req), 4000);
         const cache = await caches.open(CACHE);
-        if(res.ok) cache.put(req, res.clone());
-        stamp();
+        if(res.ok){
+          cache.put(req, res.clone());
+          stamp();
+        }
         return res;
       }catch(err){
         const hit = await caches.match(req) || (url.pathname.endsWith("/") ? await caches.match("index.html") : null);
@@ -761,7 +763,10 @@ self.addEventListener("fetch", e=>{
   e.respondWith((async ()=>{
     const hit = await caches.match(req, {ignoreSearch:false});
     const net = fetch(req).then(res=>{
-      if(res.ok) caches.open(CACHE).then(c => c.put(req, res.clone()));
+      if(res.ok){
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy));
+      }
       return res;
     }).catch(()=>null);
     return hit || (await net) || Response.error();
