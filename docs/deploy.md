@@ -55,7 +55,7 @@ The former repository-root Vercel project, `caribbean-guard-map-6sqm` (`prj_i3Yk
 
 ## Cache behavior
 
-`web/vercel.json` and Cloudflare fallback `web/_headers` carry corresponding response rules. The map document and worker revalidate. The service worker uses network-first document requests with an offline fallback and cache-first assets with background revalidation. Its version must change for a coordinated interface/data release.
+`web/vercel.json` and Cloudflare fallback `web/_headers` carry corresponding response rules. The map document and worker revalidate. The service worker uses network-first document requests with an offline fallback and cache-first assets with background revalidation. Its version must change for a coordinated interface/data release. Application script and stylesheet URLs also carry the same version query in index.html and the precache list. Keep both in sync: an older active worker must not satisfy a new document with an incompatible script. The cache-upgrade regression test enforces this boundary.
 
 Critical assets include the main interface, symbols, fonts, projected annotation data and overview tiles. CSS precaching explicitly requests `text/css`, including during Vite development.
 
