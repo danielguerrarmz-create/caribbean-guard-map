@@ -878,8 +878,8 @@
     .leaflet-bottom.leaflet-left{bottom:0;left:360px}
   }
 </style>
-<link rel="stylesheet" href="coastal.css?v=71">
-<link rel="stylesheet" href="coastal-panels.css?v=71">
+<link rel="stylesheet" href="coastal.css?v=75">
+<link rel="stylesheet" href="coastal-panels.css?v=75">
 </head>
 <body>
 
@@ -997,13 +997,14 @@
      AFTER Leaflet and BEFORE this file. Stroke widths, dash ratios, the 40 m end
      shoreline strokes, rip arrows and label collision live in there now, so
      the card swatch and the map read ONE table instead of two copies. -->
-<script src="geometry.js?v=71"></script>
-<script src="panel-gesture.js?v=71"></script>
-<script src="forecast.js?v=71"></script>
-<script src="advisory.js?v=71"></script>
+<script src="geometry.js?v=75"></script>
+<script src="panel-gesture.js?v=75"></script>
+<script src="forecast.js?v=75"></script>
+<script src="advisory.js?v=75"></script>
 <!-- The lifeguard post clock, in Costa Rica time whatever the phone says. -->
-<script src="lifeguard.js?v=71"></script>
-<script src="symbols.js?v=71"></script>
+<script src="lifeguard.js?v=75"></script>
+<script src="symbols.js?v=75"></script>
+<script src="signposts.js?v=75"></script>
 <script>document.body.insertAdjacentHTML("afterbegin",CGSymbols.haloDefinitions);</script>
 <script>
 /* ============================================================
@@ -1368,27 +1369,27 @@ const UNASSESSED_BEACHES = [
    not the Costa Rican term at all, plus "puesto de rescate", "puesto de
    observación P.O. 4" and "puesto de guardavidas". Caribbean Guard's own V5
    legend says ESTACIÓN DE RESCATE, so
-   that is the word, and the name is that word plus the number the pin carries.
+   that is the word. AJ requested no public station numbering on 2026-11-04.
    Hat 3 signs the Revisado line on these; a name he did not use is a thing he
    did not say. Salvamento is also not the Costa Rican term. */
 const POSTS = [
   {id:"cg:station/est1", n:"3.2", kind:"station", ll:[9.64474,-82.719],
-   name:{es:"Estación de Rescate 3.2", en:"Rescue Station 3.2"},
+   name:{es:"Estación de Rescate", en:"Rescue Station"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null},
   {id:"cg:station/est2", n:"3.3", kind:"station", proposed:true, ll:[9.64333,-82.71809],
-   name:{es:"Estación propuesta 3.3", en:"Proposed station 3.3"},
+   name:{es:"Estación propuesta", en:"Proposed station"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null},
   {id:"cg:station/est3", n:"3.5", kind:"station", ll:[9.64137,-82.71073],
-   name:{es:"Estación de Rescate 3.5", en:"Rescue Station 3.5"},
+   name:{es:"Estación de Rescate", en:"Rescue Station"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null},
   {id:"cg:station/est4", n:"3.6", kind:"station", ll:[9.64029,-82.70878],
-   name:{es:"Estación de Rescate 3.6", en:"Rescue Station 3.6"},
+   name:{es:"Estación de Rescate", en:"Rescue Station"},
    hours:{es:"Equipo colocado al amanecer y retirado al atardecer por los socios locales",
           en:"Equipment put out at dawn and taken in at dusk by local partners"},
    authored:"sheet", reviewed:null}
@@ -2692,10 +2693,10 @@ const geomReady = fetch("data/zones-geometry.json")
    the map having stopped being theirs, and hat 1 as four marks meaning nothing
    until tapped. The shape and the colour are both theirs. See .po. */
 POSTS.forEach(p=>{
-  const icon = L.divIcon({className:"", html:`<div class="station-marker ${p.proposed?'planned':''}">${CGSymbols.badge(p.proposed?'proposed_rescue_station':'rescue_station')}<span class="number">${p.n}</span></div>`,
+  const icon = L.divIcon({className:"", html:`<div class="station-marker ${p.proposed?'planned':''}">${CGSymbols.badge(p.proposed?'proposed_rescue_station':'rescue_station')}</div>`,
     iconSize:[44,44], iconAnchor:[22,22]});
   postMarkers[p.id] = L.marker(p.ll,{icon, keyboard:true,
-    alt:`${T[lang].legendStation} ${p.n}`}).addTo(map).on("click",()=>openPost(p));
+    alt:T[lang].legendStation}).addTo(map).on("click",()=>openPost(p));
 });
 
 stationsReady = true;
@@ -3062,6 +3063,20 @@ function navigateFromOverview(open){
   open();
 }
 function animatePanelRoute(back=false, done=()=>{}){
+  // Desktop is a persistent sidebar. Only its contents change, never its
+  // geographic footprint over the map. Mobile retains spatial Back navigation.
+  if(desktop()){
+    const target=back?document.getElementById('picker'):sheetBody;
+    const from=routeAnimations.length?getComputedStyle(target).opacity:.65;
+    routeAnimations.forEach(a=>a.cancel());routeAnimations=[];
+    sheet.style.translate='';dockEl.style.translate='';dockEl.style.opacity='';
+    if(back)done(); // Reveal the overview before its content fades in.
+    if(reducedMotion.matches){if(!back)done();return;}
+    const fade=target.animate({opacity:[from,1]},{duration:160,easing:'ease-out',fill:'both'});
+    routeAnimations=[fade];
+    fade.onfinish=()=>{if(!back)done();fade.cancel();routeAnimations=[];};
+    return;
+  }
   // Capture the presented position before cancelling an interrupted route.
   const interrupted=routeAnimations.length>0;
   const detailFrom=interrupted?getComputedStyle(sheet).translate:null;
@@ -3194,11 +3209,8 @@ function openSheet(html, render){
     }
   }else if(!reopening){
     sheetStop("peek", true);
-    // A reflow between un-hiding and adding .open, or the browser collapses the
-    // two style changes into one frame and the slide-in never animates.
-    sheet.classList.remove("open"); void sheet.offsetHeight; sheet.classList.add("open");
   }
-  if(panelRoute && !reopening)animatePanelRoute();
+  if(desktop() || (panelRoute && !reopening))animatePanelRoute();
   const h2 = document.getElementById("sheet-title");
   if(h2 && !reopening) h2.focus({preventScroll:true});
 }
@@ -3238,9 +3250,10 @@ window.addEventListener("popstate", e => {
   const b = UNASSESSED_BEACHES.find(x => localId(x.id) === q.get("b"));
   const p = POSTS.find(x => localId(x.id) === q.get("p"));
   const access = accessPoints.find(x=>x.id===q.get("a"));
+  const sign = q.get('sign');
   restoringHistory = true;
   try{
-    if(access) openAccess(access); else if(z) openBeach(z); else if(b) openBeach(b); else if(p) openPost(p);
+    if(sign) openSignpost(sign); else if(access) openAccess(access); else if(z) openBeach(z); else if(b) openBeach(b); else if(p) openPost(p);
     // A sheet with no address (legend, saved copy) cannot be rebuilt from a URL.
     // Stepping back out keeps the stack free of a dead copy of the map.
     else history.back();
@@ -3320,7 +3333,7 @@ function closeSheet(opts = {}){
 }
 
 CGPanelGesture.attach(sheet,{
-  enabled:()=>!!panelRoute&&sheet.classList.contains('open')&&!sheetClosing&&!routeAnimations.some(a=>a.playState==='running'),
+  enabled:()=>!desktop()&&!!panelRoute&&sheet.classList.contains('open')&&!sheetClosing&&!routeAnimations.some(a=>a.playState==='running'),
   progress:(dx,width)=>{
     if(reducedMotion.matches)return;
     sheet.style.translate=dx+'px 0';dockEl.style.translate=(-18+18*dx/width)+'% 0';dockEl.style.opacity=.65+.35*dx/width;
@@ -3751,6 +3764,7 @@ const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerG
 // Both station sources belong to the same user-visible Legend switch.
 Object.values(postMarkers).forEach(marker=>sourceLayers.rescue.addLayer(marker));
 const ripReferenceMarkers = [];
+const referenceImages = [];
 function openRipReference(ref){
   const render = ()=>{
     const es = lang === 'es';
@@ -3806,9 +3820,9 @@ function drawRipReferences(data){
   map.on('zoomend',update);
   update();
 }
-fetch('data/rip-reference-images.json')
+const referencesReady=fetch('data/rip-reference-images.json')
   .then(r=>r.ok?r.json():Promise.reject(r.status))
-  .then(drawRipReferences)
+  .then(data=>{referenceImages.push(...data.features);drawRipReferences(data);})
   .catch(error=>console.warn('Rip-current reference images unavailable',error));
 function legendLayerContent(){
   const es=lang==='es';
@@ -4408,7 +4422,14 @@ function refreshDangerLabels(){
   });
   restyleLabels();
 }
-const accessPoints=[], accessMarkers=[];
+const accessPoints=[], accessMarkers=[], signposts=[];
+const signpostsReady=fetch('data/signposts.json').then(r=>{if(!r.ok)throw new Error('Poster registry unavailable');return r.json();})
+  .then(data=>{signposts.push(...data.entries);}).catch(error=>console.warn(error));
+function openSignpost(id){
+  const resolved=CGSignposts.resolve(id,signposts,accessPoints,referenceImages);
+  if(!resolved){say(lang==='es'?'Cartel no encontrado. Elige una playa.':'Poster not found. Choose a beach.',10000);return false;}
+  openAccess(resolved.access,resolved);return true;
+}
 map.createPane('cgAccessPane');
 map.getPane('cgAccessPane').style.zIndex=450;
 map.getPane('cgAccessPane').style.pointerEvents='none';
@@ -4416,17 +4437,23 @@ let selectedAccessPath=null;
 function accessName(point){
   const beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===point.beach);
   const name=beach?.character?beach.name[lang]:beach?.name;
-  return `${lang==='es'?'Sendero':'Path'} · ${name||point.id}`;
+  const label=point.kind==='trailhead'?(lang==='es'?'Inicio de sendero':'Trailhead'):(lang==='es'?'Sendero':'Path');
+  return `${label} · ${point.name||name||point.id}`;
 }
 function clearAccessPath(){if(selectedAccessPath){selectedAccessPath.remove();selectedAccessPath=null;}}
-function openAccess(point){
+function openAccess(point,poster=null){
+  if(!poster){const sign=signposts.find(item=>item.accessId===point.id);if(sign)poster=CGSignposts.resolve(sign.id,signposts,accessPoints,referenceImages);}
   clearAccessPath();
   const beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===point.beach);
   const render=()=>{
-    const es=lang==='es',name=accessName(point),qr=new URL('/mapa',location.origin);
+    const es=lang==='es',name=point.name||accessName(point),qr=new URL(location.pathname,location.origin);
     qr.searchParams.set('a',point.id);
-    return `<h2 id="sheet-title" tabindex="-1">${sourceEsc(name)}</h2>
+    if(poster){qr.href=CGSignposts.link(qr.href,poster.sign.id);}
+    const reference=poster?.reference||referenceImages.find(ref=>ref.id===point.referenceId);
+    return `<div class="info-page trailhead-page"><p class="trailhead-eyebrow">${CGSymbols.svg('trailhead')}${point.kind==='trailhead'?(es?'Inicio de sendero':'Trailhead'):(es?'Acceso cartografiado':'Mapped access')}</p><h2 id="sheet-title" tabindex="-1">${sourceEsc(name)}</h2>
+      ${poster?`<div class="info-summary info-neutral poster-location"><strong>${es?'Ubicación del cartel':'Poster location'}${poster.sign.status==='draft'?(es?' · Borrador':' · Draft'):''}</strong><p>${es?'Este enlace abre el punto registrado del cartel, no la ubicación GPS de tu teléfono.':'This link opens the recorded poster position, not your phone’s GPS location.'}</p></div>`:''}
       <p class="access-note">${es?'Punto de acceso cartografiado. Posición y acceso público pendientes de confirmación en campo.':'Mapped access point. Position and public access await field confirmation.'}</p>
+      ${reference?`<section class="info-section trailhead-reference"><h3>${es?'Al final del sendero':'At the end of the trail'}</h3><figure class="rip-reference-figure"><a class="reference-media is-loading" aria-busy="true" style="aspect-ratio:${reference.width}/${reference.height}" href="${sourceEsc(reference.image)}" target="_blank" rel="noopener" aria-label="${es?'Abrir imagen completa':'Open full image'}"><span class="reference-image-status" role="status">${es?'Cargando imagen…':'Loading image…'}</span><img src="${sourceEsc(reference.image)}" width="${reference.width}" height="${reference.height}" alt="${sourceEsc(reference.name[lang])}"></a><figcaption>${es?'Imagen de referencia. No muestra las condiciones de hoy.':'Reference image. It does not show today’s conditions.'}</figcaption></figure></section>`:''}
       <section class="beach-safety access-risk ${beach?.character?tierOf(beach):'unknown'}" aria-label="${es?'Seguridad en la playa':'Beach safety'}">
       ${beach?.character?`<div class="statuscard ${tierOf(beach)}" data-zone="${beach.id}">${statusCardInner(beach)}</div>`:`<strong>${dangerLabel(beach)}</strong><p>${es?'No hay evaluación de esta playa.':'No assessment is available for this beach.'}</p>`}
       ${renderSwimAdvisory(beach?.id,true,true)}</section>
@@ -4436,18 +4463,19 @@ function openAccess(point){
       <label>${es?'Enlace de esta versión':'Link to this version'}<input readonly value="${sourceEsc(qr.href)}" aria-label="${es?'Enlace QR':'QR link'}"></label>
       <button class="btn" data-copy-access>${es?'Copiar enlace':'Copy link'}</button>
       <p>${es?'Demostración. Confirma el lugar y el dominio final antes de imprimir el QR.':'Demonstration. Confirm the location and final domain before printing the QR.'}</p></details>
-      <p class="access-note"><a href="${point.source}" target="_blank" rel="noopener">OpenStreetMap</a> · ${sourceEsc(point.id)}</p>${sheetFoot()}`;
+      <p class="access-note"><a href="${point.source}" target="_blank" rel="noopener">OpenStreetMap</a> · ${sourceEsc(point.id)}</p>${sheetFoot()}</div>`;
   };
   openSheet(render(),()=>{setSheetContent(render());});
   const path=point.path.map(([lon,lat])=>[lat,lon]);
+  const position=poster?.sign.point||point.point;
   selectedAccessPath=L.layerGroup([
     L.polyline(path,{pane:'cgAccessPane',color:'#fff',weight:6,opacity:1,interactive:false}),
     L.polyline(path,{pane:'cgAccessPane',color:'#086a9a',weight:3.5,opacity:1,interactive:false}),
-    L.circleMarker([point.point[1],point.point[0]],{pane:'cgAccessPane',radius:15,color:'#fff',weight:2,fillColor:'#086a9a',fillOpacity:1,interactive:false})
+    L.circleMarker([position[1],position[0]],{pane:'cgAccessPane',radius:15,color:'#fff',weight:2,fillColor:'#086a9a',fillOpacity:1,interactive:false})
   ]).addTo(map);
   if(beach)showBand(beach);
-  flyClear(L.latLngBounds(path).pad(.18),{maxZoom:17});
-  sheetAddress('a='+point.id);
+  flyClear(L.latLngBounds([...path,[position[1],position[0]]]).pad(.18),{maxZoom:17});
+  sheetAddress(poster?'sign='+poster.sign.id:'a='+point.id);
 }
 function updateAccessMarkers(){
   const show=map.getZoom()>=14.5;
@@ -4490,8 +4518,7 @@ function scheduleMarkerLayout(){
       const node=entry.id;
       node.querySelector('.rescue-count')?.remove();
       node.classList.remove('rescue-group');node.cgRescueGroup=null;
-      const number=node.querySelector('.number,.projected-number')?.textContent;
-      node.setAttribute('aria-label',(lang==='es'?'Estación de rescate':'Rescue station')+(number?' '+number:''));
+      node.setAttribute('aria-label',lang==='es'?'Estación de rescate':'Rescue station');
     }
     for(const group of rescueGroups){
       if(group.members.length<2)continue;
@@ -4532,10 +4559,9 @@ function expandRescueGroup(event){
     // Coincident source points still have separate records. A chooser preserves
     // access to each one without inventing displaced positions at maximum zoom.
     const list=document.createElement('div');list.className='rescue-chooser';
-    members.forEach((marker,i)=>{
+    members.forEach(marker=>{
       const button=document.createElement('button');button.type='button';
-      const number=marker.getElement()?.querySelector('.number,.projected-number')?.textContent;
-      button.textContent=(lang==='es'?'Estación de rescate ':'Rescue station ')+(number||String(i+1));
+      button.textContent=lang==='es'?'Ver estación de rescate':'View rescue station';
       button.onclick=()=>{map.closePopup();marker.fire('click',{latlng:marker.getLatLng()});};
       list.append(button);
     });
@@ -4590,18 +4616,16 @@ function sourcePopup(f,compact=false){
   }
   const note=p.registration==='aj_google_maps_pin'
     ? (es?'Ubicación aportada por AJ; equipo reportado como instalado.':'Location supplied by AJ; equipment reported as installed.')
-      +(p.identity_match==='spatial_inference'
-        ? (es?' Número inferido por cercanía.':' Number inferred from proximity.') : '')
     : proposed ? (es?'Propuesto, no disponible':'Proposed, not available')
     : p.kind==='unclassified_facility' ? (es?'Servicio no identificado':'Service unknown')
     : (es?'Posición aproximada':'Approximate position');
-  return compact?note:`<strong>${sourceEsc(names[es?0:1])}${p.number?' '+sourceEsc(p.number):''}</strong><br><small>${note}</small>`;
+  return compact?note:`<strong>${sourceEsc(names[es?0:1])}${p.kind!=='rescue_station'&&p.number?' '+sourceEsc(p.number):''}</strong><br><small>${note}</small>`;
 }
 function openSourceFeature(f){
   const p=f.properties;
   const render=()=>{
     const es=lang==='es',rescue=p.kind==='rescue_station',place=p.kind==='location';
-    const title=place?sourcePlaceLabel(p,es):(projectedNames[p.kind]?.[es?0:1]||(es?'Anotación':'Annotation'))+(p.number?' '+p.number:'');
+    const title=place?sourcePlaceLabel(p,es):(projectedNames[p.kind]?.[es?0:1]||(es?'Anotación':'Annotation'))+(!rescue&&p.number?' '+p.number:'');
     const summary=rescue?(es?'Disponibilidad sin confirmar':'Availability unconfirmed'):p.kind==='rip_current'?(es?'Corriente de referencia':'Reference current'):(es?'Referencia del mapa':'Map reference');
     return `<div class="info-page ${rescue?'rescue-page':''}"><h2 id="sheet-title" tabindex="-1">${sourceEsc(title)}</h2>
       ${rescue?rescueStatus():`<div class="info-summary ${p.kind==='rip_current'?'info-danger':'info-neutral'}"><div class="info-label">${CGSymbols.svg(place?'place_'+(p.category||'other'):'rip_current')}<strong>${summary}</strong></div><p>${sourcePopup(f,true)}</p></div>`}
@@ -4650,7 +4674,7 @@ function drawProjectedAnnotations(gj){
         zIndexOffset:kind==='rescue_station'?500:0,
         icon:L.divIcon({className:'projected-marker '+(kind==='rescue_station'?'projected-rescue ':'')+(kind==='location'?'projected-place':
           kind==='rescue_station' && f.properties.registration==='aj_google_maps_pin' && !f.properties.number?'aj-unnumbered':''),
-          iconSize:[44,44],iconAnchor:[22,22],html:CGSymbols.badge(symbol)+(f.properties.number?`<span class="projected-number">${sourceEsc(f.properties.number)}</span>`:'')})
+          iconSize:[44,44],iconAnchor:[22,22],html:CGSymbols.badge(symbol)+(kind!=='rescue_station'&&f.properties.number?`<span class="projected-number">${sourceEsc(f.properties.number)}</span>`:'')})
       }).addTo(group).on('click',()=>openSourceFeature(f));
       projectedDetail.push({layer:marker,kind});
     }
@@ -5075,7 +5099,7 @@ function selectForecastMetric(panel,key,focus=false){
     view.hidden=view.id!=='hourly-'+key;
     if(!view.hidden){
       view.querySelector('.hourly-scroll').scrollLeft=left;
-      if(!reducedMotion.matches)view.animate({opacity:[.35,1],transform:['translateY(4px)','translateY(0)']},{duration:180,easing:'ease-out'});
+      if(!reducedMotion.matches)view.animate(desktop()?{opacity:[.65,1]}:{opacity:[.35,1],transform:['translateY(4px)','translateY(0)']},{duration:desktop()?160:180,easing:'ease-out'});
     }
   });
   scheduleScrollCues();
@@ -5436,7 +5460,8 @@ renderSaved();
   const b=UNASSESSED_BEACHES.find(x=>localId(x.id)===q.get("b"));
   const p=POSTS.find(x=>localId(x.id)===q.get("p"));
   // Fit immediately so late startup layout updates cannot interrupt a QR flight.
-  if(q.has("a")){ Promise.all([geomReady,accessReady]).then(()=>{ const point=accessPoints.find(x=>x.id===q.get("a")); if(point)openAccess(point); else say(lang==='es'?'Acceso no encontrado. Elige una playa.':'Access point not found. Choose a beach.',10000); }); }
+  if(q.has("sign")){Promise.all([geomReady,accessReady,signpostsReady,referencesReady]).then(()=>openSignpost(q.get("sign")));}
+  else if(q.has("a")){ Promise.all([geomReady,accessReady,referencesReady,signpostsReady]).then(()=>{ const point=accessPoints.find(x=>x.id===q.get("a")); if(point)openAccess(point); else say(lang==='es'?'Acceso no encontrado. Elige una playa.':'Access point not found. Choose a beach.',10000); }); }
   else if(z){ geomReady.then(()=>openBeach(z)); }
   else if(b){ geomReady.then(()=>openBeach(b)); }
   else if(p){ setTimeout(()=>openPost(p),350); }

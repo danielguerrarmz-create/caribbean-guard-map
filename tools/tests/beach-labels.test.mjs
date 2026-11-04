@@ -30,7 +30,7 @@ test('a clear label stays at its home position',()=>{
 });
 
 test('the unreviewed beach notice is outside the collapsed sources section and absent for reviewed beaches',()=>{
-  const html=readFileSync(new URL('../../web/index.html',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../../web/index.html',import.meta.url),'utf8').replace(/\r\n/g,'\n');
   const start=html.indexOf('function openZone(');
   const source=html.slice(start,html.indexOf('\n}\n',start)+3);
   for(const lang of ['en','es']) for(const reviewed of [null,{by:'Guard',on:'2026-11-04'}]){
