@@ -438,3 +438,11 @@
 @media(max-width:819px){
  body::after{content:'';position:fixed;z-index:1201;bottom:0;left:0;right:0;height:var(--safe-pad);background:var(--paper);pointer-events:none}
 }
+.trailhead-page .trailhead-eyebrow{display:flex;align-items:center;gap:8px;margin:4px 0 12px;color:var(--ocean);font-size:15px;font-weight:600;letter-spacing:.02em}
+.trailhead-eyebrow svg{width:24px;height:24px;flex:none}
+.trailhead-page .poster-location{margin:24px 0 16px}
+.trailhead-page .access-note{font-size:14px;line-height:1.5}
+.trailhead-page .trailhead-reference{margin-top:28px;padding-top:0;border-top:0}
+.trailhead-reference .rip-reference-figure{margin:16px 0 28px}
+.trailhead-reference img{display:block;width:100%;height:auto}
+.trailhead-page .qr-link input{display:block;box-sizing:border-box;width:100%;margin:10px 0 16px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;color:var(--ink)}

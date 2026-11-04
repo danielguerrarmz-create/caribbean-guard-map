@@ -1337,6 +1337,41 @@
       "name": null,
       "source": "https://www.openstreetmap.org/way/1362771447",
       "verified": false
+    },
+    {
+      "id": "osm-1122791652",
+      "point": [
+        -82.7172165,
+        9.6402744
+      ],
+      "path": [
+        [
+          -82.7166197,
+          9.6419853
+        ],
+        [
+          -82.7168182,
+          9.6411048
+        ],
+        [
+          -82.7170274,
+          9.6408853
+        ],
+        [
+          -82.7171883,
+          9.6406975
+        ],
+        [
+          -82.7172165,
+          9.6402744
+        ]
+      ],
+      "beach": "cg:zone/chiquita",
+      "name": "Calle Merlin / Punta Cocles",
+      "referenceId": "merlin",
+      "source": "https://www.openstreetmap.org/way/1122791652",
+      "verified": false,
+      "kind": "trailhead"
     }
   ]
 }

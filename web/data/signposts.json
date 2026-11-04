@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "note": "Stable poster IDs. Draft points are mapped candidates, not surveyed installations. Never reuse a retired ID for a different entrance.",
+  "entries": [
+    {
+      "id": "merlin-entrance",
+      "name": {"es": "Calle Merlin / Punta Cocles", "en": "Calle Merlin / Punta Cocles"},
+      "accessId": "osm-1122791652",
+      "referenceId": "merlin",
+      "posterImageCrop": [52, 88, 1186, 845],
+      "point": [-82.7172165, 9.6402744],
+      "status": "draft",
+      "verifiedAt": null,
+      "placement": "Candidate junction of the mapped northbound route with Via 256. Identified from AJ's screenshot and Daniel's Calle Merlin clarification. Exact installation point and destination photograph pairing require field confirmation."
+    }
+  ]
+}

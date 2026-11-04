@@ -41,7 +41,7 @@
     safeAreas.addEventListener('change',showSafeAreas);
     // Reuse the app's existing deep links when reviewing a specific destination.
     const query=new URLSearchParams(location.search),appQuery=new URLSearchParams();
-    for(const key of ['z','b','p','a'])if(query.has(key))appQuery.set(key,query.get(key));
+    for(const key of ['z','b','p','a','sign'])if(query.has(key))appQuery.set(key,query.get(key));
     if(appQuery.size)frame.src='/?'+appQuery.toString();
     function sizePreview(){
       const scale = Math.min(1, (innerWidth - 32) / 390, (innerHeight - 76) / 844);
