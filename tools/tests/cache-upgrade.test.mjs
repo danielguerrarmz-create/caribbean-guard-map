@@ -14,4 +14,3 @@ test('a new document cannot boot with unversioned application assets from an old
   assert.ok(assets.includes(url),'precache must use the exact request key: '+url);
  }
 });
-
