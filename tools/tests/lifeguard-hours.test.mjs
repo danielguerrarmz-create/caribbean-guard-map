@@ -83,14 +83,14 @@ test('the off duty instruction exists in ES and EN and tells the reader not to g
 });
 
 test('the page renders through the Costa Rica clock and refreshes it', () => {
-  assert.match(HTML, /<script src="lifeguard\.js"><\/script>/);
+  assert.match(HTML, /<script src="lifeguard\.js\?v=\d+"><\/script>/);
   const hours = HTML.slice(HTML.indexOf('function hoursLine('), HTML.indexOf('function statusCardInner('));
   assert.doesNotMatch(hours, /getHours\(\)/, 'hoursLine must not read the phone clock');
   assert.match(HTML, /setInterval\(\(\)=>\{\s*refreshPostClock\(\)/);
   assert.match(HTML, /visibilitychange',\(\)=>\{\s*if\(!document\.hidden\)\{refreshPostClock\(\)/);
   assert.match(HTML, /<span class="instr">\$\{t\[instructionKey\(z, when\)\]\}<\/span>/);
   assert.match(HTML, /<span class="beach-status">\$\{t\[instructionKey\(z\)\]\}<\/span>/);
-  assert.match(WORKER, /"lifeguard\.js",/);
+  assert.match(WORKER, /"lifeguard\.js\?v=\d+",/);
   assert.doesNotMatch(WORKER, /cg-map-v50-aj-rescue-pins/, 'offline cache version bumped');
 });
 

@@ -13,7 +13,7 @@ const worker = readFileSync(resolve(source, 'sw.js'), 'utf8');
 const boundary = worker.indexOf('async function put(');
 if (boundary < 0) throw new Error('Cannot locate service-worker asset declarations.');
 const assets = runInNewContext(worker.slice(0, boundary) + '\n[...CRITICAL, ...OPTIONAL]', {}, { timeout: 1000 });
-const missing = assets.filter(asset => !existsSync(resolve(source, asset)));
+const missing = assets.filter(asset => !existsSync(resolve(source, asset.split("?")[0])));
 if (missing.length) throw new Error(`Missing offline assets:\n${missing.join('\n')}`);
 console.log(`Validated ${assets.length} offline asset references.`);
 // Replace generated output so removed public files cannot survive a rebuild.
