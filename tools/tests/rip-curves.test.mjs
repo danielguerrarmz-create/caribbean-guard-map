@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {simplifyCurve as approvedCurve} from '../../docs/design/symbol-study/curve.mjs';
 
 const context={L:{point:(x,y)=>({x,y})}};
 runInNewContext(readFileSync(new URL('../../web/geometry.js',import.meta.url),'utf8'),context);
@@ -14,14 +13,24 @@ function projection(scale){return {
   layerPointToLatLng:p=>p
 };}
 
-test('all source rips retain the approved curve intent without changing evidence',()=>{
+test('all source rips match the current app baseline without changing evidence',()=>{
+  // Labelled baseline of app behaviour captured 2026-11-04, not approved symbol-study curves.
+  const baseline=JSON.parse(readFileSync(new URL('./fixtures/rip-curves.app-baseline-2026-11-04.json',import.meta.url),'utf8'));
+  const keyFor=(feature,index)=>feature.id!=null?`feature.id:${JSON.stringify(feature.id)}`:
+    feature.properties.id!=null?`properties.id:${JSON.stringify(feature.properties.id)}`:`index:${index}`;
+  const source=JSON.parse(readFileSync(new URL('../../web/data/full-map-geographic.geojson',import.meta.url),'utf8'));
+  const keys=source.features.flatMap((feature,index)=>feature.properties.kind==='rip_current'?[keyFor(feature,index)]:[]);
   const original=JSON.stringify(rips);
   assert.equal(rips.length,53);
-  for(const feature of rips){
+  assert.equal(baseline.featureCount,53);
+  assert.equal(new Set(keys).size,53,'source feature keys must be unique');
+  assert.deepEqual(Object.keys(baseline.entries).sort(),[...keys].sort(),'baseline keys must match exactly');
+  for(const [index,feature] of rips.entries()){
     const points=feature.geometry.coordinates;
     const actual=simplifyCurve(points);
-    assert.deepEqual(JSON.parse(JSON.stringify(actual)),approvedCurve(points));
+    assert.deepEqual(JSON.parse(JSON.stringify(actual)),baseline.entries[keys[index]],keys[index]);
     assert.ok(Object.values(actual).flat().every(Number.isFinite));
+    assert.ok(Object.values(baseline.entries[keys[index]]).flat().every(Number.isFinite));
   }
   assert.equal(JSON.stringify(rips),original);
 });

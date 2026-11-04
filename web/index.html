@@ -878,8 +878,8 @@
     .leaflet-bottom.leaflet-left{bottom:0;left:360px}
   }
 </style>
-<link rel="stylesheet" href="coastal.css?v=74">
-<link rel="stylesheet" href="coastal-panels.css?v=74">
+<link rel="stylesheet" href="coastal.css?v=75">
+<link rel="stylesheet" href="coastal-panels.css?v=75">
 </head>
 <body>
 
@@ -997,14 +997,14 @@
      AFTER Leaflet and BEFORE this file. Stroke widths, dash ratios, the 40 m end
      shoreline strokes, rip arrows and label collision live in there now, so
      the card swatch and the map read ONE table instead of two copies. -->
-<script src="geometry.js?v=74"></script>
-<script src="panel-gesture.js?v=74"></script>
-<script src="forecast.js?v=74"></script>
-<script src="advisory.js?v=74"></script>
+<script src="geometry.js?v=75"></script>
+<script src="panel-gesture.js?v=75"></script>
+<script src="forecast.js?v=75"></script>
+<script src="advisory.js?v=75"></script>
 <!-- The lifeguard post clock, in Costa Rica time whatever the phone says. -->
-<script src="lifeguard.js?v=74"></script>
-<script src="symbols.js?v=74"></script>
-<script src="signposts.js?v=74"></script>
+<script src="lifeguard.js?v=75"></script>
+<script src="symbols.js?v=75"></script>
+<script src="signposts.js?v=75"></script>
 <script>document.body.insertAdjacentHTML("afterbegin",CGSymbols.haloDefinitions);</script>
 <script>
 /* ============================================================
@@ -3485,6 +3485,7 @@ function openZone(z){
         <section class="beach-overview" aria-labelledby="beach-overview-title">
           <h3 id="beach-overview-title">${lang==='es'?'Sobre esta playa':'About this beach'}</h3>
           <p class="beach-context">${c.why[lang]}</p>
+          ${!c.reviewed?`<p class="beach-meta">${lang==='es'?'Sin revisión local. Sin condiciones en vivo.':'Not locally reviewed. No live conditions.'}</p>`:''}
         </section>
         <details class="beach-background"><summary>${lang==='es'?'Fuentes y revisión':'Sources and review'}</summary>
           ${rider}${trustLine(z)}${renderWeatherPanel()}
@@ -5266,7 +5267,7 @@ const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
 let installPrompt = null;     // Chromium's beforeinstallprompt, stashed
-let savedAt = null;           // when the cache was last written, from the worker
+let savedAt = null;           // time of the last complete core download, from the worker
 
 /* The saved bar is no longer a bar. It is one 12 px line inside .dockrow,
    sharing that line with the legend chip and the strip counter, because on a
@@ -5421,7 +5422,7 @@ if(SW_SUPPORTED){
     location.reload();
   });
 
-  // the worker reports when it last wrote the cache
+  // the worker reports the time of the last complete core download
   navigator.serviceWorker.addEventListener("message", e=>{
     if(e.data && e.data.savedAt){
       savedAt = new Date(e.data.savedAt);
