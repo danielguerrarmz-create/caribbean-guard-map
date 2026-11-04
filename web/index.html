@@ -5243,7 +5243,7 @@ const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
 let installPrompt = null;     // Chromium's beforeinstallprompt, stashed
-let savedAt = null;           // when the cache was last written, from the worker
+let savedAt = null;           // time of the last complete core download, from the worker
 
 /* The saved bar is no longer a bar. It is one 12 px line inside .dockrow,
    sharing that line with the legend chip and the strip counter, because on a
@@ -5398,7 +5398,7 @@ if(SW_SUPPORTED){
     location.reload();
   });
 
-  // the worker reports when it last wrote the cache
+  // the worker reports the time of the last complete core download
   navigator.serviceWorker.addEventListener("message", e=>{
     if(e.data && e.data.savedAt){
       savedAt = new Date(e.data.savedAt);
