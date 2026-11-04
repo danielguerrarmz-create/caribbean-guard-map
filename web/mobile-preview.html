@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Caribbean Guard | Mobile preview</title>
+  <link rel="stylesheet" href="/preview-device.css">
+  <script defer src="/preview-device.js"></script>
   <style>
     *{box-sizing:border-box}
     :root{font-family:Arial,Helvetica,sans-serif;color:#18313e;background:#e8eef0}
@@ -12,18 +14,38 @@
     strong{font-size:14px}
     a{color:#125b73}
     #stage{position:relative;flex:none}
+    header label{display:flex;align-items:center;gap:6px;font-size:12px}
+    #stage.safe-areas::before{content:'';position:absolute;z-index:5;pointer-events:none;left:50%;top:calc(11px * var(--preview-scale));transform:translateX(-50%);width:calc(120px * var(--preview-scale));height:calc(35px * var(--preview-scale));border-radius:24px;background:#080b0d}
+    #stage.safe-areas::after{content:'';position:absolute;z-index:5;pointer-events:none;left:50%;bottom:calc(8px * var(--preview-scale));transform:translateX(-50%);width:calc(134px * var(--preview-scale));height:calc(5px * var(--preview-scale));border-radius:4px;background:#142d38}
     iframe{display:block;width:390px;height:844px;border:0;border-radius:20px;background:#fff;box-shadow:0 14px 46px #18313e30;transform-origin:top left}
     @media(max-width:420px){body{padding:0}header{padding:0 12px}iframe{border-radius:0;box-shadow:none}}
   </style>
 </head>
 <body>
-  <header><strong>Mobile preview · 390 × 844</strong><a href="/" target="_blank" rel="noopener">Open full site</a></header>
+  <header><strong>Mobile · 390 × 844</strong><label><input id="safe-areas" type="checkbox" checked>Simulate iPhone safe areas</label><a href="/" target="_blank" rel="noopener">Open full site</a></header>
   <div id="stage"><iframe id="app" src="/" title="Caribbean Guard mobile app" allow="geolocation"></iframe></div>
   <script>
     const frame = document.getElementById('app');
     const stage = document.getElementById('stage');
+    const safeAreas = document.getElementById('safe-areas');
+    function showSafeAreas(){
+      stage.classList.toggle('safe-areas',safeAreas.checked);
+      const root=frame.contentDocument?.documentElement;
+      if(!root)return;
+      for(const [key,value] of [['--safe-top','59px'],['--safe-pad','34px']]){
+        if(safeAreas.checked)root.style.setProperty(key,value);else root.style.removeProperty(key);
+      }
+      frame.contentWindow.dispatchEvent(new Event('resize'));
+    }
+    frame.addEventListener('load',showSafeAreas);
+    safeAreas.addEventListener('change',showSafeAreas);
+    // Reuse the app's existing deep links when reviewing a specific destination.
+    const query=new URLSearchParams(location.search),appQuery=new URLSearchParams();
+    for(const key of ['z','b','p','a'])if(query.has(key))appQuery.set(key,query.get(key));
+    if(appQuery.size)frame.src='/?'+appQuery.toString();
     function sizePreview(){
       const scale = Math.min(1, (innerWidth - 32) / 390, (innerHeight - 76) / 844);
+      stage.style.setProperty('--preview-scale',scale);
       frame.style.transform = `scale(${scale})`;
       stage.style.width = `${390 * scale}px`;
       stage.style.height = `${844 * scale}px`;

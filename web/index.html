@@ -879,6 +879,7 @@
   }
 </style>
 <link rel="stylesheet" href="coastal.css">
+<link rel="stylesheet" href="coastal-panels.css">
 </head>
 <body>
 
@@ -892,11 +893,11 @@
     <span class="brand-text">Caribbean Guard<small id="tagline">Mapa de seguridad costera</small></span></a>
   <span class="region-label">Caribe Sur · Costa Rica</span>
   <div class="spacer"></div>
-  <a class="sos" id="sos" href="tel:911"><b>911</b><span class="word" id="sos-word">Emergencia</span></a>
   <div class="lang" role="group" id="lang-group" aria-label="Idioma">
     <button id="btn-es" aria-pressed="true">ES</button>
     <button id="btn-en" aria-pressed="false">EN</button>
   </div>
+  <a class="sos" id="sos" href="tel:911"><b>911</b><span class="word" id="sos-word">Emergencia</span></a>
 </div>
 
 <!-- role="alert", not role="status" with aria-live="assertive". Hat 4, finding
@@ -906,10 +907,7 @@
 <div class="toast" id="toast" role="alert" aria-atomic="true"></div>
 
 <button class="fab" id="locate" aria-label="Mi ubicación">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-    <circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/>
-    <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
-  </svg>
+  <svg class="cg-icon cg-duotone" data-icon="locate" data-tone="place" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M160,128a32,32,0,1,1-32-32A32,32,0,0,1,160,128Z" opacity="0.2"/><path d="M232,120h-8.34A96.14,96.14,0,0,0,136,32.34V24a8,8,0,0,0-16,0v8.34A96.14,96.14,0,0,0,32.34,120H24a8,8,0,0,0,0,16h8.34A96.14,96.14,0,0,0,120,223.66V232a8,8,0,0,0,16,0v-8.34A96.14,96.14,0,0,0,223.66,136H232a8,8,0,0,0,0-16Zm-96,87.6V200a8,8,0,0,0-16,0v7.6A80.15,80.15,0,0,1,48.4,136H56a8,8,0,0,0,0-16H48.4A80.15,80.15,0,0,1,120,48.4V56a8,8,0,0,0,16,0V48.4A80.15,80.15,0,0,1,207.6,120H200a8,8,0,0,0,0,16h7.6A80.15,80.15,0,0,1,136,207.6ZM128,88a40,40,0,1,0,40,40A40,40,0,0,0,128,88Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,152Z"/></svg>
 </button>
 
 <!-- North arrow. On a phone with a compass this becomes a live heading
@@ -918,14 +916,7 @@
      Without a compass it stays a plain north arrow, which is still correct
      because the imagery is rectified north-up. -->
 <button class="compass" id="compass" aria-label="Norte" aria-live="off">
-  <svg viewBox="0 0 44 44" aria-hidden="true">
-    <g id="needle">
-      <path d="M22 7 L27.4 24 L22 20.6 L16.6 24 Z" fill="#c62828"/>
-      <path d="M22 37 L16.6 20 L22 23.4 L27.4 20 Z" fill="#8ea3b6"/>
-    </g>
-    <text x="22" y="6.4" text-anchor="middle" font-size="7.5" font-weight="600"
-          fill="#0b1c2c" font-family="inherit">N</text>
-  </svg>
+  <svg id="needle" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 3 19 21 12 17Z"/><path d="M12 3 12 17 5 21Z" opacity=".35"/></svg>
 </button>
 
 <div class="dock" id="dock">
@@ -941,20 +932,14 @@
     <button class="btn-chip" id="legend-open" type="button">Leyenda</button>
     <button class="txt" id="saved-txt" type="button"></button>
     <button class="rf" id="saved-refresh" type="button" aria-label="Actualizar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-           stroke-linecap="round" aria-hidden="true">
-        <path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 5v6h-6"/>
-      </svg>
+      <svg class="cg-icon cg-duotone" data-icon="refresh" data-tone="place" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,128a88,88,0,1,1-88-88A88,88,0,0,1,216,128Z" opacity="0.2"/><path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z"/></svg>
     </button>
     <span class="counter" id="counter" aria-hidden="true"></span>
   </div>
 
   <!-- First run only; JS collapses it to the round icon once it has been used. -->
   <button class="locate-first" id="locate-first" type="button">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/>
-      <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
-    </svg>
+    <svg class="cg-icon cg-duotone" data-icon="locate" data-tone="place" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M160,128a32,32,0,1,1-32-32A32,32,0,0,1,160,128Z" opacity="0.2"/><path d="M232,120h-8.34A96.14,96.14,0,0,0,136,32.34V24a8,8,0,0,0-16,0v8.34A96.14,96.14,0,0,0,32.34,120H24a8,8,0,0,0,0,16h8.34A96.14,96.14,0,0,0,120,223.66V232a8,8,0,0,0,16,0v-8.34A96.14,96.14,0,0,0,223.66,136H232a8,8,0,0,0,0-16Zm-96,87.6V200a8,8,0,0,0-16,0v7.6A80.15,80.15,0,0,1,48.4,136H56a8,8,0,0,0,0-16H48.4A80.15,80.15,0,0,1,120,48.4V56a8,8,0,0,0,16,0V48.4A80.15,80.15,0,0,1,207.6,120H200a8,8,0,0,0,0,16h7.6A80.15,80.15,0,0,1,136,207.6ZM128,88a40,40,0,1,0,40,40A40,40,0,0,0,128,88Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,152Z"/></svg>
     <span id="locate-first-label">¿En qué playa estoy?</span>
   </button>
 
@@ -976,15 +961,14 @@
   </section>
 
   <div class="list-heading"><h3 class="eyebrow rail-eyebrow" id="rail-beaches">Playas</h3><button id="list-toggle" aria-expanded="false" aria-controls="picker">Ver todas</button></div>
-  <p class="dist-origin" id="dist-origin" hidden></p>
   <div class="strip" id="picker">
-    <button class="card" data-id="cg:zone/playa-negra" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Negra</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
-    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m6 6 12 12M5 16q2-2 4 0t4 0t4 0"/><circle cx="14" cy="8" r="1.5"/></svg></span><span class="beach-copy"><span class="nm">Puerto Viejo</span><span class="beach-status">NO ENTRES AL AGUA</span></span></button>
-    <button class="card" data-id="cg:zone/cocles" aria-current="false"><span class="symbol high-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 10h8l2 4H6zM9 14l-2 7m8-7 2 7M5 21h14"/></svg></span><span class="beach-copy"><span class="nm">Playa Cocles</span><span class="beach-status">SOLO CON GUARDAVIDAS</span></span></button>
-    <button class="card" data-id="cg:zone/chiquita" aria-current="false"><span class="symbol conditional beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2Z"/><path d="M12 9v5m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Chiquita</span><span class="beach-status">REVISA ANTES DE ENTRAR</span></span></button>
-    <button class="card" data-id="cg:zone/punta-uva" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14q2-2 4 0t4 0t4 0t4 0t4 0M2 19q2-2 4 0t4 0t4 0t4 0t4 0"/><path d="M12 3v6m0 2v.1"/></svg></span><span class="beach-copy"><span class="nm">Punta Uva</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
-    <button class="card unassessed" data-id="cg:beach/playa-grande" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Playa Grande</span><span class="beach-status">SIN EVALUAR</span></span></button>
-    <button class="card unassessed" data-id="cg:beach/manzanillo" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 1-1 2-1 3m0 3v.1"/></svg></span><span class="beach-copy"><span class="nm">Manzanillo</span><span class="beach-status">SIN EVALUAR</span></span></button>
+    <button class="card" data-id="cg:zone/playa-negra" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg class="cg-icon cg-duotone" data-icon="lower-risk" data-tone="water" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,70.39v112c-72,59.69-104-56.47-176,3.22v-112C112,13.92,144,130.08,216,70.39Z" opacity="0.2"/><path d="M222.16,177.25a8,8,0,0,1-1,11.25c-17.36,14.39-32.86,19.5-47,19.5-18.58,0-34.82-8.82-49.93-17-25.35-13.76-47.24-25.64-79.07.74a8,8,0,1,1-10.22-12.31c40.17-33.28,70.32-16.92,96.93-2.48,25.35,13.75,47.24,25.63,79.07-.74A8,8,0,0,1,222.16,177.25Zm-11.27-57c-31.83,26.38-53.72,14.5-79.07.74-26.61-14.43-56.76-30.79-96.93,2.49a8,8,0,0,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.19,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31ZM45.11,79.8c31.83-26.37,53.72-14.49,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.12,47-19.5a8,8,0,1,0-10.22-12.31c-31.83,26.38-53.72,14.5-79.07.74C105.21,50.58,75.06,34.22,34.89,67.5A8,8,0,1,0,45.11,79.8Z"/></svg></span><span class="beach-copy"><span class="nm">Playa Negra</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
+    <button class="card" data-id="cg:zone/salsa-brava" aria-current="false"><span class="symbol no-swim beach-symbol" aria-hidden="true"><svg class="cg-icon cg-duotone" data-icon="no-swim" data-tone="danger" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm88,104a87.56,87.56,0,0,1-20.41,56.28L71.72,60.4A88,88,0,0,1,216,128ZM40,128A87.56,87.56,0,0,1,60.41,71.72L184.28,195.6A88,88,0,0,1,40,128Z"/></svg></span><span class="beach-copy"><span class="nm">Puerto Viejo</span><span class="beach-status">NO ENTRES AL AGUA</span></span></button>
+    <button class="card" data-id="cg:zone/cocles" aria-current="false"><span class="symbol high-risk beach-symbol" aria-hidden="true"><svg class="cg-icon cg-duotone" data-icon="high-risk" data-tone="danger" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M195.88,195.88l-39.6-39.6a40,40,0,0,0,0-56.56l39.6-39.6A96,96,0,0,1,195.88,195.88ZM60.12,60.12a96,96,0,0,0,0,135.76l39.6-39.6a40,40,0,0,1,0-56.56Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm39.1,131.79a47.84,47.84,0,0,0,0-55.58l28.5-28.49a87.83,87.83,0,0,1,0,112.56ZM96,128a32,32,0,1,1,32,32A32,32,0,0,1,96,128Zm88.28-67.6L155.79,88.9a47.84,47.84,0,0,0-55.58,0L71.72,60.4a87.83,87.83,0,0,1,112.56,0ZM60.4,71.72l28.5,28.49a47.84,47.84,0,0,0,0,55.58L60.4,184.28a87.83,87.83,0,0,1,0-112.56ZM71.72,195.6l28.49-28.5a47.84,47.84,0,0,0,55.58,0l28.49,28.5a87.83,87.83,0,0,1-112.56,0Z"/></svg></span><span class="beach-copy"><span class="nm">Playa Cocles</span><span class="beach-status">SOLO CON GUARDAVIDAS</span></span></button>
+    <button class="card" data-id="cg:zone/chiquita" aria-current="false"><span class="symbol conditional beach-symbol" aria-hidden="true"><svg class="cg-icon cg-duotone" data-icon="conditional" data-tone="caution" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22c6.3-11,22.52-11,28.82,0l87.46,151.87C236,202.79,228.08,216,215.46,216Z" opacity="0.2"/><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg></span><span class="beach-copy"><span class="nm">Playa Chiquita</span><span class="beach-status">REVISA ANTES DE ENTRAR</span></span></button>
+    <button class="card" data-id="cg:zone/punta-uva" aria-current="false"><span class="symbol lower-risk beach-symbol" aria-hidden="true"><svg class="cg-icon cg-duotone" data-icon="lower-risk" data-tone="water" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,70.39v112c-72,59.69-104-56.47-176,3.22v-112C112,13.92,144,130.08,216,70.39Z" opacity="0.2"/><path d="M222.16,177.25a8,8,0,0,1-1,11.25c-17.36,14.39-32.86,19.5-47,19.5-18.58,0-34.82-8.82-49.93-17-25.35-13.76-47.24-25.64-79.07.74a8,8,0,1,1-10.22-12.31c40.17-33.28,70.32-16.92,96.93-2.48,25.35,13.75,47.24,25.63,79.07-.74A8,8,0,0,1,222.16,177.25Zm-11.27-57c-31.83,26.38-53.72,14.5-79.07.74-26.61-14.43-56.76-30.79-96.93,2.49a8,8,0,0,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.19,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31ZM45.11,79.8c31.83-26.37,53.72-14.49,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.12,47-19.5a8,8,0,1,0-10.22-12.31c-31.83,26.38-53.72,14.5-79.07.74C105.21,50.58,75.06,34.22,34.89,67.5A8,8,0,1,0,45.11,79.8Z"/></svg></span><span class="beach-copy"><span class="nm">Punta Uva</span><span class="beach-status">IGUAL, TEN CUIDADO</span></span></button>
+    <button class="card unassessed" data-id="cg:beach/playa-grande" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg class="cg-icon cg-duotone" data-icon="unknown" data-tone="muted" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span><span class="beach-copy"><span class="nm">Playa Grande</span><span class="beach-status">SIN EVALUAR</span></span></button>
+    <button class="card unassessed" data-id="cg:beach/manzanillo" aria-current="false"><span class="symbol unknown beach-symbol" aria-hidden="true"><svg class="cg-icon cg-duotone" data-icon="unknown" data-tone="muted" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span><span class="beach-copy"><span class="nm">Manzanillo</span><span class="beach-status">SIN EVALUAR</span></span></button>
   </div>
 
   <!-- Desktop only: the same legend the chip opens as a sheet on a phone. -->
@@ -994,7 +978,7 @@
 <div class="update" id="update" role="status" aria-live="polite">
   <span class="msg" id="update-msg"></span>
   <button class="go" id="update-go"></button>
-  <button class="no" id="update-no" aria-label="Cerrar">&times;</button>
+  <button class="no" id="update-no" aria-label="Cerrar"><svg class="cg-icon cg-duotone" data-icon="close" data-tone="place" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,56V200a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40H200A16,16,0,0,1,216,56Z" opacity="0.2"/><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
 </div>
 
 <!-- hidden AND inert while closed. Named by its own h2, which also takes focus
@@ -1003,7 +987,7 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="false"
      aria-labelledby="sheet-title" data-stop="peek" hidden inert>
   <button class="sheet-expand" id="sheet-expand" aria-expanded="false">Ver más</button>
-  <button class="close" id="sheet-close" aria-label="Cerrar">&times;</button>
+  <button class="close" id="sheet-close" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
   <div class="sheet-body" id="sheet-body"></div>
 </div>
 
@@ -1014,11 +998,13 @@
      shoreline strokes, rip arrows and label collision live in there now, so
      the card swatch and the map read ONE table instead of two copies. -->
 <script src="geometry.js"></script>
+<script src="panel-gesture.js"></script>
 <script src="forecast.js"></script>
 <script src="advisory.js"></script>
 <!-- The lifeguard post clock, in Costa Rica time whatever the phone says. -->
 <script src="lifeguard.js"></script>
 <script src="symbols.js"></script>
+<script>document.body.insertAdjacentHTML("afterbegin",CGSymbols.haloDefinitions);</script>
 <script>
 /* ============================================================
    1. GEOREFERENCE  <-- solved 2026-07-30, do not hand-edit
@@ -1611,7 +1597,7 @@ const T = {
       savedNever:"No guardado en este teléfono",
       previewNoStore:"La copia sin conexión está desactivada en esta vista local.",
       previewWhy:"Esta vista local siempre carga el mapa y sus líneas actuales para revisión. La versión publicada conserva la copia sin conexión.",
-      bandFailed:"No se pudieron cargar las franjas de color de la costa. Las líneas de seguridad siguen visibles.",
+      bandFailed:"No se pudo cargar el resaltado de la playa. Los nombres y detalles siguen disponibles.",
       savedAt:when=>`Guardado en este teléfono · ${when}`,
       savedNoStore:"Este navegador no guarda la página",
       savedRefreshing:"Actualizando...",
@@ -1765,7 +1751,7 @@ const T = {
       savedNever:"Not saved on this phone",
       previewNoStore:"Offline saving is off in this local preview.",
       previewWhy:"This local preview always loads the current map and linework for review. The published map still saves an offline copy.",
-      bandFailed:"The coastal color bands could not load. Safety lines remain visible.",
+      bandFailed:"The selected beach highlight could not load. Beach labels and details remain available.",
       savedAt:when=>`Saved on this phone · ${when}`,
       savedNoStore:"This browser does not save the page",
       savedRefreshing:"Refreshing...",
@@ -2056,9 +2042,8 @@ function hoursLine(z, when){
   return `<span class="hours"><b>${p[lang]}</b> ${t.postZone}${closed}</span>`;
 }
 function statusCardInner(z, when){
-  const t = T[lang], c = z.character;
-  return `<span class="tile" aria-hidden="true">${CGSymbols.badge(c.class)}</span>
-          <span class="eyebrow">${dangerLabel(z)}</span>
+  const t = T[lang];
+  return `<span class="eyebrow">${dangerLabel(z)}</span>
           <span class="instr">${t[instructionKey(z, when)]}</span>${hoursLine(z, when)}`;
 }
 const postState = new Map();   // zone id -> on duty when last drawn
@@ -2410,8 +2395,8 @@ function tappableLabel(m, open){
   });
   if(m.getElement()) m.fire("add");
 }
-zoneLabels.forEach((m, i) => tappableLabel(m, () => openZone(ZONES[i])));
-unassessedLabels.forEach((m, i) => tappableLabel(m, () => openUnassessedBeach(UNASSESSED_BEACHES[i])));
+zoneLabels.forEach((m, i) => tappableLabel(m, () => openBeach(ZONES[i])));
+unassessedLabels.forEach((m, i) => tappableLabel(m, () => openBeach(UNASSESSED_BEACHES[i])));
 // NOT `placeLabels`. CGGeom exports a FUNCTION of that name and this const
 // would shadow it at exactly the point restyleLabels() wants to call it.
 const placeMarks = PLACES.map(p => label(p.ll, p.t, "place"));
@@ -2423,34 +2408,20 @@ const seaLabel = label(SEA.ll, SEA.t, "sea");
    is reached. Reading a const in its temporal dead zone throws, and `typeof`
    does not save you from that. A plain flag does. */
 let postMarkers = {};
-let clusterMarker = null;
 let stationsReady = false;
 
-/* ONE HEXAGON, OR FOUR.
-   Caribbean Guard's four stations sit inside 1.1 km of Playa Chiquita. At the
-   whole-coast view that is about 25 px, so four 32 px hexagons pile on top of
-   each other and on the beach name underneath them, and a reader counts two
-   pins where there are four. Below z15 they collapse to one badge carrying the
-   COUNT; at z15 and above they are four numbered stations again.
-   The badge reads "x4" rather than "4" on purpose: a bare 4 in the same
-   hexagon that station 4 uses is the same mark meaning two different things,
-   which is the failure this whole file is written against. */
+/* Proposed stations still require detail zoom. Existing stations participate
+   in screen-space grouping at their original anchors at every zoom. */
 const STATION_CLUSTER_ZOOM = 15;
 function stationsClustered(){ return map.getZoom() < STATION_CLUSTER_ZOOM; }
 function applyStationVisibility(){
   if(!stationsReady) return;
-  /* EVERY CONFIRMED STATION SHOWS AT EVERY ZOOM (Daniel, 2026-09-23). The x4
-     badge hid real equipment behind a count at the whole-coast view, the view
-     most people see first. Confirmed stations now always show, drawn small
-     and without numbers at the overview; only PROPOSED ones wait for zoom. */
   const clustered = stationsClustered();
   Object.entries(postMarkers).forEach(([id, m])=>{
     const e = m.getElement();
     const p = POSTS.find(x => x.id === id);
     if(e) e.style.display = clustered && p && p.proposed ? "none" : "";
   });
-  const ce = clusterMarker && clusterMarker.getElement();
-  if(ce) ce.style.display = "none";
 }
 
 /* The station marks are OBSTACLES to the labels and never the other way round.
@@ -2469,7 +2440,6 @@ function stationBoxes(){
     if(r.width) out.push(r);
   };
   Object.values(postMarkers).forEach(add);
-  add(clusterMarker);
   return out;
 }
 function hideLabelsUnderStations(){
@@ -2517,52 +2487,52 @@ function restyleLabels(){
   placeBeachLabels();
 }
 
-/* A BEACH NAME NEVER SITS ON AN ICON (Daniel, 2026-09-23). The old pass could
-   only HIDE a name that collided with a station, and it never looked at the
-   equipment and place pins at all, so "Playa Grande" landed under 5.3. Now
-   each beach name looks for its own room: it tries its home spot, then nearby
-   spots, seaward first because that is where a beach's water is, and takes
-   the first that clears every visible pin and every name already placed.
-   Only if nothing within reach is free does it step out, which at the zooms
-   where names show is rare. Towns and the sea then yield to the beaches. */
-const LABEL_TRIES = [[0,0],[0,-24],[0,24],[0,-44],[-56,-18],[56,-18],[0,44],[-56,18],[56,18],[0,-66],[-90,0],[90,0],[0,66]];
+/* Show nearby beach names when there is room. Only text moves: source anchors and
+   rescue symbols stay fixed, and thin leaders preserve the geographic link. */
 function placeBeachLabels(){
-  const pad = 3;
-  const hit = (a, b) => a.left < b.right + pad && a.right > b.left - pad &&
-                        a.top < b.bottom + pad && a.bottom > b.top - pad;
-  const icons = [...document.querySelectorAll(".leaflet-marker-pane .leaflet-marker-icon:not(.lbl)")]
-    .filter(e => e.offsetParent && getComputedStyle(e).visibility !== "hidden")
-    .map(e => e.getBoundingClientRect()).filter(r => r.width);
-  const placed = [];
-  [...zoneLabels, ...unassessedLabels].forEach(m => {
-    const e = m.getElement(); if(!e) return;
-    if(e.cgMargins === undefined) e.cgMargins = [parseFloat(e.style.marginLeft) || 0, parseFloat(e.style.marginTop) || 0];
-    const [ml, mt] = e.cgMargins;
-    e.style.marginLeft = ml + "px"; e.style.marginTop = mt + "px";
-    if(e.style.display === "none" && !e.cgMoved) return;      // hidden by the zoom rules
-    e.style.display = ""; e.cgMoved = false;
-    const home = e.getBoundingClientRect();
-    if(!home.width){ return; }
-    for(const [dx, dy] of LABEL_TRIES){
-      const r = {left:home.left + dx, right:home.right + dx, top:home.top + dy, bottom:home.bottom + dy};
-      if(!icons.some(b => hit(r, b)) && !placed.some(b => hit(r, b))){
-        e.style.marginLeft = (ml + dx) + "px"; e.style.marginTop = (mt + dy) + "px";
-        e.cgMoved = !!(dx || dy);
-        placed.push(r);
-        return;
-      }
+  const mapBox=map.getContainer().getBoundingClientRect();
+  const visible=e=>e&&e.getBoundingClientRect().width&&getComputedStyle(e).visibility!=='hidden'&&getComputedStyle(e).display!=='none';
+  const rect=e=>{const r=e.getBoundingClientRect();return {left:r.left-mapBox.left,right:r.right-mapBox.left,top:r.top-mapBox.top,bottom:r.bottom-mapBox.top};};
+  const dock=document.getElementById('dock'),detail=document.getElementById('sheet');
+  const panel=visible(detail)&&!detail.hidden?detail:dock;
+  const panelBox=visible(panel)?rect(panel):null;
+  const bounds={left:window.innerWidth>=820&&panelBox?panelBox.right+12:12,right:mapBox.width-12,
+    top:document.querySelector('.topbar').getBoundingClientRect().bottom-mapBox.top+12,
+    bottom:window.innerWidth<820&&panelBox?Math.min(mapBox.height-12,panelBox.top-12):mapBox.height-28};
+  const svgNS='http://www.w3.org/2000/svg';
+  let leaders=map.getContainer().querySelector('.beach-leaders');
+  if(!leaders){leaders=document.createElementNS(svgNS,'svg');leaders.classList.add('beach-leaders');leaders.setAttribute('aria-hidden','true');map.getContainer().append(leaders);}
+  leaders.replaceChildren();leaders.setAttribute('viewBox',`0 0 ${mapBox.width} ${mapBox.height}`);
+  // No label layout is useful when the reading panel covers the map.
+  if(bounds.bottom-bounds.top<100)return;
+  const icons=[...document.querySelectorAll('.leaflet-marker-pane .leaflet-marker-icon:not(.lbl),.rescue-count')].filter(visible).map(rect);
+  const chrome=[...document.querySelectorAll('.map-key,.fab,.compass,.leaflet-control-scale')].filter(visible).map(rect);
+  const entries=[];
+  [...zoneLabels,...unassessedLabels].forEach(marker=>{
+    const e=marker.getElement();if(!e)return;
+    if(e.cgMargins===undefined)e.cgMargins=[parseFloat(e.style.marginLeft)||0,parseFloat(e.style.marginTop)||0];
+    e.style.display='';e.cgMargins[0]=-e.getBoundingClientRect().width/2;
+    const [ml,mt]=e.cgMargins;e.style.marginLeft=ml+'px';e.style.marginTop=mt+'px';
+    const r=rect(e),anchor=map.latLngToContainerPoint(marker.getLatLng());
+    if(map.getZoom()<11.5||anchor.x<bounds.left||anchor.x>bounds.right||anchor.y<bounds.top||anchor.y>bounds.bottom){e.style.display='none';return;}
+    entries.push({...r,id:marker,width:r.right-r.left,height:r.bottom-r.top,anchor});
+  });
+  const placed=CGGeom.layoutBeachLabels(entries,icons.concat(chrome),bounds);
+  for(const entry of entries){
+    const e=entry.id.getElement(),box=placed.find(p=>p.id===entry.id);
+    if(!box){e.style.display='none';continue;}
+    const dx=box.left-entry.left,dy=box.top-entry.top;
+    e.style.marginLeft=(e.cgMargins[0]+dx)+'px';e.style.marginTop=(e.cgMargins[1]+dy)+'px';
+    if(Math.hypot(dx,dy)>18){
+      const line=document.createElementNS(svgNS,'line');
+      const x=Math.max(box.left,Math.min(box.right,entry.anchor.x));
+      const y=Math.max(box.top,Math.min(box.bottom,entry.anchor.y));
+      line.setAttribute('x1',entry.anchor.x);line.setAttribute('y1',entry.anchor.y);line.setAttribute('x2',x);line.setAttribute('y2',y);
+      leaders.append(line);
     }
-    e.style.display = "none"; e.cgMoved = true;
-  });
-  // Map controls float over the map too; nothing is written under them.
-  const chromeBoxes = [...document.querySelectorAll(".map-key,.topbar .brand,.topbar .sos,.topbar .lang,.fab,.compass")]
-    .map(e => e.getBoundingClientRect()).filter(r => r.width);
-  [...placeMarks, seaLabel].forEach(m => {
-    const e = m.getElement();
-    if(!e || e.style.display === "none") return;
-    const r = e.getBoundingClientRect();
-    if(placed.some(b => hit(r, b)) || chromeBoxes.some(b => hit(r, b))) e.style.display = "none";
-  });
+  }
+  const hit=(a,b)=>a.left<b.right+4&&a.right>b.left-4&&a.top<b.bottom+4&&a.bottom>b.top-4;
+  [...placeMarks,seaLabel].forEach(marker=>{const e=marker.getElement();if(visible(e)&&placed.concat(chrome).some(b=>hit(rect(e),b)))e.style.display='none';});
 }
 map.on("zoomend", restyleLabels);
 map.whenReady(restyleLabels);
@@ -2575,7 +2545,7 @@ map.on("zoomend", ()=>requestAnimationFrame(()=>requestAnimationFrame(placeBeach
 // Leaflet computes metres from the actual projection and zoom. A segmented,
 // horizontal ruler provides the familiar distance reference over imagery.
 L.control.scale({metric: true, imperial: false, position: "bottomleft",
-                 maxWidth: 160, updateWhenIdle:false}).addTo(map);
+                 maxWidth: 112, updateWhenIdle:false}).addTo(map);
 
 /* Refit on anything that changes the viewport, debounced.
 
@@ -2657,95 +2627,31 @@ if(window.ResizeObserver){
 // settles after the document finishes loading.
 window.addEventListener("load", ()=>refit(0));
 
-/* Pattern and weight carry the tier independently of colour, so the map still
-   works in sunlight, on a cheap screen, and for the 1 in 12 men who cannot
-   separate red from green.
-
-   The table, the ground-width solve and the dash ratios all moved to
-   geometry.js, because the card swatch and the map stroke must be the same
-   numbers and they were two copies of them. `CGGeom.TIERS` is the reference
-   weight and dash per tier; `CGGeom.zoneStroke(tier, zoom)` is what the map
-   draws at a given zoom.
-
-   The polarity is deliberate and it is the reverse of what this file used to
-   do. It previously drew the worst tier as a fine dotted line and the best as a
-   solid one, which made the most dangerous thing on the map the faintest mark
-   on it. Every convention a tourist already carries, road markings, hazard
-   tape, warning signage, says the loud mark is the dangerous one. So high is
-   the heaviest and most solid, and low is the lightest.
-
-   These three carry the CHARACTER, which is a property of the place. A bulletin
-   a guard signed this morning is a property of the moment, so it never
-   recolours these: it draws its own halo underneath. See todayHalo().
-
-   WHAT CHANGED AT THE LANDING ZOOM, and it is hat 4's fourth blocker. The old
-   code scaled each dash COMPONENT by one factor, so at z12 low's "2 8" floored
-   to "2 2": 1:4 became 1:1 and all three textures converged at exactly the zoom
-   a deuteranope first looks at. The ratio is now fixed per tier and only the
-   gap has a floor, measured from the gap that is still VISIBLE after round caps
-   eat half a weight at each end. */
-
+/* Beach classification lives in labels and detail copy. Only the selected
+   beach receives a flat tint. Signed current advisories retain a separate halo. */
 let zonesReady = false;
-
+const layers = {};
 function restyleZones(){
-  // fitCoast() emits zoomend during startup, before the zone layers exist.
-  // `typeof layers === "undefined"` does NOT guard this: typeof still throws on
-  // a const in the temporal dead zone. An ordinary flag does.
-  if(!zonesReady) return;
-  const z0 = map.getZoom();
+  if(!zonesReady)return;
   ZONES.forEach(z=>{
-    const g = layers[z.id]; if(!g) return;
-    const st = CGGeom.zoneStroke(tierOf(z), z0);
-    const halo = todayHalo(z);
-    g.cgSetStyle({
-      weight: st.weight,
-      dashArray: st.dashArray,
-      halo: halo ? {color: halo, weight: st.halo} : null
-    });
-    // Keep adjacent zones equally opaque so their shared endpoints meet cleanly.
+    const layer=layers[z.id],halo=todayHalo(z);
+    if(layer)layer.setStyle({color:halo||COLOR[tierOf(z)],opacity:halo?.5:0});
   });
 }
-let anyCurrent = false;
-
-/* ---------- draw zones ----------
-   Runs when data/zones-geometry.json lands, not at parse time. The cards do not
-   wait for it: they are static HTML and they are the thing somebody standing on
-   the sand needs first. The lines are the thing that needs to be right. */
-const layers = {};
 function drawZones(){
   ZONES.forEach(z=>{
-    if(!z.line.length || layers[z.id]) return;
-    const st = CGGeom.zoneStroke(tierOf(z), map.getZoom());
-
-    /* A bulletin signed today draws UNDER the character stroke, never over it
-       and never instead of it. If a guard signs "stay out today" at Punta Uva
-       the map has to shout, but recolouring the line would erase the standing
-       character the moment somebody signed one calm morning, which is the exact
-       conflation the two-axis split exists to undo. A halo is additive: both
-       claims stay legible and the character stroke stays on top. */
-    const halo = todayHalo(z);
-
-    // One continuous stroke with all casings beneath all coastal ink.
-    const g = CGGeom.taperedPolyline(z.line, {
-      color: COLOR[tierOf(z)],
-      weight: st.weight,
-      dashArray: st.dashArray,
-      halo: halo ? {color: halo, weight: st.halo, opacity:.5} : null
-    }, map).addTo(map);
-
-    // Our own hit line, separate and invisible. Everything taperedPolyline
-    // draws is interactive:false, so it cannot swallow a tap meant for this.
-    L.polyline(z.line,{color:"#000",weight:44,opacity:0})
-      .addTo(map).on("click",()=>openZone(z));
-    layers[z.id] = g;
+    if(!z.line.length||layers[z.id])return;
+    const halo=todayHalo(z);
+    layers[z.id]=L.polyline(z.line,{color:halo||COLOR[tierOf(z)],weight:6,
+      opacity:halo?.5:0,interactive:false,className:'cg-today-alert'}).addTo(map);
+    L.polyline(z.line,{color:'#000',weight:44,opacity:0})
+      .addTo(map).on('click',()=>openBeach(z));
   });
-  zonesReady = true;
+  zonesReady=true;
   restyleZones();
-  /* A QR deep link opens the sheet about 350 ms before this fetch resolves, so
-     the band asked for back then had no line to be drawn from. It does now. */
-  if(bandZone) showBand(bandZone);
+  if(bandZone)showBand(bandZone);
 }
-map.on("zoomend", restyleZones);
+map.on('zoomend',restyleZones);
 
 /* The traced coastline. Five zones, 160 to 917 points each, against the 7 to 60
    they replace. It is in the service worker's critical precache, so after the
@@ -2786,38 +2692,11 @@ const geomReady = fetch("data/zones-geometry.json")
    until tapped. The shape and the colour are both theirs. See .po. */
 POSTS.forEach(p=>{
   const icon = L.divIcon({className:"", html:`<div class="station-marker ${p.proposed?'planned':''}">${CGSymbols.badge(p.proposed?'proposed_rescue_station':'rescue_station')}<span class="number">${p.n}</span></div>`,
-    iconSize:[40,40], iconAnchor:[20,20]});
+    iconSize:[44,44], iconAnchor:[22,22]});
   postMarkers[p.id] = L.marker(p.ll,{icon, keyboard:true,
     alt:`${T[lang].legendStation} ${p.n}`}).addTo(map).on("click",()=>openPost(p));
 });
 
-/* The collapsed badge. Its position is the centroid of the real stations, so it
-   is recomputed whenever joinStations() moves one onto the authoritative
-   geometry. Tapping it zooms to the four rather than opening a sheet: the
-   question a reader has at the overview is "what are those", and the answer is
-   four separate stations, which is a thing to SHOW rather than to describe. */
-function stationCentroid(){
-  const n = POSTS.length;
-  return [POSTS.reduce((s,p)=>s+p.ll[0],0)/n, POSTS.reduce((s,p)=>s+p.ll[1],0)/n];
-}
-function buildCluster(){
-  if(clusterMarker) map.removeLayer(clusterMarker);
-  const icon = L.divIcon({className:"", iconSize:[40,40], iconAnchor:[20,20],
-    html:`<div class="station-marker">${CGSymbols.badge('rescue_station')}<span class="number">${POSTS.length}</span></div>`});
-  clusterMarker = L.marker(stationCentroid(), {icon, keyboard:true,
-    alt:`${POSTS.length} ${T[lang].legendStation}`})
-    .addTo(map)
-    /* A fixed zoom, not a fit to the four stations' bounds. Fitting their
-       1.1 km span into a 390 px phone with the sheet open landed at z14.25,
-       which is still below STATION_CLUSTER_ZOOM, so tapping the badge left the
-       badge on screen and nothing appeared to happen. The badge's entire job is
-       to expand, so it flies to a zoom that is guaranteed to expand it.
-       Through flyClear rather than flyTo, so the stations do not land under the
-       sheet that is already open. */
-    .on("click", ()=>flyClear(L.latLngBounds([stationCentroid()]).pad(0.002),
-                              {maxZoom:15.75, duration:.6}));
-}
-buildCluster();
 stationsReady = true;
 map.on("zoomend", restyleLabels);   // stations and labels settle together
 restyleLabels();
@@ -2838,8 +2717,6 @@ function joinStations(gj){
   });
   const missing = POSTS.filter(p=>!gj.features.some(f=>f.id === p.id));
   if(missing.length) console.warn("[cg] stations with no record in the data:", missing.map(p=>p.id));
-  // The badge sits on their centroid, so it moves when they do.
-  buildCluster();
   restyleLabels();
 }
 
@@ -2896,7 +2773,7 @@ const topbarH = () => document.querySelector(".topbar")?.offsetHeight || 64;
 // The home-indicator inset, read off a probe: env() inside a custom property
 // is not resolved to pixels by getComputedStyle in every engine.
 const safeProbe = Object.assign(document.createElement("div"), {ariaHidden:"true"});
-safeProbe.style.cssText = "position:fixed;left:0;bottom:0;width:0;visibility:hidden;pointer-events:none;height:env(safe-area-inset-bottom,0px)";
+safeProbe.style.cssText = "position:fixed;left:0;bottom:0;width:0;visibility:hidden;pointer-events:none;height:var(--safe-pad)";
 document.body.appendChild(safeProbe);
 const safeBottom = () => safeProbe.offsetHeight || 0;
 
@@ -3088,7 +2965,7 @@ function placeControls(visible, settled){
     document.documentElement.style.setProperty("--dock-h", Math.round(visible) + "px");
   }
   const tf = shift ? `translate3d(0,${shift.toFixed(2)}px,0)` : "";
-  document.querySelectorAll(".fab,.compass,.leaflet-bottom.leaflet-left").forEach(n => { n.style.transform = tf; });
+  document.querySelectorAll(".fab,.compass,.map-key,.leaflet-bottom.leaflet-left").forEach(n => { n.style.transform = tf; });
 }
 
 const sheet = document.getElementById("sheet");
@@ -3098,6 +2975,11 @@ function setSheetContent(html){
   // Keep one live button/listener, inside the same scrolling title row.
   sheetClose.remove();
   sheetBody.innerHTML=html;
+  // Secondary destinations use the same reading shell as beaches and forecast.
+  if(!sheetBody.querySelector('.zone-detail,.forecast-page,.legend-page,.info-page')){
+    const page=document.createElement('div');page.className='info-page';
+    page.append(...sheetBody.childNodes);sheetBody.append(page);
+  }
   const title=sheetBody.querySelector('#sheet-title');
   if(title){
     const heading=document.createElement('div');
@@ -3105,29 +2987,113 @@ function setSheetContent(html){
     title.before(heading);
     heading.append(title,sheetClose);
   }else sheetBody.prepend(sheetClose);
+  if(panelRoute){
+    const back=document.createElement('button');
+    back.className='sheet-back';back.type='button';
+    back.innerHTML=CGSymbols.svg('next')+`<span>${lang==='es'?'Volver':'Back'}</span>`;
+    back.onclick=()=>closeSheet();
+    sheetBody.prepend(back);
+  }
+  prepareReferenceImages();
+}
+function prepareReferenceImages(){
+  sheetBody.querySelectorAll('.reference-media img').forEach(img=>{
+    const media=img.closest('.reference-media');
+    const finish=()=>{
+      if(!media.isConnected)return;
+      media.classList.remove('is-loading');media.removeAttribute('aria-busy');
+      const failed=!img.naturalWidth;
+      media.classList.toggle('is-error',failed);
+      const status=media.querySelector('[role="status"]');
+      status.textContent=failed?(lang==='es'?'Imagen no disponible. Toca para reintentar.':'Image unavailable. Tap to retry.'):'';
+      status.hidden=!failed;
+      if(!failed&&!reducedMotion.matches)img.animate({opacity:[0,1]},{duration:220,easing:'ease-out'});
+    };
+    img.addEventListener('load',finish,{once:true});img.addEventListener('error',finish,{once:true});
+    if(img.complete)finish();
+  });
 }
 const dockEl = document.getElementById("dock");
+// Keep keyboard order aligned with the visual order in both panel sizes.
+dockEl.append(dockEl.querySelector('.dockrow'));
+// Mobile scroll affordances supplement gestures without changing scroll ownership.
+const makeScrollCue=(host,target)=>{
+  const cue=document.createElement('button');cue.type='button';cue.className='scroll-cue';cue.hidden=true;
+  cue.innerHTML=CGSymbols.svg('next');host.append(cue);
+  cue.addEventListener('click',()=>target.scrollBy({top:target.clientHeight*.65,behavior:reducedMotion.matches?'auto':'smooth'}));
+  return cue;
+};
+const sheetScrollCue=makeScrollCue(sheet,sheetBody);
+const pickerScrollCue=makeScrollCue(dockEl,document.getElementById('picker'));
+let scrollCueFrame=0;
+function scheduleScrollCues(){
+  if(scrollCueFrame)return;
+  scrollCueFrame=requestAnimationFrame(()=>{
+    scrollCueFrame=0;const mobile=window.innerWidth<820;
+    const more=n=>n.clientHeight>0&&n.scrollHeight-n.clientHeight-n.scrollTop>20;
+    sheetScrollCue.hidden=!mobile||sheet.hidden||!more(sheetBody);
+    pickerScrollCue.hidden=!mobile||sheet.classList.contains('open')||!document.body.classList.contains('dock-full')||!more(document.getElementById('picker'));
+    for(const cue of [sheetScrollCue,pickerScrollCue])cue.setAttribute('aria-label',lang==='es'?'Ver más contenido':'More content');
+    sheetBody.querySelectorAll('.hourly-panel:not([hidden])').forEach(panel=>{
+      const track=panel.querySelector('.hourly-scroll');
+      const prev=panel.querySelector('[data-hourly-page="-1"]'),next=panel.querySelector('[data-hourly-page="1"]');
+      if(prev)prev.disabled=track.scrollLeft<=10;
+      if(next)next.disabled=track.scrollWidth-track.clientWidth-track.scrollLeft<=10;
+    });
+  });
+}
+document.addEventListener('scroll',event=>{if(event.target.matches?.('.sheet-body,#picker,.hourly-scroll'))scheduleScrollCues();},true);
+window.addEventListener('resize',scheduleScrollCues);
+document.addEventListener('toggle',scheduleScrollCues,true);
+new ResizeObserver(scheduleScrollCues).observe(sheetBody);
+new ResizeObserver(scheduleScrollCues).observe(document.getElementById('picker'));
+new MutationObserver(scheduleScrollCues).observe(sheetBody,{childList:true,subtree:true});
+new MutationObserver(scheduleScrollCues).observe(document.body,{attributes:true,attributeFilter:['class']});
+
 let lastRender = null;    // () => void, replays the open sheet in the new language
 let lastFocus = null;     // what to give focus back to on close
 let sheetTimer = null;
 let dockStop = "rest";
+let panelRoute = null, nextPanelRoute = null, routeAnimations = [];
+function navigateFromOverview(open){
+  nextPanelRoute = {stop:dockStop, scroll:document.getElementById('picker').scrollTop,
+    height:desktop()?0:dockPanel.visible()};
+  open();
+}
+function animatePanelRoute(back=false, done=()=>{}){
+  // Capture the presented position before cancelling an interrupted route.
+  const interrupted=routeAnimations.length>0;
+  const detailFrom=interrupted?getComputedStyle(sheet).translate:null;
+  const overviewFrom=interrupted?getComputedStyle(dockEl).translate:null;
+  const opacityFrom=interrupted?getComputedStyle(dockEl).opacity:null;
+  routeAnimations.forEach(a=>a.cancel());
+  routeAnimations=[];
+  const reset=()=>{sheet.style.translate='';dockEl.style.translate='';dockEl.style.opacity='';};
+  if(reducedMotion.matches){reset();done();return;}
+  const timing={duration:320,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
+  const detail=sheet.animate({translate:[detailFrom||sheet.style.translate||(back?'0 0':'100% 0'),back?'100% 0':'0 0']},timing);
+  const overview=dockEl.animate({translate:[overviewFrom||dockEl.style.translate||(back?'-18% 0':'0 0'),back?'0 0':'-18% 0'],
+    opacity:[opacityFrom||dockEl.style.opacity||(back?.65:1),back?1:.65]},timing);
+  routeAnimations=[detail,overview];
+  detail.onfinish=()=>{reset();done();detail.cancel();overview.cancel();routeAnimations=[];};
+}
 
 const dockPanel = createPanel(dockEl, {
   initial:"rest", topStop:"full", bottomStop:"min", canClose:false,
   scroller:".strip",
-  enabled:() => !sheet.classList.contains("open") && !document.body.classList.contains("legend-mode"),
+  enabled:() => !sheet.classList.contains("open"),
   detents:() => {
     const H = window.innerHeight, full = H - topbarH();
     return {
-      min: 64 + safeBottom(),
-      rest: Math.max(280, Math.min(full - 120, H * 0.44)),
+      min: (window.innerWidth<370?112:96) + safeBottom(),
+      rest: Math.max(280, Math.min(full - 120, H * 0.52)),
       full
     };
   },
   stops:() => ["min", "rest", "full"],
   onMove:v => { if(!sheet.classList.contains("open")) placeControls(v, false); },
   onStop:s => setDockStop(s, true),
-  onSettle:() => { if(!sheet.classList.contains("open")) placeControls(dockPanel.visible(), true); measureDock(); }
+  onSettle:() => { if(!sheet.classList.contains("open")) placeControls(dockPanel.visible(), true); measureDock(); placeBeachLabels(); }
 });
 
 const sheetPanel = createPanel(sheet, {
@@ -3137,12 +3103,12 @@ const sheetPanel = createPanel(sheet, {
   detents:() => {
     const H = window.innerHeight;
     const small = H < 650;
-    return {peek: small ? H - topbarH() : Math.max(300, H * 0.5), full: H - topbarH()};
+    return {peek: panelRoute ? Math.max(300, panelRoute.height) : small ? H - topbarH() : Math.max(300, H * 0.5), full: H - topbarH()};
   },
   stops:() => ["closed", "peek", "full"],
   onMove:v => placeControls(v, false),
   onStop:s => sheetStop(s, true),
-  onSettle:() => placeControls(sheetPanel.visible(), true),
+  onSettle:() => {placeControls(sheetPanel.visible(), true);placeBeachLabels();},
   onClose:v => closeSheet({velocity:v})
 });
 
@@ -3158,10 +3124,12 @@ function sheetStop(stop, fromGesture = false){
   if(partial && sheetBody.scrollTop > 0) sheetBody.scrollTo({top:0, behavior: reducedMotion.matches ? "auto" : "smooth"});
   const expanded = stop !== "peek";
   const handle = document.getElementById("sheet-expand");
+  const legend=!!sheetBody.querySelector('.legend-page');
+  const beach=!!sheetBody.querySelector('.zone-detail');
   handle.setAttribute("aria-expanded", expanded);
   handle.setAttribute("aria-label", lang === "es"
-    ? (expanded ? "Bajar detalles de playa" : "Subir detalles de playa")
-    : (expanded ? "Lower beach details" : "Raise beach details"));
+    ? (expanded ? (legend?"Bajar leyenda":beach?"Bajar detalles de playa":"Bajar detalles") : (legend?"Subir leyenda":beach?"Subir detalles de playa":"Subir detalles"))
+    : (expanded ? (legend?"Lower Legend":beach?"Lower beach details":"Lower details") : (legend?"Raise Legend":beach?"Raise beach details":"Raise details")));
   handle.textContent = "";
   if(!fromGesture && !desktop() && sheet.classList.contains("open") && sheetPanel.stop !== stop){
     sheetPanel.settle(stop);
@@ -3170,7 +3138,8 @@ function sheetStop(stop, fromGesture = false){
 }
 
 function openSheet(html, render){
-  if(!desktop() && legendExpanded){ legendExpanded = false; renderLegendPerm(); }
+  routeAnimations.forEach(a=>a.cancel());routeAnimations=[];
+  sheet.style.translate='';dockEl.style.translate='';dockEl.style.opacity='';
   lastRender = render || null;
   const active = document.activeElement;
   if(sheetClosing){            // reopened while the last one was still leaving
@@ -3186,6 +3155,11 @@ function openSheet(html, render){
   if(activated && !reopening && !restoringHistory && !pendingBack && !(history.state && history.state.cgSheet)){
     history.pushState({cgSheet:true}, "", location.pathname);
   }
+  if(nextPanelRoute){panelRoute=nextPanelRoute;nextPanelRoute=null;}
+  else if(!reopening)panelRoute={stop:dockStop,scroll:document.getElementById('picker').scrollTop,
+    height:desktop()?0:dockPanel.visible()};
+  sheet.classList.toggle('panel-route',!!panelRoute);
+  document.body.classList.toggle('panel-route-open',!!panelRoute);
   // Every sheet starts with no address; openers that have one set it after.
   sheetAddress("");
   if(!reopening) lastFocus = (active && active !== document.body) ? active : null;
@@ -3203,9 +3177,14 @@ function openSheet(html, render){
     // hidden: at its full stop, iOS kept painting its layer under the new
     // sheet (Daniel's screenshot, 2026-09-23). It comes back on close.
     dockPanel.stopAnim();
-    dockPanel.render(dockPanel.full);
+    if(!panelRoute)dockPanel.render(dockPanel.full);
     sheetPanel.measure();
-    if(!reopening){
+    if(!reopening && panelRoute){
+      const stop=panelRoute.stop==='full'?'full':'peek';
+      sheetStop(stop,true);sheetPanel.stop=stop;
+      sheetPanel.render(sheetPanel.yOf(stop));
+      placeControls(sheetPanel.visible(),true);
+    }else if(!reopening){
       sheetStop("peek", true);
       sheetPanel.stop = "peek";
       sheetPanel.render(sheetPanel.full);        // start below the screen
@@ -3218,6 +3197,7 @@ function openSheet(html, render){
     // two style changes into one frame and the slide-in never animates.
     sheet.classList.remove("open"); void sheet.offsetHeight; sheet.classList.add("open");
   }
+  if(panelRoute && !reopening)animatePanelRoute();
   const h2 = document.getElementById("sheet-title");
   if(h2 && !reopening) h2.focus({preventScroll:true});
 }
@@ -3259,7 +3239,7 @@ window.addEventListener("popstate", e => {
   const access = accessPoints.find(x=>x.id===q.get("a"));
   restoringHistory = true;
   try{
-    if(access) openAccess(access); else if(z) openZone(z); else if(b) openUnassessedBeach(b); else if(p) openPost(p);
+    if(access) openAccess(access); else if(z) openBeach(z); else if(b) openBeach(b); else if(p) openPost(p);
     // A sheet with no address (legend, saved copy) cannot be rebuilt from a URL.
     // Stepping back out keeps the stack free of a dead copy of the map.
     else history.back();
@@ -3268,7 +3248,7 @@ window.addEventListener("popstate", e => {
 
 function closeSheet(opts = {}){
   clearAccessPath();
-  clearBand();
+  // Keep the last inspected reference area visible when the map is uncovered.
   if(!sheet.classList.contains("open") || sheetClosing) return;
   // Leaving through the UI pops our own history entry; the popstate that
   // follows finds sheetClosing set and does nothing.
@@ -3277,20 +3257,37 @@ function closeSheet(opts = {}){
     else if(history.state && history.state.cgSheet){ pendingBack = true; history.back(); }
     else history.replaceState(null, "", location.pathname);
   }
+  const returnTo = lastFocus && document.contains(lastFocus) ? lastFocus
+    : document.querySelector('.card[aria-current="true"]') || document.querySelector('.card');
   sheetClosing = true;
   lastRender = null;
   clearTimeout(sheetTimer);
   const finish = () => {
     if(!sheetClosing) return;           // a new sheet took over mid-slide
     sheetClosing = false;
-    sheet.classList.remove("open");
-    document.body.classList.remove("selection-open");
+    sheet.classList.remove("open","panel-route");
+    document.body.classList.remove("selection-open","panel-route-open");
+    panelRoute=null;
     dockEl.removeAttribute("inert");
     sheet.hidden = true;
     sheet.setAttribute("inert", "");
     if(!desktop()) placeControls(dockPanel.visible(), true);
+    placeBeachLabels();
+    // Browser history may restore focus after popstate. Return it only once
+    // the outgoing page is gone, so focus cannot be stranded in hidden detail.
+    if(returnTo&&document.contains(returnTo))returnTo.focus({preventScroll:true});
   };
-  if(!desktop()){
+  const returningToList=!!panelRoute;
+  if(returningToList){
+    sheetPanel.stopAnim();
+    if(!desktop()){
+      setDockStop(panelRoute.stop,true);
+      dockPanel.snap(panelRoute.stop);
+      document.getElementById('picker').scrollTop=panelRoute.scroll;
+    }
+    dockEl.removeAttribute('inert');
+    animatePanelRoute(true,finish);
+  }else if(!desktop()){
     // The dock comes back up under the sheet as it leaves, and it has to be
     // focusable now: focus returns to a card below, before the slide ends.
     document.body.classList.remove("selection-open");
@@ -3315,14 +3312,20 @@ function closeSheet(opts = {}){
     sheetTimer = setTimeout(()=>{ sheet.hidden = true; sheet.setAttribute("inert", ""); },
       reducedMotion.matches ? 0 : 340);
   }
-  const returnTo = lastFocus && document.contains(lastFocus) ? lastFocus
-    : document.querySelector('.card[aria-current="true"]') || document.querySelector('.card');
-  if(returnTo) returnTo.focus({preventScroll:true});
+  if(returnTo&&!returningToList) returnTo.focus({preventScroll:true});
   lastFocus = null;
   markCurrent(null);
-  if(desktop()) fitCoast();
+  if(desktop()&&!returningToList) fitCoast();
 }
 
+CGPanelGesture.attach(sheet,{
+  enabled:()=>!!panelRoute&&sheet.classList.contains('open')&&!sheetClosing&&!routeAnimations.some(a=>a.playState==='running'),
+  progress:(dx,width)=>{
+    if(reducedMotion.matches)return;
+    sheet.style.translate=dx+'px 0';dockEl.style.translate=(-18+18*dx/width)+'% 0';dockEl.style.opacity=.65+.35*dx/width;
+  },
+  commit:()=>closeSheet(),cancel:()=>animatePanelRoute(false)
+});
 document.getElementById("sheet-close").onclick = () => closeSheet();
 document.getElementById("sheet-expand").onclick = ()=>{
   sheetStop(sheet.dataset.stop === "peek" ? "full" : "peek");
@@ -3368,7 +3371,7 @@ function layoutPanels(){
   }
   dockPanel.measure();
   // Under an open sheet the dock stays parked below the screen (one panel).
-  if(sheet.classList.contains("open")){ dockPanel.stop = dockStop; dockPanel.render(dockPanel.full); }
+  if(sheet.classList.contains("open")&&!panelRoute){ dockPanel.stop = dockStop; dockPanel.render(dockPanel.full); }
   else dockPanel.snap(dockStop);
   if(sheet.classList.contains("open")){
     sheetPanel.measure();
@@ -3454,23 +3457,20 @@ function openZone(z){
     <div class="zone-detail">
       <div class="zone-top">
         <h2 id="sheet-title" tabindex="-1">${z.name[lang]}</h2>
-        <div class="statuscard ${tierOf(z)}" data-zone="${z.id}">
+        <section class="beach-safety ${tierOf(z)}" aria-label="${lang==='es'?'Seguridad en la playa':'Beach safety'}"><div class="statuscard ${tierOf(z)}" data-zone="${z.id}">
           ${statusCardInner(z)}
-        </div>
-        ${c.class==='lower-risk'?`<p class="beach-caution">${lang==='es'?'Menor riesgo no significa que sea seguro.':'Lower risk does not mean safe.'}</p>`:''}
-        ${caveats}
+        </div>${c.class==='lower-risk'?`<p class="beach-caution">${lang==='es'?'Menor riesgo no significa que sea seguro.':'Lower risk does not mean safe.'}</p>`:''}${caveats}${renderSwimAdvisory(z.id,true,true)}</section>
         <section class="beach-help" aria-labelledby="beach-help-title">
           <h3 id="beach-help-title">${lang==='es'?'Si te arrastra una corriente':'If a current pulls you out'}</h3>
           <p class="escape">${t.escapeRip}</p>
           <a class="help-call" href="tel:911">${t.call}</a>
         </section>
       </div>
-      ${renderForecastPanel(z.id)}
+      ${renderForecastPanel(z.id,false,'swell',true)}
       <div class="zone-lower">
         <section class="beach-overview" aria-labelledby="beach-overview-title">
           <h3 id="beach-overview-title">${lang==='es'?'Sobre esta playa':'About this beach'}</h3>
           <p class="beach-context">${c.why[lang]}</p>
-          <p class="beach-meta">${!c.reviewed?(lang==='es'?'Sin revisión local. ':'Not locally reviewed. '):''}${lang==='es'?'Sin condiciones en vivo.':'No live conditions.'}</p>
         </section>
         <details class="beach-background"><summary>${lang==='es'?'Fuentes y revisión':'Sources and review'}</summary>
           ${rider}${trustLine(z)}${renderWeatherPanel()}
@@ -3506,9 +3506,8 @@ function openVoid(){
     const surveyed = map.distance([9.643, SURVEY.w], [9.643, SURVEY.e]);
     return `
     <h2 id="sheet-title" tabindex="-1">${t.voidName}</h2>
-    <p class="sub">${t.voidStatus}</p>
-    <p class="why">${t.voidWhy(km(total), km(zoned), km(surveyed))}</p>
-    <p class="caveat">${t.voidRule}</p>
+    <div class="info-summary info-warning"><strong>${t.voidStatus}</strong><p>${t.voidRule}</p></div>
+    <section class="info-section"><h3>${lang==='es'?'Cobertura del mapa':'Map coverage'}</h3><p>${t.voidWhy(km(total), km(zoned), km(surveyed))}</p></section>
     <p class="defer">${t.defer}</p>
     <div class="actions">
       <a class="btn" href="${reportHref(t.reportSubject)}">${t.report}</a>
@@ -3527,16 +3526,16 @@ function openUnassessedBeach(beach){
   const render = ()=>{
     const t = T[lang];
     return `
+    <div class="zone-detail unassessed-detail"><div class="zone-top">
     <h2 id="sheet-title" tabindex="-1">${beach.name}</h2>
-    <p class="why">${t.unassessedWhy}</p>
-    <p class="caveat">${t.unassessedLocation}</p>
-    <p class="defer">${t.defer}</p>
-    ${renderForecastPanel(beach.id)}
-    <div class="actions">
-      <a class="btn" href="${reportHref(t.reportSubject + ": " + beach.name)}">${t.report}</a>
-      <a class="btn primary" href="tel:911">${t.call}</a>
-    </div>
-    ${sheetFoot()}`;
+    <section class="beach-safety unassessed" aria-label="${lang==='es'?'Seguridad en la playa':'Beach safety'}"><div class="statuscard unassessed">
+      <span class="eyebrow">${lang==='es'?'Evaluación de la playa':'Beach assessment'}</span><span class="instr">${t.unassessedStatus}</span></div><p class="safety-context">${t.unassessedWhy}</p>${renderSwimAdvisory(beach.id,true,true)}</section>
+    <section class="beach-help" aria-labelledby="beach-help-title"><h3 id="beach-help-title">${lang==='es'?'Si te arrastra una corriente':'If a current pulls you out'}</h3><p class="escape">${t.escapeRip}</p><a class="help-call" href="tel:911">${t.call}</a></section></div>
+    ${renderForecastPanel(beach.id,false,'swell',true)}
+    <div class="zone-lower"><section class="beach-overview"><h3>${lang==='es'?'Sobre esta playa':'About this beach'}</h3><p class="beach-context">${t.unassessedLocation}</p></section>
+    <details class="beach-background"><summary>${lang==='es'?'Fuentes y revisión':'Sources and review'}</summary><p class="trust">${t.defer}</p></details>
+    <a class="btn beach-route" href="${reportHref(t.reportSubject + ": " + beach.name)}">${t.report}</a>
+    </div>${sheetFoot()}</div>`;
   };
   openSheet(render(), ()=>{ setSheetContent(render()); });
   markCurrent(beach.id);
@@ -3549,32 +3548,27 @@ function openUnassessedBeach(beach){
 /* Fly so the subject lands in the strip the sheet is NOT covering. Without this
    Leaflet centres on the full map, the sheet then eats the bottom 60% of the
    screen, and the zone you just asked about ends up pushed off the top edge. */
-/* The colored coast bands are generated from one continuous corridor, then cut
-   at shared beach joints. The old per-vertex normal offsets folded over
-   themselves at Cocles, Chiquita, Punta Uva, and Salsa Brava. The source lines
-   still supply the thin safety stroke and the tap target above these bands. */
+/* The existing continuous display corridor supplies selection geometry.
+   It is not an exact hazard boundary. No ambient tint, perimeter or end caps. */
 var bandZone=null;
 var bandLayer=null;
-const openBeach=z=>z.character?openZone(z):openUnassessedBeach(z);
+function openBeach(z){
+  if(!z)return;
+  navigateFromOverview(()=>z.character?openZone(z):openUnassessedBeach(z));
+}
 const BAND_PANE='cgBandPane';
 map.createPane(BAND_PANE).style.zIndex=350;
 map.getPane(BAND_PANE).style.pointerEvents='none';
 const bandFeatures=new Map();
 let bandsReady=false;
-const bandColor=z=>z.character?COLOR[tierOf(z)]:'#9aa7b0';
+const bandColor=z=>z.character?({high:'#ef343c',moderate:'#f5bb27',low:'#26b57d'})[tierOf(z)]:'#9aa7b0';
 const bandShape=(feature,style)=>L.geoJSON(feature,{pane:BAND_PANE,style,interactive:false});
 function drawBand(z,selected,group){
   const features=bandFeatures.get(z.id);
   if(!features)return;
-  const col=bandColor(z),provisional=!z.character;
-  bandShape(features.band,{stroke:false,fill:true,fillColor:col,
-    fillOpacity:selected ? .14 : (provisional ? .18 : .08)}).addTo(group);
-  bandShape(features.offshore,{color:col,weight:1,opacity:selected ? .55 : .35,
-    dashArray:'5 7',fill:false}).addTo(group);
-  if(selected){
-    features.caps.forEach(cap=>bandShape(cap,{color:col,weight:2,opacity:.9,
-      dashArray:provisional?'4 4':null,fill:false}).addTo(group));
-  }
+  if(!selected)return;
+  bandShape(features.band,{stroke:false,fill:true,fillColor:bandColor(z),
+    fillOpacity:z.character?.40:.22,className:'cg-selected-area'}).addTo(group);
 }
 function clearBand(){
   if(bandLayer){bandLayer.remove();bandLayer=null;}
@@ -3589,27 +3583,15 @@ function showBand(z){
   bandLayer=L.layerGroup().addTo(map);
   drawBand(z,true,bandLayer);
 }
-const ambientBands=L.layerGroup().addTo(map);
-const provisionalLines=[];
+const provisionalTargets=[];
 function drawAmbientBands(){
-  ambientBands.clearLayers();
-  if(zonesReady&&bandsReady){
-    const view=map.getBounds().pad(.2);
-    [...ZONES,...UNASSESSED_BEACHES].forEach(z=>{
-      if(!z.line.length||z.id===bandZone?.id||!view.intersects(L.latLngBounds(z.line)))return;
-      drawBand(z,false,ambientBands);
-    });
-  }
-  if(!zonesReady)return;
-  if(!provisionalLines.length){
-    UNASSESSED_BEACHES.forEach(z=>{
-      if(!z.line.length)return;
-      const line=CGGeom.taperedPolyline(z.line,{color:'#83949a',weight:3},map).addTo(map);
-      provisionalLines.push(line);
-      L.polyline(z.line,{weight:32,opacity:0}).addTo(map).on('click',()=>openUnassessedBeach(z));
-    });
-  }
-  provisionalLines.forEach(line=>line.cgSetStyle({weight:CGGeom.zoneStroke('low',map.getZoom()).weight}));
+  // Preserve selection targets for unassessed beaches without drawing a border.
+  if(!zonesReady||provisionalTargets.length)return;
+  UNASSESSED_BEACHES.forEach(z=>{
+    if(!z.line.length)return;
+    provisionalTargets.push(L.polyline(z.line,{weight:32,opacity:0}).addTo(map)
+      .on('click',()=>openBeach(z)));
+  });
 }
 map.on('zoomend moveend',drawAmbientBands);
 fetch('data/coast-bands.geojson')
@@ -3645,8 +3627,8 @@ function flyClear(bounds, opts){
     return;
   }
   // The stop it is heading for, not where it is: it starts below the screen.
-  if(open && sheetPanel.stop !== 'peek') sheetStop('peek');
-  const sheetH = open ? sheetPanel.visibleOf(sheetPanel.stop) : 0;
+  if(open && !panelRoute && sheetPanel.stop !== 'peek') sheetStop('peek');
+  const sheetH = open ? (panelRoute ? Math.min(sheetPanel.visibleOf('peek'),window.innerHeight*.5) : sheetPanel.visibleOf(sheetPanel.stop)) : 0;
   map.fitBounds(bounds, Object.assign({
     animate:false, maxZoom:17,
     paddingTopLeft:[24, headH + 16],
@@ -3666,23 +3648,32 @@ function openPost(p){
        one and from the shaded-area sheet, which were the only two that
        described something reassuring. */
     return `
+    <div class="info-page rescue-page">
     <h2 id="sheet-title" tabindex="-1">${p.name[lang]}</h2>
-    <p class="sub">${p.proposed ? (lang==='es'?'Propuesta en el mapa fuente. No indica equipo disponible.':'Proposed in the source map. Does not indicate available equipment.') : p.hours[lang]}</p>
-    ${titleChip(CGSymbols.badge(p.proposed?'proposed_rescue_station':'rescue_station'), p.proposed ? (lang==='es'?'Propuesta':'Proposed') : t.station)}
-    ${provenance(p, true)}
-    <p class="why">${p.proposed ? (lang==='es'?'No es una estación operativa confirmada.':'This is not a confirmed operating station.') : t.stationHolds}</p>
-    <p class="caveat">${lang==='es'?'Número y estado según el mapa completo aportado. La presencia de equipo no confirma guardavidas.':'Number and status follow the supplied full map. Equipment does not confirm lifeguard staffing.'}</p>
+    ${rescueStatus(p.proposed)}
+    <section class="info-section rescue-record"><h3>${lang==='es'?'Equipo reportado':'Reported equipment'}</h3>
+      ${p.proposed ? `<p>${lang==='es'?'No es una estación operativa confirmada.':'This is not a confirmed operating station.'}</p>` : `<ul class="rescue-equipment"><li>${lang==='es'?'Tubos y torpedos de rescate':'Rescue tubes & torpedoes'}</li><li>${lang==='es'?'Caja de mecate · 200 m':'Rope box · 200 m'}</li><li>${lang==='es'?'Salvavidas, chaleco y silbato':'Life ring, vest & whistle'}</li></ul><div class="rescue-schedule"><span>${lang==='es'?'Horario reportado':'Reported schedule'}</span><p>${p.hours[lang]}</p></div>`}
+      ${!p.proposed ? `<a class="btn info-route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${p.ll.join(',')}"><span>${t.route}</span>${CGSymbols.svg('next')}</a>` : ''}
+    </section>
+    <details class="info-details"><summary><span>${lang==='es'?'Ver fuentes y revisión':'View sources & review'}</span>${CGSymbols.svg('next')}</summary>
+      ${provenance(p, true)}<p>${lang==='es'?'Número y estado según el mapa completo aportado.':'Number and status follow the supplied full map.'}</p>
+      <a href="${reportHref(t.reportSubject + ": " + p.name.es)}">${t.report}</a></details>
     <p class="defer">${t.defer}</p>
-    <div class="actions">
-      ${!p.proposed ? `<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${p.ll.join(',')}">${t.route}</a>` : ''}
-      <a class="btn" href="${reportHref(t.reportSubject + ": " + p.name.es)}">${t.report}</a>
-      <a class="btn primary wide" href="tel:911">${t.call}</a>
-    </div>
-    ${sheetFoot()}`;
+    ${sheetFoot()}</div>`;
   };
   openSheet(render(), ()=>{ setSheetContent(render()); });
   flyClear(L.latLngBounds([p.ll]).pad(0.002), {maxZoom:16.5});
   sheetAddress("p=" + localId(p.id));
+}
+
+// The same status hierarchy and emergency action serve every station record.
+function rescueStatus(proposed=false){
+  const es=lang==='es';
+  return `<section class="info-summary rescue-status ${proposed?'info-warning':''}" aria-label="${es?'Estado de la estación':'Station status'}">
+    <span class="rescue-eyebrow">${es?'Estado de la estación':'Station status'}</span>
+    <strong>${proposed?(es?'Estación propuesta':'Proposed station'):(es?'Disponibilidad sin confirmar':'Availability unconfirmed')}</strong>
+    <p>${proposed?(es?'Propuesta en el mapa fuente. No indica equipo disponible.':'Proposed in the source map. Does not indicate available equipment.'):(es?'El registro no confirma equipo disponible hoy ni guardavidas presentes.':'The record does not confirm equipment is available today or lifeguards are present.')}</p>
+  </section><a class="btn help-call rescue-call" href="tel:911">${T[lang].call}</a>`;
 }
 
 /* ---------- the legend ----------
@@ -3730,13 +3721,11 @@ function legendHTML(){
 }
 
 function openLegend(){
-  const render = ()=>`<h2 id="sheet-title" tabindex="-1">${T[lang].legendTitle}</h2>
-    <div class="legend">${legendHTML()}</div>
-    <p class="defer">${T[lang].defer}</p>
-    ${sheetFoot()}`;
-  openSheet(render(), ()=>{ setSheetContent(render()); });
-  // A legend is a reading task, not a glance, so it opens past PEEK.
-  sheetStop("half");
+  const render=()=>`<div class="legend-page"><h2 id="sheet-title" tabindex="-1">${T[lang].legendTitle}</h2>
+    ${legendLayerContent()}
+    <p class="legend-guidance">${T[lang].defer}</p>${sheetFoot()}</div>`;
+  openSheet(render(),()=>setSheetContent(render()));
+  sheetStop('full');
 }
 /* THE LEGEND IS THREE SECTIONS (2026-09-23): what keeps you safe, where
    things are, and how to get there. Places are split by category so a reader
@@ -3744,7 +3733,7 @@ function openLegend(){
 const PLACE_CATEGORIES = ['stay','eat','shop','landmark','other'];
 const sourceLayerDefs = [
   ['hazards','rip_current','Corrientes de resaca','Rip currents','safety'],
-  ['references','source_image','Imágenes de referencia','Reference images','safety'],
+  ['references','source_image','Imágenes de referencia','Reference images','access'],
   ['rescue','rescue_station','Equipo de rescate','Rescue equipment','safety'],
   ['places_stay','place_stay','Hospedaje','Places to stay','places'],
   ['places_eat','place_eat','Comer y beber','Food and drink','places'],
@@ -3753,10 +3742,12 @@ const sourceLayerDefs = [
   ['places_other','place_other','Otros lugares','Other places','places'],
   ['access','pedestrian','Caminos y senderos','Roads and paths','access']
 ];
-const LEGEND_SECTIONS = [['safety','Seguridad','Safety'],['places','Lugares','Places'],['access','Cómo llegar','Getting there']];
+const LEGEND_SECTIONS = [['safety','Seguridad costera','Coastal safety'],['places','Lugares','Places'],['access','Acceso y referencias','Access & references']];
 
 const sourceLayerState = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,true]));
 const sourceLayers = Object.fromEntries(sourceLayerDefs.map(([id])=>[id,L.layerGroup().addTo(map)]));
+// Both station sources belong to the same user-visible Legend switch.
+Object.values(postMarkers).forEach(marker=>sourceLayers.rescue.addLayer(marker));
 const ripReferenceMarkers = [];
 function openRipReference(ref){
   const render = ()=>{
@@ -3776,16 +3767,16 @@ function openRipReference(ref){
     return `<h2 id="sheet-title" tabindex="-1">${sourceEsc(ref.name[lang])}</h2>
       ${titleChip(CGSymbols.badge('source_image'), es?'Imagen de referencia':'Reference image')}
       <figure class="rip-reference-figure">
-        <a href="${sourceEsc(ref.image)}" target="_blank" rel="noopener" aria-label="${es?'Abrir imagen completa':'Open full image'}"><img src="${sourceEsc(ref.image)}" alt="${sourceEsc(ref.survivor_line
+        <a class="reference-media is-loading" aria-busy="true" style="aspect-ratio:${Number(ref.width)||4}/${Number(ref.height)||3}" href="${sourceEsc(ref.image)}" target="_blank" rel="noopener" aria-label="${es?'Abrir imagen completa':'Open full image'}"><span class="reference-image-status" role="status">${es?'Cargando imagen…':'Loading image…'}</span><img width="${Number(ref.width)||4}" height="${Number(ref.height)||3}" src="${sourceEsc(ref.image)}" alt="${sourceEsc(ref.survivor_line
           ? (es?'Imagen aérea con corrientes de resaca rojas y una línea de supervivencia punteada':'Aerial image with red rip currents and a dotted survivor line')
           : (es?'Imagen aérea anotada con corrientes de resaca':'Annotated aerial image showing rip currents'))}" loading="eager"></a>
         <figcaption>${es?'Imagen aportada para esta revisión; no representa las condiciones de hoy.':'Image supplied for this review; it does not show today’s conditions.'}</figcaption>
       </figure>
       ${survivor}
-      <p class="caveat">${placement}</p>
+      <details class="info-details"><summary><span>${es?'Ver ubicación y fuentes':'View placement & sources'}</span>${CGSymbols.svg('next')}</summary><p class="caveat">${placement}</p>
       <p class="caveat">${es
         ? 'Las flechas siguen el documento de 2026. Las ubicaciones de equipo también incluyen puntos posteriores aportados por AJ. Esta imagen sirve para entender el lugar, no para ubicar una corriente, cuerda o equipo con GPS.'
-        : 'The arrows follow the 2026 document. Equipment locations also include later pins supplied by AJ. This image helps explain the area; it does not locate a current, rope, or equipment by GPS.'}</p>
+        : 'The arrows follow the 2026 document. Equipment locations also include later pins supplied by AJ. This image helps explain the area; it does not locate a current, rope, or equipment by GPS.'}</p></details>
       <p class="defer">${T[lang].defer}</p>
       ${sheetFoot()}`;
   };
@@ -3798,7 +3789,7 @@ function drawRipReferences(data){
     const [lon,lat] = ref.point;
     const marker = L.marker([lat,lon], {
       title:ref.name[lang], keyboard:true, zIndexOffset:-100,
-      icon:L.divIcon({className:'rip-reference-marker', iconSize:[34,34], iconAnchor:[17,17],
+      icon:L.divIcon({className:'rip-reference-marker', iconSize:[44,44], iconAnchor:[22,22],
         html:CGSymbols.badge('source_image')})
     }).on('click',()=>openRipReference(ref));
     ripReferenceMarkers.push({marker,ref});
@@ -3817,137 +3808,36 @@ fetch('data/rip-reference-images.json')
   .then(r=>r.ok?r.json():Promise.reject(r.status))
   .then(drawRipReferences)
   .catch(error=>console.warn('Rip-current reference images unavailable',error));
-let legendExpanded = false;
-let legendClosingTimer = null;
-let legendParked = false;
-function renderLegendPerm(){
-  clearTimeout(legendClosingTimer);
-  const el = document.getElementById("legend-perm");
-  if(!el) return;
-  const restoreToggleFocus = document.activeElement?.classList?.contains('key-toggle') && el.contains(document.activeElement);
-  el.classList.remove('is-closing');
-  const mobileLegend = legendExpanded && !desktop();
-  document.body.classList.toggle('legend-mode', mobileLegend);
-  /* ONE PANEL AT A TIME, the legend included (Daniel, 2026-09-23): the beach
-     panel is parked below the screen while the legend is up, not merely
-     hidden, and comes back to its own stop when the legend closes. */
-  if(mobileLegend && !legendParked){
-    legendParked = true; dockPanel.stopAnim(); dockPanel.render(dockPanel.full);
-  }else if(!mobileLegend && legendParked){
-    legendParked = false;
-    if(!sheet.classList.contains('open')) dockPanel.animateTo(dockStop, 0, () => placeControls(dockPanel.visible(), true));
-  }
-  const dockEl = document.getElementById('dock');
-  if(mobileLegend) dockEl.setAttribute('inert', '');
-  else if(!document.getElementById('sheet')?.classList.contains('open')) dockEl.removeAttribute('inert');
-  el.setAttribute("aria-label", lang === "es" ? "Leyenda" : "Legend");
-  const es = lang === 'es';
-  el.classList.toggle('is-open', legendExpanded);
-  if(!legendExpanded) el.classList.remove('opened');
-  el.innerHTML = `${legendExpanded ? '<div class="key-grab" aria-hidden="true"></div>' : ''}<button type="button" class="key-toggle" aria-controls="legend-content" aria-expanded="${legendExpanded}">
-      <span>${es ? 'Leyenda' : 'Legend'}</span>
-    </button><div class="key-content" id="legend-content" ${legendExpanded?'':'hidden'}>
-    ${LEGEND_SECTIONS.map(([sec,esSec,enSec])=>`<section class="key-section">
+function legendLayerContent(){
+  const es=lang==='es';
+  return `${LEGEND_SECTIONS.map(([sec,esSec,enSec])=>`<section class="key-section">
       <h3 class="key-section-label">${es?esSec:enSec}</h3>
       <div class="source-layer-grid">${sourceLayerDefs.filter(d=>d[4]===sec).map(([id,icon,esName,enName])=>`<label>
       <input type="checkbox" data-source-layer="${id}" ${sourceLayerState[id]?'checked':''}>
-      ${CGSymbols.badge(icon, id.startsWith('places_')?'place-badge':'')}<span>${es?esName:enName}</span></label>`).join('')}</div></section>`).join('')}
-    <p class="key-hint">${es?'Acerca el mapa para ver más detalles. Las corrientes en movimiento marcan resaca según el mapa de Caribbean Guard; su dirección no está medida.':'Zoom in for detail. Moving currents mark rips from the Caribbean Guard map; their direction is not measured.'}</p>
-    <details class="key-data"><summary>${es?'Fuentes y precisión':'Sources and accuracy'}</summary>
+      ${id==='access'?'<span class="legend-road" aria-hidden="true"><svg viewBox="0 0 32 28"><path d="M3 8h26M3 20h26" stroke="#314e5b" stroke-width="4"/><path d="M3 8h26" stroke="#deedf0" stroke-width="2"/><path d="M3 20h26" stroke="#f3f6f5" stroke-width="2" stroke-dasharray="4 5"/></svg></span>':CGSymbols.badge(icon, id.startsWith('places_')?'place-badge':'')}<span>${es?esName:enName}</span></label>`).join('')}</div>
+      ${sec==='safety'?`<div class="legend-areas"><h4>${es?'Áreas costeras de referencia':'Coastal reference areas'}</h4><ul><li><i class="risk-high" aria-hidden="true"></i>${es?'Riesgo alto':'High risk'}</li><li><i class="risk-moderate" aria-hidden="true"></i>${es?'Moderado':'Moderate'}</li><li><i class="risk-low" aria-hidden="true"></i>${es?'Precaución':'Caution'}</li><li><i class="risk-unknown" aria-hidden="true"></i>${es?'Sin evaluar':'Not assessed'}</li></ul></div>`:''}</section>`).join('')}
+    <details class="key-data"><summary><span>${es?'Ver fuentes y precisión':'View sources & accuracy'}</span>${CGSymbols.svg('next')}</summary>
       <p>${es?'Lugares y caminos: datos de OpenStreetMap; algunos lugares aún son estimados. Las flechas se ajustan a la costa GPS desde el documento original, pero no indican corrientes actuales. Los puntos de equipo aportados por AJ fueron reportados como instalados; no se verificó su disponibilidad actual. Los caminos no confirman acceso.':'Places and roads: OpenStreetMap data; some places remain estimated. Arrows follow the GPS coast from the source document, but do not show live currents. Equipment pins supplied by AJ were reported as installed; current availability was not verified. Roads do not confirm access.'} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>.</p>
-    </details></div>`;
-  el.querySelector('.key-toggle').onclick = () => {
-    if(legendExpanded && !desktop() && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
-      el.classList.add('is-closing');
-      legendClosingTimer = setTimeout(()=>{ el.classList.remove('is-closing'); legendExpanded = false; renderLegendPerm(); }, 220);
-    }else{ legendExpanded = !legendExpanded; renderLegendPerm(); }
-  };
-  if(restoreToggleFocus) el.querySelector('.key-toggle').focus({preventScroll:true});
-  el.querySelectorAll('[data-source-layer]').forEach(input=>input.onchange=()=>{
-    sourceLayerState[input.dataset.sourceLayer]=input.checked;
-    const layer=sourceLayers[input.dataset.sourceLayer];
-    input.checked?layer.addTo(map):map.removeLayer(layer);
-    requestAnimationFrame(restyleLabels);
-  });
+    </details>`;
 }
-document.getElementById("legend-open").onclick = openLegend;
-
-/* SWIPE DOWN CLOSES THE LEGEND (Daniel, 2026-09-23), the same gesture as every
-   other panel: the tray follows the finger, resists being pulled up, and on
-   release either leaves (a flick, or past a third of its height) or springs
-   back. Inside the list, a drag down only takes the tray once the list is at
-   its top; scrolling the list is untouched. The header stays a button, so a
-   tap, Enter or a screen reader still closes it. */
-(function(){
-  const el = document.getElementById("legend-perm");
-  // Once the slide-in has played it must not replay when a drag ends.
-  el.addEventListener("animationend", e => { if(e.target === el && el.classList.contains("is-open")) el.classList.add("opened"); });
-  let y0 = 0, x0 = 0, dy = 0, mode = null, samples = [], suppress = false, id = null;
-  const open = () => legendExpanded && !desktop() && el.classList.contains("is-open");
-  const set = v => { el.style.transform = v ? `translate3d(0,${v.toFixed(1)}px,0)` : ""; };
-  function begin(x, y, target){
-    if(!open()) return false;
-    const list = el.querySelector(".key-content");
-    const inList = list && list.contains(target);
-    y0 = y; x0 = x; dy = 0; samples = [{y, t:performance.now()}];
-    mode = inList && list.scrollTop > 0 ? "scroll" : (inList ? "list" : "pending");
-    el.style.transition = "none";
-    return true;
-  }
-  function move(x, y){
-    if(!mode || mode === "scroll" || mode === "ignore") return false;
-    const d = y - y0;
-    if(mode !== "drag"){
-      if(Math.abs(d) < 6 && Math.abs(x - x0) < 6) return mode === "pending";
-      if(Math.abs(x - x0) > Math.abs(d)){ mode = "ignore"; return false; }
-      if(mode === "list" && d < 0){ mode = "scroll"; return false; }
-      mode = "drag"; el.classList.add("dragging"); y0 = y;
-    }
-    dy = y - y0;
-    const now = performance.now(); samples.push({y, t:now});
-    while(samples.length > 2 && now - samples[0].t > 90) samples.shift();
-    set(dy >= 0 ? dy : -(-dy * 40) / (40 - dy));      // resists upward
-    return true;
-  }
-  function end(){
-    const was = mode; mode = null;
-    if(was !== "drag") return;
-    suppress = true; setTimeout(() => { suppress = false; }, 60);
-    const a = samples[0], b = samples[samples.length - 1];
-    const v = b.t > a.t ? (b.y - a.y) / (b.t - a.t) : 0;
-    const h = el.offsetHeight;
-    const quick = reducedMotion.matches;
-    if(v > 0.5 || dy > h / 3){
-      el.style.transition = quick ? "none" : `transform ${Math.max(.14, Math.min(.3, (h - dy) / Math.max(1, v * 1000)))}s cubic-bezier(.3,.6,.4,1)`;
-      set(h + 20);
-      setTimeout(() => {
-        el.classList.remove("dragging"); el.style.transition = ""; set(0);
-        legendExpanded = false; renderLegendPerm();
-      }, quick ? 0 : 300);
-    }else{
-      el.style.transition = quick ? "none" : "transform .34s cubic-bezier(.22,1,.36,1)";
-      set(0);
-      setTimeout(() => { el.classList.remove("dragging"); el.style.transition = ""; }, 360);
-    }
-  }
-  el.addEventListener("touchstart", e => {
-    if(e.touches.length !== 1) return;
-    const t = e.touches[0]; if(begin(t.clientX, t.clientY, e.target)) id = t.identifier;
-  }, {passive:true});
-  el.addEventListener("touchmove", e => {
-    const t = [...e.changedTouches].find(x => x.identifier === id); if(!t) return;
-    if(move(t.clientX, t.clientY) && e.cancelable) e.preventDefault();
-  }, {passive:false});
-  el.addEventListener("touchend", () => { id = null; end(); });
-  el.addEventListener("touchcancel", () => { id = null; dy = 0; end(); });
-  el.addEventListener("pointerdown", e => {
-    if(e.pointerType === "touch" || e.button !== 0 || !begin(e.clientX, e.clientY, e.target)) return;
-    const mv = ev => { if(move(ev.clientX, ev.clientY)) ev.preventDefault(); };
-    const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); end(); };
-    window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
-  });
-  el.addEventListener("click", e => { if(suppress){ suppress = false; e.stopPropagation(); e.preventDefault(); } }, true);
-})();
+function renderLegendPerm(){
+  const el=document.getElementById('legend-perm');
+  if(!el)return;
+  const es=lang==='es';
+  el.setAttribute('aria-label',es?'Leyenda':'Legend');
+  el.innerHTML=`<button type="button" class="key-toggle" aria-controls="sheet"><span>${es?'Leyenda':'Legend'}</span></button>`;
+  el.querySelector('.key-toggle').onclick=()=>navigateFromOverview(openLegend);
+}
+document.getElementById('legend-open').onclick=()=>navigateFromOverview(openLegend);
+document.addEventListener('change',event=>{
+  const input=event.target.closest('[data-source-layer]');
+  if(!input)return;
+  const id=input.dataset.sourceLayer,layer=sourceLayers[id];
+  if(!layer)return;
+  sourceLayerState[id]=input.checked;
+  input.checked?layer.addTo(map):map.removeLayer(layer);
+  requestAnimationFrame(restyleLabels);
+});
 
 /* ---------- beach picker ----------
    The coast is 12 km of near identical jungle and sand. Nobody pans a map to
@@ -4044,6 +3934,7 @@ function cardHTML(z){
       <span class="nm">${z.name[lang]}</span>
       <span class="beach-status">${t[instructionKey(z)]}</span>
       </span>
+      ${CGSymbols.svg('next')}
     </button>`;
 }
 
@@ -4058,14 +3949,13 @@ function buildPicker(){
       ${CGSymbols.badge('unknown', 'beach-symbol')}
       <span class="beach-copy"><span class="nm">${b.name}</span>
       <span class="beach-status">${t.unassessedStatus}</span></span>
+      ${CGSymbols.svg('next')}
     </button>`).join("");
   document.getElementById("picker").innerHTML = cards;
   document.querySelectorAll(".card").forEach(c=>{
     c.setAttribute("aria-current", c.dataset.id === selected);
-    c.onclick = c.dataset.id === "void" ? openVoid
-      : c.dataset.id.startsWith("cg:beach/")
-        ? ()=>openUnassessedBeach(UNASSESSED_BEACHES.find(b=>b.id === c.dataset.id))
-        : ()=>openZone(ZONES.find(z=>z.id === c.dataset.id));
+    c.onclick = ()=>c.dataset.id === "void" ? navigateFromOverview(openVoid)
+      : openBeach([...ZONES,...UNASSESSED_BEACHES].find(b=>b.id === c.dataset.id));
   });
   renderCounter();
   renderDistances();
@@ -4080,8 +3970,8 @@ function buildPicker(){
    never asks on load: a permission prompt before the reader has done anything
    is how the map lost them before), and from the centre of Puerto Viejo
    otherwise, including when the reader's position is more than 25 km from the
-   coast. The caption above the list always says which, and "en línea recta",
-   because a walk along the road is longer and the map must not imply a route. */
+   coast. Distance context stays on each value as an accessible label and tooltip,
+   instead of adding a caption above the beach list. */
 const DIST_DEFAULT = {ll:[9.65670, -82.75450], you:false};
 const DIST_OUT_OF_RANGE_M = 25000;
 let distOrigin = DIST_DEFAULT;
@@ -4110,14 +4000,13 @@ function renderDistances(){
     if(!pts){ if(el) el.remove(); return; }
     if(!el){ el = document.createElement("span"); el.className = "card-dist"; c.appendChild(el); }
     el.textContent = fmtDist(nearestM(distOrigin.ll, pts));
+    const context=distOrigin.you
+      ? (es?'En línea recta desde tu ubicación':'Straight-line from your location')
+      : (es?'En línea recta desde Puerto Viejo':'Straight-line from Puerto Viejo');
+    el.title=context;
+    el.setAttribute('aria-label',`${el.textContent}, ${context}`);
   });
-  const cap = document.getElementById("dist-origin");
-  if(cap){
-    cap.hidden = false;
-    cap.textContent = distOrigin.you
-      ? (es ? "Distancia en línea recta desde donde estás" : "Straight-line distance from where you are")
-      : (es ? "Distancia en línea recta desde el centro de Puerto Viejo" : "Straight-line distance from central Puerto Viejo");
-  }
+
 }
 function setDistOrigin(ll){
   const near = [...ZONES, ...UNASSESSED_BEACHES].some(z => nearestM(ll, z.line && z.line.length ? z.line : [z.at]) < DIST_OUT_OF_RANGE_M);
@@ -4180,8 +4069,6 @@ function markCurrent(id){
       }
     }
   });
-  anyCurrent = !!id && !!layers[id];
-  Object.entries(layers).forEach(([k,g])=>{ g.cgCurrent = (k === id); });
   restyleZones();
   setTimeout(renderCounter, 420);   // after the smooth scroll settles
 }
@@ -4274,11 +4161,25 @@ function runLocate(){
 document.getElementById("locate-first").onclick = runLocate;
 document.getElementById("locate").onclick = runLocate;
 
+let locateBusy=false;
+function setLocateBusy(busy){
+  locateBusy=busy;
+  toast.classList.toggle('is-loading',busy);
+  for(const id of ['locate','locate-first']){
+    const button=document.getElementById(id);
+    button.classList.toggle('is-loading',busy);
+    if(busy){button.setAttribute('aria-busy','true');button.setAttribute('aria-disabled','true');}
+    else{button.removeAttribute('aria-busy');button.removeAttribute('aria-disabled');}
+  }
+}
 function doLocate(){
+  if(locateBusy)return;
   const t=T[lang];
   if(!navigator.geolocation){ say(t.denied); return; }
-  say(t.locating);
+  setLocateBusy(true);
+  say(t.locating,10000);
   navigator.geolocation.getCurrentPosition(pos=>{
+    setLocateBusy(false);
     const {latitude:la,longitude:lo,accuracy:acc}=pos.coords;
     const ll=[la,lo];
     setDistOrigin(ll);
@@ -4294,7 +4195,7 @@ function doLocate(){
     const shown  = Math.sqrt(acc*acc + mapErr*mapErr);
     meCircle=L.circle(ll,{radius:shown,color:"#1565c0",weight:1,fillOpacity:.14}).addTo(map);
     meMarker=L.marker(ll,{icon:L.divIcon({className:"cg-gps-marker",iconSize:[36,36],iconAnchor:[18,18],
-      html:'<svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><circle cx="18" cy="18" r="16" fill="#1565c0" stroke="#fff" stroke-width="3"/><circle cx="18" cy="12" r="3.2" fill="#fff"/><path d="M12 25c.4-4.1 2.4-6.4 6-6.4s5.6 2.3 6 6.4" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/></svg>'})}).addTo(map);
+      html:CGSymbols.svg('me')})}).addTo(map);
     meMarker.bindTooltip(lang === "es" ? "Tu ubicación GPS" : "Your GPS location");
     if(!L.latLngBounds(IMG_BOUNDS).contains(ll)){ say(t.outside,6000); map.fitBounds(IMG_BOUNDS); return; }
     toast.classList.remove("show");
@@ -4324,12 +4225,12 @@ function doLocate(){
     const NEAR_M = 250, MARGIN_M = 150;
     if(near[0] && near[0].d < NEAR_M &&
        (!near[1] || near[1].d - near[0].d > MARGIN_M)){
-      openZone(near[0].z);
+      openBeach(near[0].z);
     } else {
       flyClear(meCircle.getBounds(), {maxZoom:16});
       if(near[0] && near[0].d < 700) say(t.ambiguous, 7000);
     }
-  },()=>say(T[lang].denied,5000),{enableHighAccuracy:true,timeout:9000,maximumAge:30000});
+  },()=>{setLocateBusy(false);say(T[lang].denied,5000);},{enableHighAccuracy:true,timeout:9000,maximumAge:30000});
 }
 
 /* ---------- language ----------
@@ -4347,7 +4248,7 @@ function updateCoastalLabels(){
   document.getElementById("dock-handle").setAttribute("aria-label", es
     ? (dockStop === "min" ? "Abrir panel de playas" : dockStop === "full" ? "Bajar panel de playas" : "Contraer panel de playas")
     : (dockStop === "min" ? "Open beach panel" : dockStop === "full" ? "Lower beach panel" : "Collapse beach panel"));
-  document.getElementById("coast-title").textContent = es ? "Playas del Caribe Sur" : "Southern Caribbean beaches";
+  document.getElementById("coast-title").textContent = es ? "Playas del Caribe Sur" : "Southern Caribbean Beaches";
   document.getElementById("list-toggle").textContent = es
     ? (expanded ? "Ver mapa" : "Ver todas") : (expanded ? "Show map" : "See all");
   document.getElementById("forecast-label").textContent = es ? "Pronóstico de la costa" : "Coastal forecast";
@@ -4398,7 +4299,7 @@ function setLang(l){
       const post = POSTS.find(x=>x.id === id);
       if(post && m._icon) m._icon.alt = `${t.legendStation} ${post.n}`;
     });
-    buildCluster();
+    scheduleMarkerLayout();
     restyleLabels();
   }
   if(lastRender) lastRender();
@@ -4424,21 +4325,12 @@ document.getElementById("btn-en").onclick=()=>chooseLang("en");
 const ANNOT = {rips:[], stations:[], areas:[]};
 let legacyRipLayer;
 
-/* Arrow weight, head size and the minimum drawn shaft are a function of zoom,
-   and all three moved to geometry.js along with the thing that matters more:
-   THE ARROW IS OUTLINED NOW, not shadowed.
-
-   Hat 4 measured the old one. #e53935 against the water sampled next to it,
-   rgb(45,72,65), is 2.00:1, and 1.79:1 as a deuteranope sees it, against the
-   3:1 bar WCAG 1.4.11 sets for a graphical object that carries meaning. A drop
-   shadow cannot fix that, because contrast is measured at an edge and a shadow
-   is a blur. Ink at 0.85 against the red is 4.4:1, and that ink edge is what
-   the eye locks onto, so the arrow stops depending on whatever water it
-   happens to be floating over. */
+/* Approved simplified quadratic arrows. The originals remain separate tap
+   targets and source evidence; display curves do not encode current speed. */
 
 function drawAnnotations(gj){
   const layer = L.layerGroup().addTo(map);
-  legacyRipLayer = L.layerGroup().addTo(layer);
+  legacyRipLayer = L.layerGroup().addTo(sourceLayers.hazards);
   gj.features.forEach(f=>{
     // rescue_station is handled by joinStations(), not here: those markers are
     // already on screen from POSTS before this fetch resolves, and drawing them
@@ -4446,11 +4338,8 @@ function drawAnnotations(gj){
     const k = f.properties.kind, g = f.geometry;
     if(k === "rip_current"){
       const pts = g.coordinates.map(c=>[c[1], c[0]]);
-      const arrow = CGGeom.outlinedArrow(map, pts, {}).addTo(legacyRipLayer);
-      // Our own hit line, on the TRUE position rather than the drawn one: at
-      // the overview a 40 m rip is shorter than its own arrowhead and the shaft
-      // is stretched to stay legible, but the tap target belongs where the
-      // hazard is.
+      const arrow = CGGeom.curveArrow(map, pts, {}).addTo(legacyRipLayer);
+      // Keep the source-position tap target separate from display simplification.
       L.polyline(pts,{color:"#000",weight:30,opacity:0})
         .addTo(legacyRipLayer).on("click", ()=>openAnnot("rip", f));
       ANNOT.rips.push({f, pts, arrow});
@@ -4488,24 +4377,14 @@ function openAnnot(kind, f){
        tapping a card. A page that argues its verdicts are dated observations
        cannot put the date somewhere different depending on which mark you
        touched. */
-    const body = kind === "rip"
-      ? `<h2 id="sheet-title" tabindex="-1">${t.ripTitle}</h2>
-         ${titleChip(markRip(), t.legendRip)}
-         ${provenance(f.properties, true)}
-         <p class="why">${t.escapeRip} ${t.escapeHelp}</p>
-         <p class="prov">${t.ripDir}</p>
-         <p class="defer">${t.defer}</p>`
-      : `<h2 id="sheet-title" tabindex="-1">${t.areaTitle}</h2>
-         ${titleChip(markArea(), t.legendArea)}
-         ${provenance(f.properties, true)}
-         <p class="why">${t.areaWhy}</p>
-         <p class="defer">${t.defer}</p>`;
-    return body + `
-    <div class="actions">
-      <a class="btn" href="${reportHref(t.reportSubject + ": " + t.ripTitle)}">${t.report}</a>
-      <a class="btn primary" href="tel:911">${t.call}</a>
-    </div>
-    ${sheetFoot()}`;
+    return `<h2 id="sheet-title" tabindex="-1">${kind==='rip'?t.ripTitle:t.areaTitle}</h2>
+      <div class="info-summary info-danger"><div class="info-label">${kind==='rip'?markRip():markArea()}<strong>${kind==='rip'?t.legendRip:t.legendArea}</strong></div>
+      <p>${kind==='rip'?t.escapeRip+' '+t.escapeHelp:t.areaWhy}</p></div>
+      <section class="info-section info-emergency"><h3>${lang==='es'?'En una emergencia':'In an emergency'}</h3><a class="btn help-call" href="tel:911">${t.call}</a></section>
+      <details class="info-details"><summary><span>${lang==='es'?'Ver fuentes y revisión':'View sources & review'}</span>${CGSymbols.svg('next')}</summary>
+        ${provenance(f.properties,true)}${kind==='rip'?`<p>${t.ripDir}</p>`:''}
+        <a href="${reportHref(t.reportSubject+': '+(kind==='rip'?t.ripTitle:t.areaTitle))}">${t.report}</a></details>
+      <p class="defer">${t.defer}</p>${sheetFoot()}`;
   };
   openSheet(render(), ()=>{ setSheetContent(render()); });
 }
@@ -4521,7 +4400,7 @@ function refreshDangerLabels(){
   [...zoneLabels,...unassessedLabels].forEach((marker,i)=>{
     const beach=[...ZONES,...UNASSESSED_BEACHES][i];
     const name=beach.character?beach.name[lang]:beach.name;
-    marker.setIcon(L.divIcon({className:'lbl zone area-label',iconSize:[190,42],iconAnchor:[95,21],
+    marker.setIcon(L.divIcon({className:'lbl zone area-label',iconSize:[136,42],iconAnchor:[68,21],
       html:`<strong>${sourceEsc(name)}</strong><span class="area-risk ${beach.character?tierOf(beach):'unknown'}">${dangerLabel(beach,true)}</span>`}));
     marker.fire('add');
   });
@@ -4546,12 +4425,12 @@ function openAccess(point){
     qr.searchParams.set('a',point.id);
     return `<h2 id="sheet-title" tabindex="-1">${sourceEsc(name)}</h2>
       <p class="access-note">${es?'Punto de acceso cartografiado. Posición y acceso público pendientes de confirmación en campo.':'Mapped access point. Position and public access await field confirmation.'}</p>
-      <div class="access-risk ${beach?.character?tierOf(beach):'unknown'}"><strong>${dangerLabel(beach)}</strong>
-      <p>${beach?.character?T[lang][beach.character.class]:(es?'No hay evaluación de esta playa.':'No assessment is available for this beach.')}</p></div>
-      <p>${es?'Las flechas muestran corrientes de resaca del mapa fuente, no mediciones de hoy. La señalización y los guardavidas en la playa tienen prioridad.':'Arrows show rip currents from the source map, not measurements today. Beach signs and lifeguards take priority.'}</p>
+      <section class="beach-safety access-risk ${beach?.character?tierOf(beach):'unknown'}" aria-label="${es?'Seguridad en la playa':'Beach safety'}">
+      ${beach?.character?`<div class="statuscard ${tierOf(beach)}" data-zone="${beach.id}">${statusCardInner(beach)}</div>`:`<strong>${dangerLabel(beach)}</strong><p>${es?'No hay evaluación de esta playa.':'No assessment is available for this beach.'}</p>`}
+      ${renderSwimAdvisory(beach?.id,true,true)}</section>
       <div class="actions"><button class="btn" data-area="${point.beach}">${es?'Ver toda la playa':'View the whole beach'}</button><a class="btn" href="tel:911">${es?'Llamar al 911':'Call 911'}</a></div>
-      ${renderForecastPanel(beach?.id)}
-      <details class="qr-link"><summary>${es?'Enlace para el QR de este acceso':'QR link for this access point'}</summary>
+      ${renderForecastPanel(beach?.id,false,'swell',true)}
+      <details class="qr-link info-details"><summary><span>${es?'Ver enlace QR de este acceso':'View QR link for this access point'}</span>${CGSymbols.svg('next')}</summary>
       <label>${es?'Enlace de esta versión':'Link to this version'}<input readonly value="${sourceEsc(qr.href)}" aria-label="${es?'Enlace QR':'QR link'}"></label>
       <button class="btn" data-copy-access>${es?'Copiar enlace':'Copy link'}</button>
       <p>${es?'Demostración. Confirma el lugar y el dominio final antes de imprimir el QR.':'Demonstration. Confirm the location and final domain before printing the QR.'}</p></details>
@@ -4584,6 +4463,88 @@ const accessReady=fetch('data/access-points.json').then(r=>{if(!r.ok)throw new E
   updateAccessMarkers();
 }).catch(error=>{console.warn(error);});
 map.on('zoomend',updateAccessMarkers);
+
+let markerLayoutFrame=0;
+function scheduleMarkerLayout(){
+  if(markerLayoutFrame)return;
+  markerLayoutFrame=requestAnimationFrame(()=>{
+    markerLayoutFrame=0;
+    const entries=[], markerByNode=new Map();
+    map.eachLayer(layer=>{if(layer instanceof L.Marker&&layer.getElement())markerByNode.set(layer.getElement(),layer);});
+    document.querySelectorAll('#map .leaflet-marker-icon').forEach(node=>{
+      const rescue=node.classList.contains('projected-rescue')||!!node.querySelector('.station-marker');
+      const access=node.classList.contains('access-marker');
+      const place=node.classList.contains('projected-place');
+      const reference=node.classList.contains('rip-reference-marker');
+      if(!rescue&&!access&&!place&&!reference)return;
+      const box=node.getBoundingClientRect();
+      if(!box.width||!box.height)return; // Disabled layers and zoom-ineligible markers reserve no space.
+      entries.push({id:node,x:box.x+box.width/2,y:box.y+box.height/2,size:Math.max(box.width,box.height),
+        priority:rescue?100:access?50:reference?30:10,required:rescue,marker:markerByNode.get(node)});
+    });
+    const rescueGroups=CGGeom.groupMarkers(entries.filter(e=>e.required));
+    const representatives=new Set(rescueGroups.map(g=>g.anchor.id));
+    for(const entry of entries.filter(e=>e.required)){
+      const node=entry.id;
+      node.querySelector('.rescue-count')?.remove();
+      node.classList.remove('rescue-group');node.cgRescueGroup=null;
+      const number=node.querySelector('.number,.projected-number')?.textContent;
+      node.setAttribute('aria-label',(lang==='es'?'Estación de rescate':'Rescue station')+(number?' '+number:''));
+    }
+    for(const group of rescueGroups){
+      if(group.members.length<2)continue;
+      const node=group.anchor.id;
+      node.cgRescueGroup=group.members.map(e=>e.marker).filter(Boolean);
+      node.classList.add('rescue-group');
+      const badge=document.createElement('span');badge.className='rescue-count';
+      badge.textContent=group.members.length;badge.setAttribute('aria-hidden','true');node.append(badge);
+      node.setAttribute('aria-label',lang==='es'?`${group.members.length} estaciones de rescate. Ampliar`:`${group.members.length} rescue stations. Expand`);
+    }
+    const candidates=entries.filter(e=>!e.required||representatives.has(e.id))
+      .map(e=>e.required?{...e,size:56}:e);
+    const shown=new Set(CGGeom.declutterMarkers(candidates));
+    for(const {id:node} of entries){
+      const hidden=!shown.has(node),wasHidden=node.classList.contains('cg-marker-suppressed');
+      if(hidden&&!wasHidden)node.cgTabIndex=node.getAttribute('tabindex');
+      node.classList.toggle('cg-marker-suppressed',hidden);
+      if(hidden){node.setAttribute('aria-hidden','true');node.setAttribute('tabindex','-1');}
+      else if(wasHidden){
+        node.removeAttribute('aria-hidden');
+        if(node.cgTabIndex===null)node.removeAttribute('tabindex');else node.setAttribute('tabindex',node.cgTabIndex);
+      }
+    }
+    placeBeachLabels();
+  });
+}
+// Capture before Leaflet dispatches the individual marker's popup/click.
+function expandRescueGroup(event){
+  if(event.type==='keydown'&&!['Enter',' '].includes(event.key))return;
+  const node=event.target.closest('.rescue-group'),members=node?.cgRescueGroup;
+  if(!members?.length)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  map.closePopup();
+  if(map.getZoom()<map.getMaxZoom()){
+    const anchor=members[0].getLatLng();
+    flyClear(L.latLngBounds([anchor]),{maxZoom:Math.min(map.getMaxZoom(),map.getZoom()+2),duration:.5});
+  }else{
+    // Coincident source points still have separate records. A chooser preserves
+    // access to each one without inventing displaced positions at maximum zoom.
+    const list=document.createElement('div');list.className='rescue-chooser';
+    members.forEach((marker,i)=>{
+      const button=document.createElement('button');button.type='button';
+      const number=marker.getElement()?.querySelector('.number,.projected-number')?.textContent;
+      button.textContent=(lang==='es'?'Estación de rescate ':'Rescue station ')+(number||String(i+1));
+      button.onclick=()=>{map.closePopup();marker.fire('click',{latlng:marker.getLatLng()});};
+      list.append(button);
+    });
+    L.popup().setLatLng(members[0].getLatLng()).setContent(list).openOn(map);
+  }
+}
+map.getContainer().addEventListener('click',expandRescueGroup,true);
+map.getContainer().addEventListener('keydown',expandRescueGroup,true);
+map.on('zoomend moveend layeradd layerremove resize',scheduleMarkerLayout);
+scheduleMarkerLayout();
+
 document.addEventListener('click',async event=>{
   const area=event.target.closest('[data-area]');
   if(area){const beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===area.dataset.area);if(beach){clearAccessPath();openBeach(beach);}}
@@ -4613,7 +4574,7 @@ function sourcePlaceLabel(p,es){
   const mappedName=/real location/i.test(p.osm_name||'')?'':p.osm_name;
   return mappedName||(!generic&&p.name)||(es?'Lugar sin identificar':'Unidentified place');
 }
-function sourcePopup(f){
+function sourcePopup(f,compact=false){
   const es=lang==='es', p=f.properties, names=projectedNames[p.kind]||['Anotación','Annotation'];
   const proposed=p.kind.startsWith('proposed');
   if(p.kind==='location'){
@@ -4623,7 +4584,7 @@ function sourcePopup(f){
       : (es?'Posición estimada del documento':'Estimated document position');
     const def=sourceLayerDefs.find(d=>d[0]==='places_'+(p.category||'other'));
     const cat=def?(es?def[2]:def[3]):'';
-    return `<strong>${sourceEsc(label)}</strong><br><small>${cat?sourceEsc(cat)+' · ':''}${note}</small>`;
+    return compact?`${cat?sourceEsc(cat)+' · ':''}${note}`:`<strong>${sourceEsc(label)}</strong><br><small>${cat?sourceEsc(cat)+' · ':''}${note}</small>`;
   }
   const note=p.registration==='aj_google_maps_pin'
     ? (es?'Ubicación aportada por AJ; equipo reportado como instalado.':'Location supplied by AJ; equipment reported as installed.')
@@ -4632,7 +4593,34 @@ function sourcePopup(f){
     : proposed ? (es?'Propuesto, no disponible':'Proposed, not available')
     : p.kind==='unclassified_facility' ? (es?'Servicio no identificado':'Service unknown')
     : (es?'Posición aproximada':'Approximate position');
-  return `<strong>${sourceEsc(names[es?0:1])}${p.number?' '+sourceEsc(p.number):''}</strong><br><small>${note}</small>`;
+  return compact?note:`<strong>${sourceEsc(names[es?0:1])}${p.number?' '+sourceEsc(p.number):''}</strong><br><small>${note}</small>`;
+}
+function openSourceFeature(f){
+  const p=f.properties;
+  const render=()=>{
+    const es=lang==='es',rescue=p.kind==='rescue_station',place=p.kind==='location';
+    const title=place?sourcePlaceLabel(p,es):(projectedNames[p.kind]?.[es?0:1]||(es?'Anotación':'Annotation'))+(p.number?' '+p.number:'');
+    const summary=rescue?(es?'Disponibilidad sin confirmar':'Availability unconfirmed'):p.kind==='rip_current'?(es?'Corriente de referencia':'Reference current'):(es?'Referencia del mapa':'Map reference');
+    return `<div class="info-page ${rescue?'rescue-page':''}"><h2 id="sheet-title" tabindex="-1">${sourceEsc(title)}</h2>
+      ${rescue?rescueStatus():`<div class="info-summary ${p.kind==='rip_current'?'info-danger':'info-neutral'}"><div class="info-label">${CGSymbols.svg(place?'place_'+(p.category||'other'):'rip_current')}<strong>${summary}</strong></div><p>${sourcePopup(f,true)}</p></div>`}
+      ${rescue?`<section class="info-section rescue-record"><h3>${es?'Ubicación reportada':'Reported location'}</h3><p>${sourcePopup(f,true)}</p></section>`:''}
+      ${p.kind==='rip_current'?`<section class="info-section"><h3>${es?'Si te arrastra una corriente':'If a current pulls you out'}</h3><p>${T[lang].escapeRip} ${T[lang].escapeHelp}</p><a class="btn help-call" href="tel:911">${T[lang].call}</a></section>`:''}
+      <details class="info-details"><summary><span>${es?'Ver fuentes y precisión':'View sources & accuracy'}</span>${CGSymbols.svg('next')}</summary>
+        <p>${es?'Registro del mapa de Caribbean Guard. La posición no confirma condiciones actuales, acceso público ni disponibilidad.':'Caribbean Guard map record. Position does not confirm current conditions, public access, or availability.'}</p>
+        <a href="${reportHref(T[lang].reportSubject+': '+title)}">${T[lang].report}</a></details>
+      ${!place?`<p class="defer">${T[lang].defer}</p>`:''}${sheetFoot()}</div>`;
+  };
+  openSheet(render(),()=>setSheetContent(render()));
+}
+function openRoad(feature){
+  const render=()=>{
+    const es=lang==='es',p=feature.properties;
+    const kind=p.road_class==='main'?(es?'Carretera principal':'Main road'):p.road_class==='path'?(es?'Sendero':'Path'):(es?'Camino local':'Local road');
+    return `<h2 id="sheet-title" tabindex="-1">${sourceEsc(p.name||kind)}</h2>
+      <div class="info-summary info-neutral"><strong>${kind}</strong><p>${es?'Acceso público sin verificar.':'Public access unverified.'}</p></div>
+      <section class="info-section"><h3>${es?'Fuente del trazado':'Route source'}</h3><p>OpenStreetMap</p><p>${es?'El trazado en el mapa no confirma que el camino esté abierto o sea transitable.':'The mapped route does not confirm that the road is open or passable.'}</p></section>${sheetFoot()}`;
+  };
+  openSheet(render(),()=>setSheetContent(render()));
 }
 function drawProjectedAnnotations(gj){
   const categories={rip_current:'hazards',rescue_station:'rescue',
@@ -4647,8 +4635,8 @@ function drawProjectedAnnotations(gj){
     const g=f.geometry;
     if(kind==='rip_current'){
       const pts=g.coordinates.map(([lon,lat])=>[lat,lon]);
-      const arrow=CGGeom.outlinedArrow(map,pts,{}).addTo(group);
-      const hit=L.polyline(pts,{color:'#000',weight:20,opacity:0}).addTo(group).bindPopup(()=>sourcePopup(f));
+      const arrow=CGGeom.curveArrow(map,pts,{}).addTo(group);
+      const hit=L.polyline(pts,{color:'#000',weight:20,opacity:0}).addTo(group).on('click',()=>openSourceFeature(f));
       projectedArrows.push({arrow,pts,hit});
     }else{
       const symbol=kind==='location'?'place_'+(f.properties.category||'other'):kind==='unclassified_facility'?'unknown':kind;
@@ -4657,19 +4645,20 @@ function drawProjectedAnnotations(gj){
         ? sourcePlaceLabel(f.properties,lang==='es')
         : (projectedNames[kind]?.[lang==='es'?0:1]||'Annotation');
       const marker=L.marker([lat,lon],{title:markerTitle,
-        icon:L.divIcon({className:'projected-marker '+(kind==='location'?'projected-place':
+        zIndexOffset:kind==='rescue_station'?500:0,
+        icon:L.divIcon({className:'projected-marker '+(kind==='rescue_station'?'projected-rescue ':'')+(kind==='location'?'projected-place':
           kind==='rescue_station' && f.properties.registration==='aj_google_maps_pin' && !f.properties.number?'aj-unnumbered':''),
-          iconSize:[30,30],iconAnchor:[15,15],html:CGSymbols.badge(symbol)+(f.properties.number?`<span class="projected-number">${sourceEsc(f.properties.number)}</span>`:'')})
-      }).addTo(group).bindPopup(()=>sourcePopup(f));
+          iconSize:[44,44],iconAnchor:[22,22],html:CGSymbols.badge(symbol)+(f.properties.number?`<span class="projected-number">${sourceEsc(f.properties.number)}</span>`:'')})
+      }).addTo(group).on('click',()=>openSourceFeature(f));
       projectedDetail.push({layer:marker,kind});
     }
   }
   map.on('zoomend',()=>{
-    const zoom=map.getZoom(), show=zoom>=15;
+    const zoom=map.getZoom(), show=zoom>=14;
     // Keep close document marks legible even at beach zoom. Their original
     // invisible hit paths remain available; only redundant arrow ink is hidden.
     const separation=zoom<16?56:36;
-    document.body.classList.toggle('map-overview',!show);
+    document.body.classList.toggle('map-overview',zoom<15);
     const used=[];
     projectedArrows.forEach(({arrow,pts,hit})=>{
       const center=map.latLngToContainerPoint(pts[Math.floor(pts.length/2)]);
@@ -4732,7 +4721,7 @@ function drawOsmRoads(gj){
       pane:'cgRoadInk',color:roadClass==='path'?'#f3f6f5':'#deedf0', weight:3,opacity:1,smoothFactor:.5,
       dashArray:roadClass==='path'?'4 5':null,lineCap:'round',lineJoin:'round',interactive:false
     }).addTo(sourceLayers.access);
-    const hit=L.polyline(pts,{weight:20,opacity:0}).addTo(sourceLayers.access).bindPopup(()=>osmRoadPopup(feature));
+    const hit=L.polyline(pts,{weight:20,opacity:0}).addTo(sourceLayers.access).on('click',()=>openRoad(feature));
     osmRoadLayers.push({layer,casing,roadClass,hit});
   }
   updateOsmRoadVisibility();
@@ -4919,6 +4908,9 @@ function weatherCondition(code){
   if((code >= 51 && code <= 82)) return t.weatherRain;
   return t.weatherMixed;
 }
+function loadingValue(value,pending){
+  return pending&&value==='-'?`<span class="loading-value" role="status" aria-label="${lang==='es'?'Cargando':'Loading'}"><span aria-hidden="true">-</span></span>`:value;
+}
 function renderWeatherPanel(){
   const t = T[lang], c = weatherData;
   const valid = c && Number.isFinite(c.time) &&
@@ -4927,7 +4919,7 @@ function renderWeatherPanel(){
   const at = valid ? new Date(c.time * 1000).toLocaleTimeString(
     lang === "es" ? "es-CR" : "en-GB",
     {timeZone:"America/Costa_Rica",hour:"2-digit",minute:"2-digit"}) : "";
-  const metric = (label, value) => `<div><span>${label}</span><strong>${value}</strong></div>`;
+  const metric = (label, value) => `<div><span>${label}</span><strong>${loadingValue(value,forecastBusy)}</strong></div>`;
   return `<section class="sheet-weather" aria-label="${t.weatherTitle}">
     <div class="weather-head"><span class="eyebrow">${t.weatherTitle}</span>
       <span class="weather-time">${valid ? `${t.weatherModel} · ${at} CR` : t.weatherModel}</span></div>
@@ -4937,7 +4929,7 @@ function renderWeatherPanel(){
       ${metric(t.weatherHumidity, Math.round(c.relative_humidity_2m) + "%")}
     </div><p class="weather-foot">${weatherCondition(c.weather_code)} · ${t.weatherScope}
       <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></p>`
-    : `<p class="weather-empty">${t.weatherUnavailable}</p>`}
+    : forecastBusy?`<div class="weather-metrics">${metric(t.weatherAir,'-')}${metric(t.weatherWind,'-')}${metric(t.weatherHumidity,'-')}</div>`:`<p class="weather-empty">${t.weatherUnavailable}</p>`}
   </section>`;
 }
 function refreshWeatherPanel(){
@@ -4956,19 +4948,18 @@ function seaDir(deg){
 }
 
 function renderSea(){
-  const es=lang==='es', marine=CGForecast.current(seaData), wind=CGForecast.current(weatherData);
-  const metric=(label,value)=>`<div><span>${label}</span><strong>${value}</strong></div>`;
+  const es=lang==='es', marine=CGForecast.current(seaData), wind=CGForecast.current(weatherData),f=CGForecast.format;
+  const metric=(label,value,unit,primary=false)=>`<div class="${primary?'summary-primary':''}"><span>${label}</span><strong>${loadingValue(value,forecastBusy)} <small>${unit}</small></strong></div>`;
   seaEl.hidden=false;
   seaEl.className='sea forecast-summary';
   seaEl.innerHTML=`<div class="forecast-current">
-    ${metric('Swell',CGForecast.format(marine?.swell_wave_height,' m',1))}
-    ${metric(es?'Viento':'Wind',CGForecast.format(wind?.wind_speed_10m,' km/h'))}
-    ${metric(es?'Ráfagas':'Gusts',CGForecast.format(wind?.wind_gusts_10m,' km/h'))}
-    </div><button class="forecast-open" data-forecast>${es?'Oleaje y viento · 24 horas':'Swell and wind · 24 hours'}</button>
-    <p class="foot">${es?'Modelo regional, no condiciones de cada playa.':'Regional model, not individual beach conditions.'}</p>`;
+    ${metric(es?'Oleaje':'Swell',f(marine?.swell_wave_height,'',1),'m',true)}
+    ${metric(es?'Viento':'Wind',f(wind?.wind_speed_10m,''),'km/h')}
+    ${metric(es?'Ráfagas':'Gusts',f(wind?.wind_gusts_10m,''),'km/h')}
+    </div><button class="forecast-open" data-forecast>${es?'Pronóstico costero · 24 horas':'Coastal forecast · 24 hours'}${CGSymbols.svg('external')}</button>`;
 }
 function direction(value){return Number.isFinite(value)?seaDir(value):'-';}
-function renderSwimAdvisory(beachId){
+function renderSwimAdvisory(beachId,compact=false,integrated=false){
   const es=lang==='es', beach=[...ZONES,...UNASSESSED_BEACHES].find(b=>b.id===beachId);
   const a=CGAdvisory.evaluate({beachClass:beach?.character?.class, marine:seaData,weather:weatherData,
     weatherHourly:windHourly,marineFetchedAt,weatherFetchedAt:windFetchedAt});
@@ -4993,13 +4984,36 @@ function renderSwimAdvisory(beachId){
     'local-observation-missing':'There are no current rip-current observations or confirmed lifeguards.',
     'wave-wind-policy-unvalidated':'Wave and wind thresholds have not been validated for these beaches.'
   };
-  return `<section class="swim-advisory ${a.decision==='avoid-water'?'advisory-stop':''}" aria-label="${es?'Orientación para nadar':'Swimming guidance'}">
+  if(integrated&&!a.thunderstorm){
+    return `<section class="swim-advisory advisory-integrated" aria-label="${es?'Detalles de seguridad':'Safety details'}">
+      <p class="safety-context">${a.decision==='lifeguard-required'?(es?'El horario publicado no confirma que haya guardavidas hoy.':'Published hours do not confirm lifeguards are present today.'):(es?'Sigue la señalización y a los guardavidas.':'Follow beach signs and lifeguards.')}</p>
+      <details class="advisory-reasons"><summary><span>${es?'Detalles de seguridad':'Safety details'}</span>${CGSymbols.svg('next')}</summary>
+        <div class="advisory-expanded"><p>${es?'El modelo no mide resacas.':'The model does not measure rip currents.'}</p>
+        <ul>${a.reasons.filter(reason=>reason!=='lifeguard-required').map(reason=>`<li>${reasons[reason]}</li>`).join('')}</ul>
+        <p>${es?'Sin conexión automática con alertas oficiales ni datos de calidad del agua.':'Official alerts and water-quality data are not connected.'}</p></div>
+      </details>
+      ${a.coverage!=='available'?`<p class="advisory-data">${es?'Datos incompletos o sin actualizar':'Incomplete or out-of-date data'}</p>`:''}
+    </section>`;
+  }
+  if(compact&&!a.thunderstorm){
+    return `<section class="swim-advisory advisory-compact ${a.decision==='avoid-water'?'advisory-stop':''}" aria-label="${es?'Orientación para nadar':'Swimming guidance'}">
+      <details class="advisory-reasons"><summary><span class="advisory-title">${beach?titles[a.decision]:(es?'Seguridad para nadar sin confirmar':'Swimming safety unconfirmed')}</span>
+        <span class="advisory-brief">${es?'Sigue la señalización y a los guardavidas.':'Follow beach signs and lifeguards.'}</span>${CGSymbols.svg('next')}</summary>
+        <div class="advisory-expanded"><p>${es?'El modelo no mide resacas.':'The model does not measure rip currents.'}</p>
+        <ul>${a.reasons.map(reason=>`<li>${reasons[reason]}</li>`).join('')}</ul>
+        <p>${es?'Sin conexión automática con alertas oficiales ni datos de calidad del agua.':'Official alerts and water-quality data are not connected.'}</p></div>
+      </details>
+      ${a.coverage!=='available'?`<p class="advisory-data">${es?'Datos incompletos o sin actualizar':'Incomplete or out-of-date data'}</p>`:''}
+    </section>`;
+  }
+  return `<section class="swim-advisory ${compact?'advisory-compact':''} ${a.decision==='avoid-water'?'advisory-stop':''}" aria-label="${es?'Orientación para nadar':'Swimming guidance'}">
     <p class="advisory-kicker">${es?'Orientación experimental':'Experimental guidance'}</p>
-    <h3>${titles[a.decision]}</h3>
-    <p class="advisory-summary">${a.thunderstorm?reasons['regional-thunderstorm']:(es?'La seguridad para nadar no está confirmada. Sigue la señalización y a los guardavidas.':'Swimming safety is not confirmed. Follow beach signs and lifeguards.')}</p>
+    <h3>${compact&&a.decision==='unassessed'?(es?'Seguridad para nadar sin confirmar':'Swimming safety unconfirmed'):titles[a.decision]}</h3>
+    <p class="advisory-summary">${a.thunderstorm?reasons['regional-thunderstorm']:compact?(es?'Sigue la señalización y a los guardavidas. El modelo no mide resacas.':'Follow beach signs and lifeguards. The model does not measure rip currents.'):(es?'La seguridad para nadar no está confirmada. Sigue la señalización y a los guardavidas.':'Swimming safety is not confirmed. Follow beach signs and lifeguards.')}</p>
     ${a.thunderstorm?`<p class="advisory-summary"><strong>${es?'Si oyes truenos, sal del agua y busca refugio en un edificio cerrado o vehículo de techo rígido.':'If you hear thunder, leave the water and shelter in an enclosed building or hard-topped vehicle.'}</strong></p>`:''}
-    <p class="advisory-data">${es?'Datos del modelo: ':'Model data: '}${a.coverage==='available'?(es?'recientes':'recent'):(es?'incompletos o sin actualizar':'incomplete or out of date')}</p>
+    ${a.coverage!=='available'?`<p class="advisory-data">${es?'Datos del modelo: ':'Model data: '}${a.coverage==='available'?(es?'recientes':'recent'):(es?'incompletos o sin actualizar':'incomplete or out of date')}</p>`: ""}
     <details class="advisory-reasons"><summary>${es?'Por qué y qué falta':'Why and what is missing'}</summary>
+      ${a.coverage==='available'?`<p class="advisory-data">${es?'Datos del modelo: ':'Model data: '}${a.coverage==='available'?(es?'recientes':'recent'):(es?'incompletos o sin actualizar':'incomplete or out of date')}</p>`: ""}
       <ul>${a.reasons.map(reason=>`<li>${reasons[reason]}</li>`).join('')}</ul>
       <p>${es?'Si oyes truenos, sal del agua y busca un edificio cerrado o un vehículo de techo rígido. Espera al menos 30 minutos desde el último trueno. El modelo no cuenta ese tiempo.':'If you hear thunder, leave the water and shelter in an enclosed building or hard-topped vehicle. Wait at least 30 minutes after the last thunder. The model cannot time this for you.'}</p>
       <p>${es?'Sin conexión automática con alertas oficiales ni datos de calidad del agua.':'Official alerts and water-quality data are not connected.'}</p>
@@ -5008,50 +5022,177 @@ function renderSwimAdvisory(beachId){
     </details>
   </section>`;
 }
-function renderForecastPanel(beachId=''){
-  const es=lang==='es', rows=CGForecast.rows(CGForecast.freshHourly(seaHourly,marineFetchedAt),CGForecast.freshHourly(windHourly,windFetchedAt)), f=CGForecast.format;
+function renderForecastTrend(rows,m){
+  const es=lang==='es',t=CGForecast.trend(rows,m.key),f=CGForecast.format;
+  if(!t)return `<p class="trend-empty">${es?'Sin datos de esta variable':'No data for this metric'}</p>`;
+  const digits=m.key==='swell'?1:0,range=f(t.min,'',digits)+(t.min!==t.max?(es?' a ':' to ')+f(t.max,'',digits):'')+' '+m.unit;
+  const x=p=>(8+p.x*264).toFixed(2),y=p=>(16+p.y*76).toFixed(2);
+  const paths=t.segments.map(points=>{
+    const line=points.map((p,i)=>`${i?'L':'M'}${x(p)},${y(p)}`).join(' ');
+    return `${points.length>1?`<path class="trend-fill" d="${line} L${x(points.at(-1))},92 L${x(points[0])},92 Z"/><path class="trend-line" d="${line}"/>`:''}<circle class="trend-point" cx="${x(points.at(-1))}" cy="${y(points.at(-1))}" r="2.5"/>`;
+  }).join('');
+  const label=`${m.label}: ${range}. ${es?'Próximas 24 horas':'Next 24 hours'}.${t.missing?' '+(es?'Hay horas sin datos.':'Some hours have no data.'):''}`;
+  return `<figure class="forecast-trend" aria-label="${label}">
+    <figcaption><span class="trend-name">${CGSymbols.svg('forecast-'+m.key)}${m.label}</span><strong>${range}</strong></figcaption>
+    <svg viewBox="0 0 320 108" role="img" aria-label="${label}">
+      ${[0,.5,1].map(r=>`<path class="trend-grid" d="M8 ${16+r*76}H272"/><text x="286" y="${20+r*76}">${f(t.ceiling*(1-r),'',m.key==='swell'||!Number.isInteger(t.ceiling*(1-r))?1:0)}</text>`).join('')}
+      ${paths}
+    </svg>
+    <div class="trend-times">${[0,Math.floor((rows.length-1)/2),rows.length-1].map(i=>`<time datetime="${new Date(rows[i].time*1000).toISOString()}" title="${CGForecast.time(rows[i].time,lang)}">${CGForecast.clock(rows[i].time)}</time>`).join('')}</div>
+    ${t.missing?`<p class="trend-gap">${es?'Hay horas sin datos':'Some hours have no data'}</p>`:''}
+  </figure>`;
+}
+function renderHourlyForecast(rows,selected='swell'){
+  const es=lang==='es',f=CGForecast.format;
+  const metrics=[{key:'swell',label:es?'Oleaje':'Swell',unit:'m'},{key:'wind',label:es?'Viento':'Wind',unit:'km/h'},{key:'gust',label:es?'Ráfagas':'Gusts',unit:'km/h'}];
+  return `<div class="hourly-card">
+    <div class="hourly-tabs" role="tablist" aria-label="${es?'Variable del pronóstico':'Forecast metric'}">${metrics.map(m=>`<button type="button" role="tab" id="hourly-tab-${m.key}" aria-controls="hourly-${m.key}" aria-selected="${selected===m.key}" tabindex="${selected===m.key?0:-1}" data-forecast-metric="${m.key}">${m.label}</button>`).join('')}</div>
+    ${metrics.map(m=>`<div class="hourly-panel" id="hourly-${m.key}" role="tabpanel" aria-labelledby="hourly-tab-${m.key}" ${selected!==m.key?'hidden':''}>
+      ${renderForecastTrend(rows,m)}
+      <div class="hourly-nav"><span>${es?'Por hora':'Hourly'}</span><button type="button" data-hourly-page="-1" aria-label="${es?'Horas anteriores':'Earlier hours'}">${CGSymbols.svg('next')}</button><button type="button" data-hourly-page="1" aria-label="${es?'Horas siguientes':'Later hours'}">${CGSymbols.svg('next')}</button></div>
+      <div class="hourly-scroll" tabindex="0" role="region" aria-label="${es?'Valores por hora':'Hourly values'}: ${m.label}">
+      <ol class="hourly-track">${rows.map((r,i)=>{
+        const detail=m.key==='swell'?f(r.period,' s')+' · '+direction(r.swellFrom):direction(r.windFrom);
+        const newDay=i===0||CGForecast.day(r.time,lang)!==CGForecast.day(rows[i-1].time,lang);
+        return `<li><span class="hourly-day">${newDay?CGForecast.day(r.time,lang):'&nbsp;'}</span><time datetime="${new Date(r.time*1000).toISOString()}" aria-label="${CGForecast.time(r.time,lang)}">${CGForecast.clock(r.time)}</time>
+          <strong>${f(r[m.key],'',m.key==='swell'?1:0)}<small>${m.unit}</small></strong>
+          <span class="hourly-detail">${detail}</span></li>`;
+      }).join('')}</ol></div>
+    </div>`).join('')}
+  </div>`;
+}
+function selectForecastMetric(panel,key,focus=false){
+  if(!['swell','wind','gust'].includes(key)||panel.dataset.metric===key)return;
+  const previous=panel.querySelector('.hourly-panel:not([hidden]) .hourly-scroll'),left=previous?.scrollLeft||0;
+  panel.dataset.metric=key;
+  panel.querySelectorAll('[data-forecast-metric]').forEach(button=>{
+    const active=button.dataset.forecastMetric===key;button.setAttribute('aria-selected',active);button.tabIndex=active?0:-1;
+    if(active&&focus)button.focus({preventScroll:true});
+  });
+  panel.querySelectorAll('.hourly-panel').forEach(view=>{
+    view.hidden=view.id!=='hourly-'+key;
+    if(!view.hidden){
+      view.querySelector('.hourly-scroll').scrollLeft=left;
+      if(!reducedMotion.matches)view.animate({opacity:[.35,1],transform:['translateY(4px)','translateY(0)']},{duration:180,easing:'ease-out'});
+    }
+  });
+  scheduleScrollCues();
+}
+function renderForecastLoading(selected='swell'){
+  const es=lang==='es',metrics=[['swell',es?'Oleaje':'Swell','m'],['wind',es?'Viento':'Wind','km/h'],['gust',es?'Ráfagas':'Gusts','km/h']];
+  const metric=metrics.find(m=>m[0]===selected)||metrics[0];
+  // Keep the eventual layout visible without drawing a fictitious trend.
+  return `<div class="hourly-card forecast-loading">
+    <div class="hourly-tabs loading-tabs" aria-hidden="true">${metrics.map(m=>`<span class="${m[0]===metric[0]?'is-selected':''}">${m[1]}</span>`).join('')}</div>
+    <figure class="forecast-trend loading-trend">
+      <figcaption><span class="trend-name">${CGSymbols.svg('forecast-'+metric[0])}${metric[1]}</span><span class="loading-status" role="status">${es?'Cargando pronóstico…':'Loading forecast…'}</span></figcaption>
+      <svg viewBox="0 0 320 108" aria-hidden="true" focusable="false">
+        <defs><radialGradient id="forecast-loading-wash"><stop stop-color="#80bbb5" stop-opacity=".18"/><stop offset="1" stop-color="#80bbb5" stop-opacity="0"/></radialGradient></defs>
+        <ellipse class="loading-plot-wash" cx="140" cy="76" rx="132" ry="48" fill="url(#forecast-loading-wash)"/>
+        ${[16,54,92].map(y=>`<path class="trend-grid" d="M8 ${y}H272"/>`).join('')}
+      </svg>
+      <div class="trend-times loading-time-guides" aria-hidden="true"><i></i><i></i><i></i></div>
+    </figure>
+    <div class="hourly-nav loading-hourly-label" aria-hidden="true"><span>${es?'Por hora':'Hourly'}</span></div>
+    <div class="loading-hours" aria-hidden="true">${Array.from({length:4},()=>`<div><i></i><strong>-<small>${metric[2]}</small></strong><i></i></div>`).join('')}</div>
+  </div>`;
+}
+function renderForecastPanel(beachId='',coast=false,selected='swell',detail=false){
+  const modern=coast||detail;
+
+  const es=lang==='es', rows=(modern?CGForecast.hourlyRows:CGForecast.rows)(CGForecast.freshHourly(seaHourly,marineFetchedAt),CGForecast.freshHourly(windHourly,windFetchedAt)), f=CGForecast.format;
   const available=rows.some(r=>r.swell!==null||r.wind!==null);
-  return `<section class="area-forecast" data-beach="${sourceEsc(beachId||'')}" aria-label="${es?'Pronóstico de oleaje y viento':'Swell and wind forecast'}">
-    ${renderSwimAdvisory(beachId)}
-    <div class="forecast-heading"><div><h3>${es?'Oleaje y viento':'Swell and wind'}</h3>
-      <p class="forecast-period">${es?'24 horas · hora de Costa Rica':'24 hours · Costa Rica time'}</p></div>
-      <button class="forecast-refresh" data-refresh-forecast aria-label="${es?'Actualizar pronóstico':'Refresh forecast'}" title="${es?'Actualizar pronóstico':'Refresh forecast'}" ${forecastBusy?'disabled aria-busy="true"':''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M19 11a7 7 0 1 0-1 6"/></svg></button></div>
+  const marine=CGForecast.current(seaData),wind=CGForecast.current(weatherData);
+  const metric=(label,value,unit,detail,primary=false)=>`<div class="${primary?'forecast-primary':'forecast-secondary'}"><span>${primary?CGSymbols.svg('forecast-swell'):''}${label}</span><strong>${loadingValue(f(value,'',unit==='m'?1:0),forecastBusy)} <small>${unit}</small></strong>${detail?`<p>${detail}</p>`:''}</div>`;
+  const current=coast?`<section class="forecast-now" aria-label="${es?'Pronóstico actual':'Current forecast'}">
+    <h3>${es?'Pronóstico actual':'Current forecast'}</h3><div class="forecast-now-grid">
+    ${metric(es?'Oleaje':'Swell',marine?.swell_wave_height,'m',marine?f(marine.swell_wave_period,' s')+' · '+direction(marine.swell_wave_direction):'',true)}
+    ${metric(es?'Viento':'Wind',wind?.wind_speed_10m,'km/h',wind?direction(wind.wind_direction_10m):'')}
+    ${metric(es?'Ráfagas':'Gusts',wind?.wind_gusts_10m,'km/h','')}
+    </div></section>`:'';
+  let previousDay='';
+  const tableRows=rows.map(r=>{
+    const day=CGForecast.day(r.time,lang),startDay=coast&&day!==previousDay;
+    previousDay=day;
+    return `${startDay?`<tr class="forecast-day"><th colspan="4">${day}</th></tr>`:''}<tr>
+      <th scope="row">${coast?CGForecast.clock(r.time):CGForecast.time(r.time,lang)}</th>
+      <td>${f(r.swell,coast?'':' m',1)}<small>${f(r.period,' s')} · ${direction(r.swellFrom)}</small></td>
+      <td>${f(r.wind,coast?'':' km/h')}<small>${direction(r.windFrom)}</small></td>
+      <td>${f(r.gust,coast?'':' km/h')}</td></tr>`;
+  }).join('');
+  return `<section class="area-forecast ${coast?'coast-forecast':detail?'beach-forecast':''}" data-variant="${coast?'coast':detail?'detail':'beach'}" data-metric="${selected}" data-beach="${sourceEsc(beachId||'')}" aria-label="${es?'Pronóstico de oleaje y viento':'Swell and wind forecast'}">
+    ${current}${detail?'':renderSwimAdvisory(beachId,modern)}
+    <div class="forecast-heading"><div><h3>${coast?(es?'Próximas 24 horas':'Next 24 hours'):detail?(es?'Pronóstico regional':'Regional forecast'):(es?'Oleaje y viento':'Swell and wind')}</h3>
+      <p class="forecast-period">${coast?(es?'Hora de Costa Rica':'Costa Rica time'):(es?'24 horas · hora de Costa Rica':'24 hours · Costa Rica time')}</p></div>
+      <button class="forecast-refresh" data-refresh-forecast aria-label="${es?'Actualizar pronóstico':'Refresh forecast'}" title="${es?'Actualizar pronóstico':'Refresh forecast'}" ${forecastBusy?'aria-disabled="true" aria-busy="true"':''}>${CGSymbols.svg('refresh')}<span>${es?'Actualizar':'Refresh'}</span></button></div>
+    ${available?modern?renderHourlyForecast(rows,selected):`<div class="forecast-table-wrap" tabindex="0" role="region" aria-label="${es?'Tabla de pronóstico':'Forecast table'}"><table class="forecast-table">
+    <thead><tr><th>${es?'Hora':'Time'}</th><th>${es?'Oleaje':'Swell'}${coast?'<small>m</small>':''}</th><th>${es?'Viento':'Wind'}${coast?'<small>km/h</small>':''}</th><th>${es?'Ráfaga':'Gust'}${coast?'<small>km/h</small>':''}</th></tr></thead>
+    <tbody>${tableRows}</tbody></table></div>`
+    :forecastBusy?renderForecastLoading(selected):`<p role="status">${es?'Pronóstico no disponible. Comprueba tu conexión e inténtalo de nuevo.':'Forecast unavailable. Check your connection and try again.'}</p>`}
+    <details class="forecast-details"><summary><span>${es?'Ver fuentes y límites del pronóstico':'View forecast sources & limitations'}</span>${CGSymbols.svg('next')}</summary>
     <p class="forecast-scope forecast-limit">${es?'Modelo regional. No mide resacas.':'Regional model. No rip-current readings.'}</p>
-    ${available?`<div class="forecast-table-wrap" tabindex="0" role="region" aria-label="${es?'Tabla de pronóstico':'Forecast table'}"><table class="forecast-table">
-    <thead><tr><th>${es?'Hora':'Time'}</th><th>Swell</th><th>${es?'Viento':'Wind'}</th><th>${es?'Ráfaga':'Gust'}</th></tr></thead>
-    <tbody>${rows.map(r=>`<tr><th scope="row">${CGForecast.time(r.time,lang)}</th><td>${f(r.swell,' m',1)}<small>${f(r.period,' s')} · ${direction(r.swellFrom)}</small></td><td>${f(r.wind,' km/h')}<small>${direction(r.windFrom)}</small></td><td>${f(r.gust,' km/h')}</td></tr>`).join('')}</tbody></table></div>`
-    :`<p role="status">${forecastBusy?(es?'Cargando pronóstico…':'Loading forecast…'):(es?'Pronóstico no disponible. Comprueba tu conexión e inténtalo de nuevo.':'Forecast unavailable. Check your connection and try again.')}</p>`}
     <p class="forecast-scope">${es?'Dirección de origen · - sin datos.':'Direction of origin · - no data.'} <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></p>
     ${marineFetchedAt||windFetchedAt?`<p class="forecast-scope">${es?'Consultado':'Retrieved'}: swell ${marineFetchedAt?CGForecast.time(marineFetchedAt,lang):'-'}; ${es?'viento':'wind'} ${windFetchedAt?CGForecast.time(windFetchedAt,lang):'-'}.</p>`:''}
+    </details>
     ${forecastFailed?`<p role="status" class="forecast-scope">${es?'No se pudieron actualizar todos los datos. Revisa la hora de consulta.':'Some data could not be refreshed. Check the retrieval time.'}</p>`:''}
 
     </section>`;
 }
 function refreshForecastPanel(){
   document.querySelectorAll('.area-forecast').forEach(panel=>{
+    const wasLoading=!!panel.querySelector('.forecast-loading');
     const scroll=sheetBody.scrollTop, focused=panel.contains(document.activeElement);
-    const whyOpen=panel.querySelector('.advisory-reasons')?.open, whyFocused=panel.querySelector('.advisory-reasons summary')===document.activeElement;
-    const beachId=panel.dataset.beach;
-    panel.outerHTML=renderForecastPanel(beachId);
+    const safety=sheetBody.querySelector('.beach-safety .swim-advisory');
+    const advisory=safety||panel.querySelector('.swim-advisory');
+    const whyOpen=advisory?.querySelector('.advisory-reasons')?.open, whyFocused=advisory?.querySelector('.advisory-reasons summary')===document.activeElement;
+    const forecastDetailsOpen=panel.querySelector('.forecast-details')?.open;
+    const forecastDetailsFocused=panel.querySelector('.forecast-details summary')===document.activeElement;
+    const beachId=panel.dataset.beach,metric=panel.dataset.metric||'swell';
+    if(safety)safety.outerHTML=renderSwimAdvisory(beachId,true,true);
+    const hourlyLeft=panel.querySelector('.hourly-panel:not([hidden]) .hourly-scroll')?.scrollLeft||0;
+    const metricFocus=panel.querySelector('[data-forecast-metric]:focus')?.dataset.forecastMetric;
+    const trackFocused=document.activeElement?.classList.contains('hourly-scroll');
+    panel.outerHTML=renderForecastPanel(beachId,panel.dataset.variant==='coast',metric,panel.dataset.variant==='detail');
+    const resolved=sheetBody.querySelector('.hourly-card:not(.forecast-loading)');
+    if(wasLoading&&resolved&&!reducedMotion.matches)resolved.animate({opacity:[.5,1]},{duration:220,easing:'ease-out'});
+    const newTrack=sheetBody.querySelector('.hourly-panel:not([hidden]) .hourly-scroll');
+    if(newTrack)newTrack.scrollLeft=hourlyLeft;
     const why=sheetBody.querySelector('.advisory-reasons');
     if(why)why.open=whyOpen;
+    const forecastDetails=sheetBody.querySelector('.forecast-details');
+    if(forecastDetails)forecastDetails.open=forecastDetailsOpen;
     sheetBody.scrollTop=scroll;
-    if(whyFocused)why?.querySelector('summary')?.focus({preventScroll:true});
-    else if(focused&&!forecastBusy)sheetBody.querySelector('[data-refresh-forecast]')?.focus({preventScroll:true});
+    if(metricFocus)sheetBody.querySelector(`[data-forecast-metric="${metricFocus}"]`)?.focus({preventScroll:true});
+    else if(trackFocused)newTrack?.focus({preventScroll:true});
+    else if(forecastDetailsFocused)forecastDetails?.querySelector('summary')?.focus({preventScroll:true});
+    else if(whyFocused)why?.querySelector('summary')?.focus({preventScroll:true});
+    else if(focused)sheetBody.querySelector('[data-refresh-forecast]')?.focus({preventScroll:true});
   });
 }
 function openForecast(){
-  clearAccessPath(); clearBand(); sheetAddress("");
-  const render=()=>`<h2 id="sheet-title" tabindex="-1">${lang==='es'?'Pronóstico de la costa':'Coastal forecast'}</h2>${renderForecastPanel()}${sheetFoot()}`;
+  clearAccessPath(); sheetAddress("");
+  const render=()=>`<div class="forecast-page"><h2 id="sheet-title" tabindex="-1">${lang==='es'?'Pronóstico de la costa':'Coastal forecast'}</h2>${renderForecastPanel('',true)}${sheetFoot()}</div>`;
   openSheet(render(),()=>{setSheetContent(render());});
 }
 document.addEventListener('click',event=>{
-  if(event.target.closest('[data-forecast]'))openForecast();
+  if(event.target.closest('[data-forecast]'))navigateFromOverview(openForecast);
   if(event.target.closest('[data-refresh-forecast]'))refreshForecast();
+  const page=event.target.closest('[data-hourly-page]');
+  if(page){const track=page.closest('.hourly-panel').querySelector('.hourly-scroll');track.scrollBy({left:Number(page.dataset.hourlyPage)*track.clientWidth*.8,behavior:reducedMotion.matches?'auto':'smooth'});}
+
+  const metric=event.target.closest('[data-forecast-metric]');
+  if(metric)selectForecastMetric(metric.closest('.area-forecast'),metric.dataset.forecastMetric);
+});
+document.addEventListener('keydown',event=>{
+  const tab=event.target.closest('[data-forecast-metric]');
+  if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  event.preventDefault();const keys=['swell','wind','gust'],i=keys.indexOf(tab.dataset.forecastMetric);
+  const next=event.key==='Home'?0:event.key==='End'?2:(i+(event.key==='ArrowRight'?1:2))%3;
+  selectForecastMetric(tab.closest('.area-forecast'),keys[next],true);
 });
 async function refreshForecast(){
   if(forecastBusy)return;
-  forecastBusy=true;forecastFailed=false;forecastAttemptAt=Date.now();refreshForecastPanel();
+  forecastBusy=true;forecastFailed=false;forecastAttemptAt=Date.now();renderSea();refreshForecastPanel();refreshWeatherPanel();
   const requests=[[SEA_URL,d=>{seaData=d.current;seaHourly=d.hourly;marineFetchedAt=Date.now()/1000;}],
     [WEATHER_URL,d=>{weatherData=d.current;windHourly=d.hourly;windFetchedAt=Date.now()/1000;}]];
   const results=await Promise.allSettled(requests.map(async([url,save])=>{
@@ -5136,6 +5277,8 @@ function renderSaved(state){
     : savedAt                ? t.savedAt(fmtStamp(savedAt))
     : t.savedNever;
   savedRf.classList.toggle("busy", state === "refreshing");
+  if(state==='refreshing')savedRf.setAttribute('aria-busy','true');else savedRf.removeAttribute('aria-busy');
+  savedTxt.classList.toggle('is-loading',state==='refreshing');
   savedRf.disabled = state === "refreshing";
   measureDock();
 }
@@ -5173,7 +5316,6 @@ function openSaved(){
     <p class="why">${LOCAL_PREVIEW ? t.previewWhy : SW_SUPPORTED ? t.savedShort : t.savedNoSw}</p>
     ${how}`;
   openSheet(html, openSaved);
-  sheet.classList.add("no-close");
   const btn = document.getElementById("do-install");
   if(btn) btn.onclick = ()=>{
     const p = installPrompt; installPrompt = null;
@@ -5293,8 +5435,8 @@ renderSaved();
   const p=POSTS.find(x=>localId(x.id)===q.get("p"));
   // Fit immediately so late startup layout updates cannot interrupt a QR flight.
   if(q.has("a")){ Promise.all([geomReady,accessReady]).then(()=>{ const point=accessPoints.find(x=>x.id===q.get("a")); if(point)openAccess(point); else say(lang==='es'?'Acceso no encontrado. Elige una playa.':'Access point not found. Choose a beach.',10000); }); }
-  else if(z){ geomReady.then(()=>openZone(z)); }
-  else if(b){ geomReady.then(()=>openUnassessedBeach(b)); }
+  else if(z){ geomReady.then(()=>openBeach(z)); }
+  else if(b){ geomReady.then(()=>openBeach(b)); }
   else if(p){ setTimeout(()=>openPost(p),350); }
 
   /* The install nudge, which is what "Guarde esta página" was reaching for. It

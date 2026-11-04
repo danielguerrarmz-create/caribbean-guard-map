@@ -1,0 +1,20 @@
+{
+  "revision": "2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+  "assets": [
+    {
+      "file": "wave-sine.svg",
+      "source": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/regular/wave-sine.svg",
+      "sha256": "3be689afd9a500b9c522b5a8097ddec584dd1dd2d261cf1a7bfb9504c97c4bd3"
+    },
+    {
+      "file": "wind.svg",
+      "source": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/regular/wind.svg",
+      "sha256": "dd221a9698655fcd410a24cc0ccf0dc696c2adb4646b50bc81ac409654bc8401"
+    },
+    {
+      "file": "LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/LICENSE",
+      "sha256": "b5b1f1da112d18ea2147decfd48ddc1bf2b5aeb6c265381579340e95b15a2bb2"
+    }
+  ]
+}
