@@ -1,0 +1,440 @@
+/* Local review: coastal forecast, beach overview and beach detail composition. */
+/* Loading retains the forecast's structure with a diffuse breathing wash.
+   Refreshing an existing forecast leaves its readings fully legible. */
+.forecast-loading{min-height:410px;display:flex;flex-direction:column;color:#526e78;font-size:14px;line-height:21px;overflow:hidden}
+.loading-tabs>span{flex:1;display:grid;place-items:center;min-height:44px;font-size:15px;border-radius:9px;color:#70858b}
+.loading-tabs>span.is-selected{background:#ffffffb3;color:#526e78;box-shadow:0 1px 4px #173b4806}
+.loading-trend{flex:1;display:flex;flex-direction:column;justify-content:space-between;min-height:190px}
+.loading-trend .loading-status{font-size:12px;line-height:18px;color:#70858b;white-space:nowrap}
+.loading-trend .trend-grid{stroke:#e9efed;stroke-width:1}
+.loading-plot-wash{animation:forecast-breathe 2.8s ease-in-out infinite}
+.loading-time-guides i,.loading-hours i{display:block;width:22px;height:1px;background:#d9e4e1}
+.loading-time-guides{min-height:16px;align-items:center}
+.loading-hourly-label{min-height:44px}
+.loading-hours{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;min-height:144px;padding:24px 16px 16px;background:#f6f9f7;border-top:1px solid #e3ebe8}
+.loading-hours>div{display:flex;flex-direction:column;align-items:center;gap:18px}
+.loading-hours strong{display:flex;align-items:baseline;gap:4px;font-size:25px;line-height:28px;font-weight:400;color:#91aaa9}
+.loading-hours strong small{font-size:12px;line-height:18px;color:#839b9c}
+@media(max-width:819px){.forecast-loading{min-height:448px}}
+.forecast-value-loading{position:relative;color:transparent!important}
+.forecast-value-loading small{visibility:hidden}
+.forecast-value-loading::after{content:'';position:absolute;left:0;top:50%;width:22px;height:2px;border-radius:2px;background:#91aaa9;animation:forecast-breathe 2.8s ease-in-out infinite}
+.loading-value{display:inline-block;min-width:.8em;color:#91aaa9;animation:forecast-breathe 2.8s ease-in-out infinite}
+.rip-reference-figure .reference-media{position:relative;display:grid;place-items:center;overflow:hidden;background:#f6f9f7}
+.reference-media.is-loading::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 65%,#80bbb52e,transparent 65%);animation:forecast-breathe 2.8s ease-in-out infinite}
+.reference-media .reference-image-status{position:absolute;inset:auto 20px;text-align:center;font-size:14px;line-height:21px;color:#526e78;z-index:1}
+.reference-media.is-loading img,.reference-media.is-error img{opacity:0}
+.reference-media .reference-image-status[hidden]{display:none}
+#locate.is-loading svg,#locate-first.is-loading svg,.dockrow .rf.busy svg{animation:forecast-breathe 2.8s ease-in-out infinite}
+#locate.is-loading::after{content:'';position:absolute;inset:4px;border-radius:50%;background:radial-gradient(ellipse,#80bbb52e,transparent 70%);animation:forecast-breathe 2.8s ease-in-out infinite;pointer-events:none}
+#saved-txt.is-loading::after{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#4c9697;margin-left:8px;vertical-align:middle;animation:forecast-breathe 2.8s ease-in-out infinite}
+.toast,.update{top:calc(var(--header) + 8px)}
+.toast.is-loading{background:#f4f8f6;color:#375f6a;border:1px solid #dbe6e4;border-radius:14px;box-shadow:0 4px 18px #173b4814}
+.toast.is-loading::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#4c9697;margin-right:8px;vertical-align:middle;animation:forecast-breathe 2.8s ease-in-out infinite}
+@keyframes forecast-breathe{50%{opacity:.45}}
+.forecast-refresh[aria-busy=true]{cursor:progress;opacity:.65}
+:is(.forecast-refresh,.hourly-tabs button,.sheet-back,.dock .card,.key-toggle){transition:background-color .16s ease,color .16s ease,opacity .16s ease}
+.hourly-tabs button:active,.sheet-back:active{background:#e5efec}
+@media(prefers-reduced-motion:reduce){
+ .loading-plot-wash,.forecast-value-loading::after{animation:none}
+ .loading-value,.reference-media.is-loading::before,#locate.is-loading svg,#locate.is-loading::after,#locate-first.is-loading svg,.dockrow .rf.busy svg,#saved-txt.is-loading::after{animation:none}
+ .toast.is-loading::before{animation:none}
+ :is(.forecast-refresh,.hourly-tabs button,.sheet-back,.dock .card,.key-toggle){transition:none}
+}
+.dock,.forecast-page,.zone-detail,.legend-page,.info-page{--coast-ink:#173b48;--coast-muted:#526e78;--coast-rule:#dfe8e7;--coast-wash:#edf5f3}
+/* The overview reads in the same order at both sizes. */
+.dock .dock-handle{order:0}
+.dock .railhead{order:1;padding:28px 24px 22px}
+.dock .railhead h1{font-size:30px;line-height:1.08;letter-spacing:-.035em;max-width:310px}
+.dock .forecast{order:2;display:block;margin:0 24px 16px;padding:0;border:0;background:transparent}
+.dock .forecast-title{display:none}
+.dock #sea.forecast-summary{gap:0;padding:16px 16px 0;border-radius:16px;background:linear-gradient(135deg,#e7f2f0,#f3f7f5);box-shadow:inset 0 1px 0 #fff}
+.dock #sea .forecast-current{grid-template-columns:1.15fr 1fr 1fr;align-items:center;gap:12px}
+.dock #sea .forecast-current>div+div{padding-left:12px;border-color:#cfdfdc}
+.dock #sea .forecast-current span{font-size:13px;line-height:20px;color:#47646e}
+.dock #sea .forecast-current strong{font-size:24px;line-height:32px;font-weight:500;letter-spacing:-.025em;color:var(--coast-ink)}
+.dock #sea .forecast-current strong small{font-size:12px;font-weight:400;letter-spacing:0}
+.dock #sea .summary-primary strong{font-size:38px;line-height:40px;letter-spacing:-.045em}
+.dock #sea .summary-primary strong small{font-size:16px}
+.dock #sea .forecast-open{min-height:52px;margin-top:12px;border-top:1px solid #d4e3df;font-size:13px;line-height:20px;text-decoration:none}
+.dock #sea .forecast-open:hover{color:#0d4e61;text-decoration:none}
+.dock .list-heading{order:3;min-height:44px;padding:0 24px;border:0}
+.dock .rail-eyebrow{font-size:12px;letter-spacing:.09em}
+.dock #list-toggle{font-size:13px}
+.dock .strip{order:4;padding:0 20px;min-height:0}
+.dock .card{min-height:78px;padding:15px 24px 15px 0;gap:12px;border-color:var(--coast-rule)}
+.dock .card .nm{font-size:19px;font-weight:600;line-height:25px;letter-spacing:-.02em}
+.dock .beach-status{font-size:12px;line-height:18px;letter-spacing:0;font-weight:500;margin-top:3px}
+.dock .card:has([data-tone=danger]) .beach-status{color:#9b293b}
+.dock .card:has([data-tone=caution]) .beach-status{color:#805a16}
+.dock .card .card-dist{font-size:12px;color:#526e78}
+.dock .card .beach-symbol{width:32px;height:36px;flex-basis:32px}
+.dock .card .beach-symbol svg.cg-icon{width:28px;height:28px}
+.dock .card:hover,.dock .card[aria-current=true]{background:#eef5f2;border-radius:8px}
+.dock .dockrow{order:5;min-height:48px;padding:0 20px;background:#f5f8f6;border-top:1px solid var(--coast-rule)}
+.dockrow .txt{font-size:12px}
+/* One primary reading, with secondary wind metrics sharing a quieter column. */
+.sheet:has(.forecast-page){background:#fffefa}
+.sheet:has(.forecast-page) .sheet-body{padding-inline:24px}
+.sheet:has(.forecast-page) .sheet-back{margin-bottom:12px;font-size:14px}
+.forecast-page .sheet-heading{margin:0 0 20px}
+.sheet .forecast-page h2{font-size:32px;line-height:1.1;letter-spacing:-.035em;margin:0;color:var(--coast-ink)}
+.forecast-now{padding:18px 20px;margin:0 0 18px;border-radius:18px;background:linear-gradient(130deg,#e7f2f0,#f5f8f5);box-shadow:inset 0 1px 0 #fff}
+.forecast-page .forecast-now h3{font-size:12px;line-height:18px;letter-spacing:.045em;margin-bottom:12px;color:var(--coast-muted)}
+.forecast-now-grid{grid-template-columns:1.2fr 1fr;grid-template-rows:auto auto;column-gap:20px;row-gap:12px;align-items:start}
+.forecast-now-grid .forecast-primary{grid-row:1/3}
+.forecast-now-grid>div+div{padding-left:18px;border-left:1px solid #ccdeda}
+.forecast-now-grid span{display:flex;align-items:center;gap:6px;font-size:14px;line-height:20px;color:#43636f}
+.forecast-primary>span svg{width:22px;height:22px;color:#277f91}
+.forecast-now-grid strong{font-size:24px;line-height:28px;font-weight:500;margin-top:2px}
+.forecast-now-grid strong small{font-size:13px;color:#526e78}
+.forecast-now-grid .forecast-primary strong{font-size:64px;line-height:68px;letter-spacing:-.06em;font-weight:400;white-space:nowrap;margin-top:4px}
+.forecast-now-grid .forecast-primary strong small{font-size:22px;letter-spacing:0}
+.forecast-page .forecast-now-grid p{font-size:13px;line-height:20px;margin:3px 0 0;color:#526e78}
+/* A compact disclosure keeps the safety statement visible at all times. */
+:is(.coast-forecast,.beach-forecast) .swim-advisory.advisory-compact{padding:0 14px;margin:0 0 26px;border:1px solid #eee0b8;border-radius:12px;background:#fff7e3;color:#624b1e}
+:is(.coast-forecast,.beach-forecast) .advisory-compact .advisory-reasons{margin:0;font-size:14px;line-height:1.5}
+:is(.coast-forecast,.beach-forecast) .advisory-compact .advisory-reasons summary{display:grid;grid-template-columns:minmax(0,1fr) 16px;column-gap:8px;row-gap:3px;min-height:44px;padding:12px 0;list-style:none}
+:is(.coast-forecast,.beach-forecast) .advisory-compact summary::-webkit-details-marker{display:none}
+:is(.coast-forecast,.beach-forecast) .advisory-title{font-size:14px;line-height:20px;font-weight:600;letter-spacing:-.015em}
+:is(.coast-forecast,.beach-forecast) .advisory-brief{grid-column:1;font-size:13px;line-height:19px;font-weight:400;color:#75603b}
+:is(.coast-forecast,.beach-forecast) .advisory-compact summary>.cg-icon{grid-column:2;grid-row:1/3;align-self:center;width:16px;height:16px;color:#8a6c30;rotate:90deg}
+:is(.coast-forecast,.beach-forecast) .advisory-compact details[open] summary>.cg-icon{rotate:270deg}
+:is(.coast-forecast,.beach-forecast) .advisory-expanded{padding:2px 0 12px;border-top:1px solid #eadfbe}
+:is(.coast-forecast,.beach-forecast) .advisory-expanded p,:is(.coast-forecast,.beach-forecast) .advisory-expanded ul{font-size:14px;line-height:1.5;margin:10px 0}
+:is(.coast-forecast,.beach-forecast) .advisory-expanded ul{padding-left:18px}
+:is(.coast-forecast,.beach-forecast) .advisory-compact .advisory-data{font-size:13px;margin:0 0 12px}
+:is(.coast-forecast,.beach-forecast) .swim-advisory.advisory-stop{padding:16px;background:#fbe9ec;border-color:#edccd2;color:#7d1426}
+:is(.coast-forecast,.beach-forecast) .advisory-stop .advisory-summary{font-size:14px;line-height:1.5}
+/* Full-day trend first; precise hourly values remain horizontally scrollable. */
+:is(.coast-forecast,.beach-forecast) .forecast-heading{align-items:center;margin-bottom:16px}
+:is(.coast-forecast,.beach-forecast) .forecast-heading h3{font-size:21px;line-height:28px;letter-spacing:-.025em;margin:0}
+:is(.coast-forecast,.beach-forecast) .forecast-period{font-size:13px;line-height:20px;margin:2px 0 0}
+:is(.coast-forecast,.beach-forecast) .forecast-refresh{font-size:13px;padding:0 0 0 8px;gap:6px}
+:is(.coast-forecast,.beach-forecast) .hourly-card{background:#fff;border:1px solid #dbe6e4;border-radius:18px;box-shadow:0 3px 14px #173b4805;padding:6px 0 10px}
+:is(.coast-forecast,.beach-forecast) .hourly-tabs{margin:0 6px;padding:3px;gap:2px;background:#edf3f1;border-radius:12px}
+:is(.coast-forecast,.beach-forecast) .hourly-tabs button{min-height:44px;font-size:14px;line-height:20px;border-radius:9px}
+.hourly-panel[hidden]{display:none}
+.forecast-trend{margin:0;padding:18px 16px 16px;color:#167790}
+.forecast-trend figcaption{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+.trend-name{display:flex;align-items:center;gap:7px;font-size:13px;color:#526e78}
+.trend-name svg.cg-icon{width:25px;height:25px;color:#247f96}
+.forecast-trend figcaption strong{font-size:21px;font-weight:500;letter-spacing:-.03em;color:#173b48;font-variant-numeric:tabular-nums}
+.forecast-trend>svg{width:100%;height:auto;display:block;overflow:visible}
+.forecast-trend svg text{fill:#526e78;font:12px 'Source Sans 3',sans-serif}
+.trend-grid{fill:none;stroke:#dfe9e7;stroke-width:1}
+.trend-line{fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.trend-fill{fill:#d5eae8;opacity:.65;stroke:none}
+.trend-point{fill:currentColor;stroke:#fff;stroke-width:1.5}
+.trend-times{display:flex;justify-content:space-between;width:86%;margin-top:2px;color:#526e78;font-size:12px;line-height:18px;font-variant-numeric:tabular-nums}
+.trend-gap,.trend-empty{font-size:13px;color:#526e78;margin:8px 0 0}
+.trend-empty{padding:16px}
+:is(.coast-forecast,.beach-forecast) .hourly-scroll{padding:0 8px 8px;border-top:1px solid #e3ebe8;background:#f6f9f7}
+:is(.coast-forecast,.beach-forecast) .hourly-track li{width:80px;padding:12px 2px 4px}
+:is(.coast-forecast,.beach-forecast) .hourly-day{font-size:11px;line-height:16px;min-height:16px;margin-bottom:6px}
+:is(.coast-forecast,.beach-forecast) .hourly-track time{font-size:13px;line-height:20px;color:#526e78}
+:is(.coast-forecast,.beach-forecast) .hourly-track strong{font-size:22px;line-height:28px;margin-top:8px;letter-spacing:-.025em}
+:is(.coast-forecast,.beach-forecast) .hourly-track strong small{font-size:12px;line-height:18px}
+:is(.coast-forecast,.beach-forecast) .hourly-detail{font-size:12px;line-height:18px;margin-top:5px}
+:is(.coast-forecast,.beach-forecast) .forecast-details{margin-top:20px;padding-top:8px}
+:is(.coast-forecast,.beach-forecast) .forecast-details summary{font-size:14px;min-height:44px;display:flex;align-items:center;gap:8px}
+:is(.coast-forecast,.beach-forecast) .forecast-details p{font-size:14px;line-height:1.5}
+.forecast-page .sheet-foot{font-size:13px;margin-top:18px}
+@media(max-width:819px){
+ .dock .railhead{padding:16px 24px 22px}
+ .dock .railhead h1{font-size:28px;max-width:300px}
+ .dock .forecast{margin-inline:24px;margin-bottom:8px}
+ .dock .list-heading{min-height:44px}
+ .dock .card{min-height:76px}
+ .dock .card .nm{font-size:18px}
+ .dock-min .dock .railhead{padding:10px 48px 22px 20px}
+ .dock-min .dock .railhead h1{font-size:20px;line-height:1.22;max-width:none}
+ .sheet:has(.forecast-page) .sheet-body{padding-inline:24px}
+}
+@media(max-width:369px){
+ .dock .railhead,.dock .list-heading{padding-inline:20px}
+ .dock .forecast{margin-inline:20px}
+ .dock #sea .forecast-current{gap:8px}
+ .dock #sea .forecast-current>div+div{padding-left:8px}
+ .dock #sea .forecast-current strong{font-size:21px}
+ .dock #sea .summary-primary strong{font-size:32px}
+ .sheet:has(.forecast-page) .sheet-body{padding-inline:20px}
+ .forecast-now{padding:16px}
+ .forecast-now-grid{column-gap:12px}
+ .forecast-now-grid .forecast-primary strong{font-size:54px}
+ .forecast-now-grid>div+div{padding-left:12px}
+}
+@media(min-width:820px) and (max-height:700px){
+ .dock .railhead{padding-top:20px;padding-bottom:16px}
+ .dock .railhead h1{font-size:27px}
+ .dock .forecast{margin-bottom:8px}
+}
+/* Beach details share the coastal composition, with safety as the primary reading. */
+.sheet:has(.zone-detail){background:#fffefa}
+.sheet:has(.zone-detail) .sheet-body{padding-inline:24px}
+.sheet .zone-detail{display:block;height:auto}
+.sheet .zone-detail h2{font-size:32px;line-height:1.1;letter-spacing:-.035em;margin:8px 0 24px;color:var(--coast-ink)}
+.sheet .zone-detail .statuscard{grid-template-columns:36px minmax(0,1fr);gap:8px 12px;padding:20px;border-radius:18px;background:linear-gradient(130deg,#e7f2f0,#f5f8f5);box-shadow:inset 0 1px 0 #fff}
+.sheet .zone-detail .statuscard.high{background:linear-gradient(130deg,#f8e6e5,#fcf3ef)}
+.sheet .zone-detail .statuscard.moderate{background:linear-gradient(130deg,#fff0cf,#fcf7e9)}
+.sheet .zone-detail .statuscard.unassessed{background:#edf1f0}
+.sheet .zone-detail .statuscard>.tile,.sheet .zone-detail .statuscard>.tile .symbol{width:36px;height:36px}
+.sheet .zone-detail .statuscard>.tile svg{width:30px;height:30px}
+.sheet .zone-detail .statuscard>.eyebrow{font-size:13px;line-height:18px;color:#52676d}
+.sheet .zone-detail .statuscard .instr{font-size:25px;line-height:1.15;font-weight:600;letter-spacing:-.025em}
+.sheet .zone-detail .statuscard .hours{font-size:14px;line-height:21px;margin-top:6px;font-weight:400}
+.sheet .zone-detail .beach-help{margin:26px 0 0;padding:0 0 26px;background:none;border-radius:0;border-bottom:1px solid var(--coast-rule)}
+.sheet .zone-detail .beach-help h3,.sheet .zone-detail .beach-overview h3{font-size:21px;line-height:28px;letter-spacing:-.025em;margin:0 0 10px;font-weight:600}
+.sheet .zone-detail .beach-help .escape{font-size:15px;line-height:1.55;font-weight:400;margin:0 0 16px}
+.sheet .zone-detail .help-call{min-height:44px;font-size:15px;border-radius:12px}
+.sheet .zone-detail .area-forecast{margin:26px 0 0}
+.sheet .zone-detail .beach-forecast .swim-advisory{margin-bottom:26px}
+.sheet .zone-detail .beach-forecast .advisory-compact.advisory-stop{padding:0 14px}
+.beach-forecast .advisory-stop .advisory-brief{color:#7d3944}
+.sheet .zone-detail .zone-lower{margin-top:28px;padding-top:24px;border-top:1px solid var(--coast-rule)}
+.sheet .zone-detail .beach-context,.sheet .zone-detail .caveat,.sheet .zone-detail .beach-caution,.sheet .zone-detail .defer{font-size:15px;line-height:1.55}
+.sheet .zone-detail .beach-background{margin-top:18px}
+.sheet .zone-detail .beach-background summary{font-size:14px;min-height:44px;align-content:center}
+.sheet .zone-detail .beach-background p{font-size:14px;line-height:1.5}
+.sheet .zone-detail .beach-route{min-height:48px;font-size:15px;margin-top:18px;border-radius:12px}
+.sheet .zone-detail .sheet-foot{font-size:13px;line-height:1.5;margin-top:24px}
+.scroll-cue,.hourly-nav{display:none}
+.scroll-cue[hidden]{display:none!important}
+@media(max-width:819px){
+ html,body,body *{scrollbar-width:none!important;scrollbar-gutter:auto!important}
+ ::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+ .sheet .zone-detail h2{font-size:32px;margin-top:8px}
+ .scroll-cue{position:absolute;z-index:4;right:14px;bottom:12px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #d4e2de;border-radius:50%;background:#fffefa;color:#24778a;box-shadow:0 3px 12px #173b481a;cursor:pointer}
+ .scroll-cue svg{width:18px;height:18px;rotate:90deg}
+ .dock>.scroll-cue{bottom:calc(60px + var(--safe-pad))}
+ .hourly-nav{display:flex;align-items:center;gap:2px;padding:0 8px 0 16px;background:#f6f9f7;border-top:1px solid #e3ebe8}
+ .hourly-nav>span{flex:1;font-size:12px;color:#526e78}
+ .hourly-nav button{display:grid;place-items:center;width:44px;height:44px;padding:0;background:transparent;border:0;border-radius:50%;color:#24778a}
+ .hourly-nav button svg{width:18px;height:18px}
+ .hourly-nav button[data-hourly-page='-1'] svg{rotate:180deg}
+ .hourly-nav button:disabled{opacity:.25}
+ :is(.coast-forecast,.beach-forecast) .hourly-scroll{border-top:0}
+}
+@media(max-width:369px){.sheet:has(.zone-detail) .sheet-body{padding-inline:20px}.sheet .zone-detail .statuscard{padding:16px}.sheet .zone-detail .statuscard .instr{font-size:23px}}
+.sheet .zone-detail .sheet-heading{margin:8px 0 24px}
+.sheet .zone-detail .sheet-heading h2{margin:0}
+.sheet .zone-detail .beach-overview{margin:0 0 16px}
+.sheet .zone-detail .zone-lower{margin-top:24px}
+@media(max-width:819px){.sheet.is-partial>.scroll-cue{display:none}}
+.sheet .unassessed-detail .defer{padding:14px;border:1px solid #eee0b8;border-radius:12px;background:#fff7e3;color:#624b1e;font-size:14px;line-height:1.5}
+/* One beach safety component; section spacing follows an 8 px rhythm. */
+.sheet .beach-safety{padding:20px;border-radius:18px;background:linear-gradient(130deg,#e7f2f0,#f5f8f5);box-shadow:inset 0 1px 0 #fff}
+.sheet .beach-safety.high{background:linear-gradient(130deg,#f8e6e5,#fcf3ef)}
+.sheet .beach-safety.moderate{background:linear-gradient(130deg,#fff0cf,#fcf7e9)}
+.sheet .beach-safety.unassessed{background:#edf1f0}
+.sheet :is(.zone-detail,.info-page) .beach-safety .statuscard{display:block;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.sheet :is(.zone-detail,.info-page) .beach-safety .statuscard>.tile{display:none}
+.sheet :is(.zone-detail,.info-page) .beach-safety .eyebrow{display:block;margin:0 0 8px}
+.sheet :is(.zone-detail,.info-page) .beach-safety .instr{margin:0;font-size:25px;line-height:1.2}
+.sheet :is(.zone-detail,.info-page) .beach-safety .hours{display:block;margin:12px 0 0;font-size:14px;line-height:21px}
+.sheet .beach-safety .advisory-integrated{margin:0;padding:0;background:none;border:0;border-radius:0;color:#4f6269}
+.sheet .beach-safety .safety-context{font-size:14px;line-height:21px;margin:8px 0 0}
+.sheet .beach-safety .advisory-reasons{margin:12px 0 0}
+.sheet .beach-safety .advisory-reasons summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:8px 0 0;border-top:1px solid #173b481a;font-size:14px;line-height:20px;color:#334f59;list-style:none}
+.sheet .beach-safety summary::-webkit-details-marker{display:none}
+.sheet .beach-safety summary svg,.sheet .forecast-details summary svg{width:16px;height:16px;flex:none;rotate:90deg;transition:rotate .18s ease}
+.sheet .beach-safety details[open] summary svg,.sheet .forecast-details[open] summary svg{rotate:270deg}
+.sheet .beach-safety .advisory-expanded p,.sheet .beach-safety .advisory-expanded li{font-size:14px;line-height:1.5}
+.sheet .beach-safety .advisory-data{font-size:13px;margin:12px 0 0}
+.sheet .beach-safety .advisory-stop{margin:16px 0 0;border-radius:12px}
+.sheet .zone-detail .beach-help{margin-top:32px;padding-bottom:32px}
+.sheet .zone-detail .beach-help .escape{margin-bottom:16px}
+.sheet .zone-detail .area-forecast{margin-top:32px}
+.sheet .zone-detail .beach-forecast .forecast-heading{border:0;padding:0;margin-bottom:20px}
+.sheet .zone-detail .zone-lower{margin-top:32px;padding-top:32px}
+.sheet .zone-detail .sheet-heading{margin:8px 0 24px}
+.sheet:has(.zone-detail) .sheet-back{min-height:44px;font-size:15px;gap:8px;margin:0 0 12px -8px;padding:0 8px}
+.sheet:has(.zone-detail) .sheet-back svg{width:20px;height:20px}
+:is(.coast-forecast,.beach-forecast) .forecast-details{margin:24px 0 0;padding:0;border-top:1px solid var(--coast-rule);border-bottom:1px solid var(--coast-rule)}
+:is(.coast-forecast,.beach-forecast) .forecast-details summary{display:flex;justify-content:space-between;gap:16px;min-height:56px;padding:16px 0;font-size:14px;line-height:21px;font-weight:600;color:#22677a;list-style:none;cursor:pointer}
+:is(.coast-forecast,.beach-forecast) .forecast-details summary::-webkit-details-marker{display:none}
+:is(.coast-forecast,.beach-forecast) .forecast-details p{margin:0 0 16px;font-size:14px;line-height:1.5}
+:is(.coast-forecast,.beach-forecast) .hourly-tabs{margin:2px 8px 0;padding:4px;gap:4px}
+:is(.coast-forecast,.beach-forecast) .hourly-tabs button{font-size:15px}
+@media(max-width:819px){.sheet:has(.zone-detail) .sheet-body{margin-top:40px}.sheet:has(.zone-detail) .sheet-expand::after{width:40px;height:4px}}
+@media(prefers-reduced-motion:reduce){.sheet .beach-safety summary svg,.sheet .forecast-details summary svg{transition:none}}
+
+.sheet .zone-detail .zone-lower{border-top:0;padding-top:0;margin-top:32px}
+
+/* Legend uses the same sheet, type scale and section rhythm as beach details. */
+.sheet:has(.legend-page){background:#fffefa}
+.sheet:has(.legend-page) .sheet-body{padding-inline:24px}
+.sheet .legend-page .sheet-heading{margin:8px 0 24px}
+.sheet .legend-page h2{margin:0;font-size:32px;line-height:1.1;letter-spacing:-.035em;color:var(--coast-ink)}
+.sheet:has(.legend-page) .sheet-back{min-height:44px;font-size:15px;gap:8px;margin:0 0 12px -8px;padding:0 8px}
+.sheet:has(.legend-page) .sheet-back svg{width:20px;height:20px}
+.legend-page .key-section{margin:24px 0 0;padding:0;border:0}
+.legend-page .sheet-heading+.key-section{margin-top:0}
+.legend-page .key-section-label{margin:0 0 8px;font-size:16px;line-height:22px;font-weight:600;letter-spacing:-.025em;text-transform:none;color:var(--coast-ink)}
+.legend-page .source-layer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+.legend-page .source-layer-grid label{display:grid;grid-template-columns:28px minmax(0,1fr) 14px;gap:7px;align-items:center;min-height:52px;padding:8px 0;border-bottom:1px solid var(--coast-rule);font-size:14px;line-height:18px;color:var(--coast-ink)}
+.legend-page .source-layer-grid input{grid-column:3;grid-row:1;width:14px;height:14px;accent-color:#24778a}
+.legend-page .source-layer-grid .symbol{grid-column:1;grid-row:1;width:28px;height:28px;background:transparent;border:0;box-shadow:none}
+.legend-page .source-layer-grid .symbol svg{width:26px;height:26px}
+.legend-page .source-layer-grid label>span:last-child{grid-column:2;grid-row:1}
+.legend-page .source-layer-grid label:has(input:focus-visible){outline:2px solid #24778a;outline-offset:4px;border-radius:4px}
+.legend-page .key-data{margin:20px 0 0;border-top:1px solid var(--coast-rule);border-bottom:1px solid var(--coast-rule)}
+.legend-page .key-data summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:16px 0;list-style:none;font-size:14px;line-height:21px;font-weight:600;color:#22677a}
+.legend-page .key-data summary::-webkit-details-marker{display:none}
+.legend-page .key-data summary svg{width:16px;height:16px;rotate:90deg;flex:none}
+.legend-page .key-data[open] summary svg{rotate:270deg}
+.legend-page .key-data p,.legend-page .legend-guidance{font-size:14px;line-height:1.5;color:var(--coast-muted)}
+.legend-page .key-data p{margin:0 0 16px}
+.legend-page .legend-guidance{margin:16px 0}
+.legend-page .sheet-foot{font-size:13px;margin-top:16px}
+.sheet .beach-safety .beach-caution,.sheet .beach-safety .caveat{font-size:14px;line-height:21px;margin:12px 0}
+.sheet .beach-safety .caveat:last-child{margin-bottom:0}
+@media(max-width:819px){
+ .sheet:has(.legend-page) .sheet-body{margin-top:40px}
+ .sheet:has(.legend-page) .sheet-expand::after{width:40px;height:4px}
+}
+@media(max-width:369px){.sheet:has(.legend-page) .sheet-body{padding-inline:20px}}
+@media(max-width:819px){.selection-open:has(#sheet[data-stop="full"]) .leaflet-control-scale{visibility:hidden}}
+.selection-open:has(.legend-page) .map-key{display:none}
+/* The floating scroll cue would cover the last layer checkbox. Legend uses
+   direct scrolling, with no overlay competing with its compact controls. */
+.sheet:has(.legend-page)>.scroll-cue{display:none}
+
+/* Compact key: map artwork, two short columns, and distinct section headings. */
+.legend-page .legend-road{grid-column:1;grid-row:1;display:block;width:28px;height:28px}
+.legend-road svg{width:100%;height:100%;fill:none;stroke-linecap:round}
+.legend-page .symbol.rip_current{width:32px;color:#f04444}
+.legend-page .symbol.rip_current svg{width:32px;height:28px;--cg-symbol-ink:#f04444}
+.legend-page .cg-icon[data-tone=place]{--cg-symbol-ink:#087d87}
+.sheet .legend-page .sheet-heading{margin:0 0 20px}
+.sheet:has(.legend-page) .sheet-back{margin-bottom:8px}
+.legend-areas{margin-top:16px;padding:14px 16px;background:#f0f4f1;border-radius:12px;color:#254451}
+.legend-page .legend-areas h4{margin:0 0 12px;font-size:13px;line-height:18px;font-weight:600;letter-spacing:0;color:#526e78}
+.legend-page .legend-areas ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:0;padding:0;list-style:none}
+.legend-page .legend-areas li{display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;margin:0;padding:0}
+.legend-areas i{display:block;flex:none;width:22px;height:14px;border-radius:3px}
+.legend-areas .risk-high{background:#ef343c;opacity:.4}
+.legend-areas .risk-moderate{background:#f5bb27;opacity:.4}
+.legend-areas .risk-low{background:#26b57d;opacity:.4}
+.legend-areas .risk-unknown{background:#9aa7b0;opacity:.22;border:1px solid #526e78}
+/* One control family. App identity/settings stay above; map tools sit together
+   immediately above the sheet. All targets remain at least 44 px. */
+:root{--control-paper:#fffffff5;--control-edge:#dce6e6;--control-shadow:0 3px 14px #08273422}
+.topbar{height:var(--header);align-items:center;gap:12px}
+.topbar .brand{border-radius:24px;letter-spacing:-.025em}
+.topbar .lang{order:2;display:flex;align-items:center;height:48px;padding:3px;border:1px solid var(--control-edge);border-radius:25px;background:var(--control-paper);box-shadow:var(--control-shadow);overflow:hidden}
+.topbar .lang button{min-width:44px;min-height:40px;height:40px;padding:0 8px;border:0;border-radius:21px;font-size:13px;font-weight:600}
+.topbar .lang button[aria-pressed=true]{background:#234955;color:#fff}
+.topbar .sos{order:3;height:48px;min-height:48px;border-radius:25px;padding:0 16px;box-shadow:var(--control-shadow);font-size:15px;letter-spacing:0}
+.map-key:not(.is-open){top:auto;left:auto;right:144px;bottom:24px;width:auto;border:1px solid var(--control-edge);border-radius:25px;background:var(--control-paper);box-shadow:var(--control-shadow)}
+.map-key:not(.is-open) .key-toggle{height:48px;min-height:48px;padding:0 18px;border-radius:25px;font-size:15px;font-weight:600;color:#234955}
+.fab,.compass{width:48px;height:48px;bottom:24px;border:1px solid var(--control-edge);border-radius:50%;background:var(--control-paper);color:#234955;box-shadow:var(--control-shadow)}
+.fab{right:84px}.compass{right:24px}
+@media(max-width:819px){
+ :root{--header:calc(72px + var(--safe-top))}
+ .topbar{padding:calc(var(--safe-top) + 12px) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));gap:8px;align-items:center}
+ .topbar .brand{height:48px;min-height:48px;padding:3px 12px 3px 4px;border:1px solid var(--control-edge);background:var(--control-paper);box-shadow:var(--control-shadow);gap:6px}
+ .topbar .brand img{width:38px;height:38px}
+ .topbar .brand-text{font-size:13px;line-height:14px}
+ .topbar .sos{padding:0 14px;min-width:54px}
+ .topbar .spacer{min-width:0}
+ .map-key:not(.is-open){top:auto;right:auto;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(var(--dock-h) + 12px);width:auto;will-change:transform}
+ .fab,.fab.hidden,.compass{bottom:calc(var(--dock-h) + 12px)}
+ .fab{right:76px}.compass{right:max(16px,env(safe-area-inset-right,0px))}
+ .leaflet-bottom.leaflet-left,.selection-open .leaflet-bottom.leaflet-left{left:max(16px,env(safe-area-inset-left,0px));bottom:calc(var(--dock-h) + 72px)}
+ .leaflet-control-scale{margin-left:0!important;margin-bottom:0!important}
+ .selection-open:has(#sheet[data-stop="full"]) :is(.fab,.compass,.map-key,.leaflet-bottom.leaflet-left){visibility:hidden;pointer-events:none}
+ .sheet-body{padding-bottom:calc(28px + var(--safe-pad))}
+ .scroll-cue{bottom:calc(12px + var(--safe-pad))}
+}
+@media(max-width:369px){
+ .topbar{padding-inline:12px;gap:6px}
+ .topbar .brand{width:48px;padding:4px;justify-content:center}
+ .topbar .brand-text{display:none}
+ .legend-page .source-layer-grid{gap:0 12px}
+}
+
+/* Shared secondary pages: rescue, access, source images, roads, places and saving. */
+.sheet:has(.info-page){background:#fffefa}
+.sheet:has(.info-page) .sheet-body{padding-inline:24px}
+.sheet .info-page .sheet-heading{margin:8px 0 24px}
+.sheet .info-page h2{margin:0;font-size:32px;line-height:1.1;letter-spacing:-.035em;color:var(--coast-ink)}
+.sheet:has(.info-page) .sheet-back{min-height:44px;font-size:15px;gap:8px;margin:0 0 12px -8px;padding:0 8px}
+.sheet:has(.info-page) .sheet-back svg{width:20px;height:20px}
+.sheet .info-page p{font-size:15px;line-height:1.55;font-weight:400;margin:12px 0;color:#405e68}
+.sheet .info-page h3{font-size:21px;line-height:28px;font-weight:600;letter-spacing:-.025em;color:var(--coast-ink);margin:0 0 12px;text-transform:none}
+.sheet .info-page .sub{font-size:15px;line-height:1.55}
+.info-summary{padding:20px;border-radius:18px;background:linear-gradient(130deg,#f8eee3,#fcf7ef);color:#694529}
+.info-summary.info-neutral{background:linear-gradient(130deg,#e7f2f0,#f5f8f5);color:#234955}
+.info-summary.info-warning{background:#fff3d6;color:#6c511a}
+.info-summary.info-danger{background:linear-gradient(130deg,#f8e6e5,#fcf3ef);color:#8c2736}
+.info-label{display:flex;align-items:center;gap:10px}
+.info-label .cg-icon,.info-label .symbol{width:28px;height:28px;flex:none}
+.info-summary strong{font-size:18px;line-height:24px;font-weight:600}
+.sheet .info-page .info-summary p{font-size:14px;line-height:21px;color:inherit;margin:10px 0 0}
+.info-section{margin:32px 0 0;padding:0 0 32px;border-bottom:1px solid var(--coast-rule)}
+.info-section>p:last-child{margin-bottom:0}
+.info-page .btn{min-height:48px;border:1px solid #cbdcdd;border-radius:14px;padding:12px 16px;background:#fff;color:#22677a;font-size:15px;font-weight:600;box-shadow:none}
+.info-page .info-route{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px;width:100%}
+.info-route svg{width:18px;height:18px}
+.info-page .help-call,.info-page .btn[href="tel:911"]{display:flex;justify-content:center;align-items:center;width:100%;background:#fff5f3;border:1px solid #ebcccc;color:#9c2638}
+.info-page .actions{display:grid;grid-template-columns:1fr;gap:12px;margin-top:24px}
+.info-page .info-details{margin:24px 0 0;border-top:1px solid var(--coast-rule);border-bottom:1px solid var(--coast-rule);border-radius:0;padding:0;background:none}
+.info-page .info-details summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:16px 0;font-size:14px;line-height:21px;font-weight:600;color:#22677a;cursor:pointer;list-style:none}
+.info-page .info-details summary::-webkit-details-marker{display:none}
+.info-page .info-section+.info-details{border-top:0;margin-top:0}
+.sheet .rescue-page .rescue-status{padding:20px;background:linear-gradient(130deg,#fff0cf,#fcf7e9);color:#173b48}
+.rescue-status .rescue-eyebrow{display:block;margin:0 0 8px;font-size:13px;line-height:18px;color:#6c5c39}
+.rescue-status strong{display:block;font-size:25px;line-height:1.2;letter-spacing:-.025em;font-weight:600}
+.sheet .rescue-page .rescue-status p{font-size:15px;line-height:22px;margin:12px 0 0;color:#60543a}
+.rescue-page .rescue-call{margin-top:16px}
+.rescue-page .rescue-record{margin-top:32px;padding-bottom:24px}
+.sheet .rescue-page .rescue-record h3{margin-bottom:16px}
+.rescue-page .rescue-equipment{list-style:none;margin:0;padding:0}
+.rescue-page .rescue-equipment li{padding:10px 0;margin:0;border-bottom:1px solid var(--coast-rule);font-size:15px;line-height:22px;color:#405e68}
+.rescue-page .rescue-equipment li:first-child{padding-top:0}
+.rescue-page .rescue-equipment li:last-child{border-bottom:0;padding-bottom:0}
+.rescue-schedule{margin-top:24px}
+.rescue-schedule>span{font-size:13px;line-height:18px;font-weight:600;color:#526e78}
+.sheet .rescue-page .rescue-schedule p{margin:8px 0 0;font-size:15px;line-height:22px}
+.rescue-page .info-route{margin-top:24px}
+.info-details summary>.cg-icon{width:16px;height:16px;rotate:90deg;flex:none}
+.info-details[open] summary>.cg-icon{rotate:270deg}
+.sheet .info-page .info-details p{font-size:14px;line-height:1.5;margin:0 0 16px;background:none;border:0;padding:0}
+.info-details>a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;color:#22677a;margin-bottom:8px}
+.sheet .info-page .defer{border:0;border-radius:0;padding:0;background:none;color:#526e78;font-size:14px;line-height:1.5;margin:24px 0}
+.sheet .info-page .sheet-foot{margin-top:24px;font-size:13px;line-height:20px}
+.sheet .info-page .chip.title{display:flex;align-items:center;gap:8px;width:fit-content;padding:0;border:0;border-radius:0;background:none;font-size:14px;font-weight:400;margin:0 0 20px;color:#526e78}
+.sheet .info-page .chip.title .symbol{width:24px;height:24px}
+.info-page .rip-reference-figure{margin:0 0 24px}
+.info-page .rip-reference-figure a{border-radius:16px}
+.info-page .rip-reference-figure figcaption{font-size:14px;line-height:21px;margin-top:12px;color:#526e78}
+.info-page .reference-note{margin:32px 0;padding:0 0 32px;border-bottom:1px solid var(--coast-rule)}
+.sheet .info-page .access-note{font-size:14px;line-height:21px;color:#526e78}
+.info-page .access-risk{border:0;border-radius:18px;padding:20px;margin:24px 0;background:#edf1f0}
+.info-page .access-risk.high{background:linear-gradient(130deg,#f8e6e5,#fcf3ef)}
+.info-page .access-risk.moderate{background:linear-gradient(130deg,#fff0cf,#fcf7e9)}
+.info-page .access-risk.low{background:linear-gradient(130deg,#e7f2f0,#f5f8f5)}
+.info-page .access-risk strong{font-size:13px;font-weight:400;color:#526e78}
+.sheet .info-page .access-risk p{font-size:25px;line-height:1.2;letter-spacing:-.025em;font-weight:600;color:#173b48}
+.info-page .area-forecast{margin-top:32px;padding-top:32px;border-top:1px solid var(--coast-rule)}
+.info-page .area-forecast .forecast-heading{margin-bottom:20px}
+.sheet .info-page .saved-status{display:block;font-size:17px;line-height:24px;letter-spacing:-.015em;padding:20px;border-radius:18px;background:#edf5f3;color:#234955;margin:0 0 24px}
+.info-page .saved-steps{margin:20px 0 0}
+.info-page .saved-steps li{padding-block:16px;font-size:15px;line-height:23px}
+.info-page .saved-steps li::before{top:16px}
+@media(max-width:819px){.sheet:has(.info-page) .sheet-body{margin-top:40px}.sheet:has(.info-page) .sheet-expand::after{width:40px;height:4px}}
+@media(max-width:369px){.sheet:has(.info-page) .sheet-body{padding-inline:20px}}
+
+.sheet .info-page .access-risk.beach-safety p{font-size:14px;line-height:21px;letter-spacing:0;font-weight:400}
+.sheet .info-page .access-risk.beach-safety .instr{font-size:25px;line-height:1.2;letter-spacing:-.025em;font-weight:600}
+
+.sheet .info-page .beach-safety .eyebrow{font-size:13px;line-height:18px;letter-spacing:0;text-transform:none;font-weight:400;color:#52676d}
+.sheet .info-page .beach-safety .hours{font-weight:400}
+
+.info-page .cg-icon[data-icon=rip_current]{--cg-symbol-ink:#f04444}
+/* A partially raised sheet extends below the viewport. Its own bottom padding
+   moves with it, so reserve the physical home-indicator strip independently. */
+@media(max-width:819px){
+ body::after{content:'';position:fixed;z-index:1201;bottom:0;left:0;right:0;height:var(--safe-pad);background:var(--paper);pointer-events:none}
+}

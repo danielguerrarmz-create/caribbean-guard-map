@@ -7,7 +7,7 @@
 
      zoneStroke(tier, zoom)          consistent stroke and alert halo widths
      taperedPolyline(latlngs, ...)   continuous coast stroke and separate casing
-     outlinedArrow(map, latlngs,...) a rip arrow that holds contrast over water
+     curveArrow(map, latlngs,...)    simplified rip direction with a filled head
      placeLabels(map, labels)        labels that never sit on top of each other
 
    A CLASSIC SCRIPT, ON PURPOSE. No module, no build step. index.html is one
@@ -69,182 +69,127 @@
     return g;
   }
 
-  /* ==========================================================================
-     outlinedArrow
-     ==========================================================================
-
-     Measured on the shipped map, the rip arrow is #e53935 on water sampled at
-     rgb(45,72,65): 2.00:1 normally and 1.79:1 simulated deuteranope, against the
-     3:1 bar WCAG 1.4.11 sets for a graphical object that carries meaning. A drop
-     shadow does not fix that, because a shadow is a blur and contrast is measured
-     at the edge.
-
-     A 1.5 px hard outline does: the same geometry drawn underneath in #0b1c2c at
-     0.85 opacity, 3 px wider, so 1.5 px of ink shows on each side. Ink on that
-     water is 1.29:1 -- dark on dark -- but ink against the RED is 4.4:1, and it
-     is the red/ink edge the eye locks onto. The arrow stops depending on the
-     water it happens to be over, which changes from sand to reef to open sea
-     along one beach.
-
-     The outline follows the same solid shaft, avoiding broken-looking arrows
-     where several document marks sit close together. */
-  var ARROW_OUTLINE = "#0b1c2c";
-  var ARROW_OUTLINE_W = 1.0;
-  var ARROW_OUTLINE_OPACITY = 0.85;
-
-  /* A rip is 30 to 100 m long, which is a couple of pixels at the whole-coast
-     view: a fixed head is a red blob detached from a shaft nobody can see, and
-     nine of them read as noise. Both scale with zoom, clamped at each end. */
-  function arrowScale(zoom) {
-    var t = Math.max(0, Math.min(1, (zoom - 12) / 5));
-    return { weight: 1.5 + t * .7, head: 7 + t * 5, shaftMin: 20 - t * 16 };
+  // Approved proof 03: one quadratic family, fixed filled heads, no casing.
+  // Source annotations remain evidence; these curves communicate broad intent.
+// Original experimental geometry primitive. No source drawing is mutated.
+// Arc-length sampling prevents densely digitized sections from dominating the bend.
+function simplifyCurve(points) {
+  const length=[0];
+  for(let i=1;i<points.length;i++) length.push(length[i-1]+Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]));
+  const total=length.at(-1);
+  if(!Number.isFinite(total)||total<1e-9) return null;
+  function sample(t){
+    const d=t*total;let i=1;while(i<length.length-1&&length[i]<d)i++;
+    const f=(d-length[i-1])/(length[i]-length[i-1]||1);
+    return points[i-1].map((v,j)=>v+(points[i][j]-v)*f);
   }
+  const start=points[0].slice();
+  const tail=[sample(.8),sample(.9),sample(1)];
+  const end=[0,1].map(j=>tail.reduce((sum,p)=>sum+p[j],0)/3);
+  const dx=end[0]-start[0],dy=end[1]-start[1],chord=Math.hypot(dx,dy);
+  if(chord<1e-9)return null;
+  const normal=[-dy/chord,dx/chord];
+  const offsets=[.2,.35,.5,.65,.8].map(t=>{const p=sample(t);return ((p[0]-start[0])*normal[0]+(p[1]-start[1])*normal[1])/chord;});
+  const mean=offsets.reduce((a,b)=>a+b,0)/offsets.length;
+  // One normalized bow magnitude, mirrored only to retain the broad bend sense.
+  const bow=Math.abs(mean)<.025?0:Math.sign(mean)*.22*chord;
+  const control=[(start[0]+end[0])/2+normal[0]*bow,(start[1]+end[1])/2+normal[1]*bow];
+  return {start,control,end,bowRatio:bow/chord};
+}
 
-  /* At the overview a 40 m rip is shorter than its own arrowhead, so the drawn
-     shaft is stretched to a readable minimum along its own bearing. The POSITION
-     stays the position; only the drawn length changes, and it stops mattering by
-     z15. */
-  function shaftPoints(map, pts, zoom) {
-    var sc = arrowScale(zoom == null ? map.getZoom() : zoom);
-    if (sc.shaftMin <= 1 || pts.length < 2) return pts;
-    var a = map.latLngToLayerPoint(pts[0]);
-    var b = map.latLngToLayerPoint(pts[pts.length - 1]);
-    var dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
-    if (len >= sc.shaftMin || len === 0) return pts;
-    var k = sc.shaftMin / len;
-    return [pts[0], map.layerPointToLatLng(L.point(a.x + dx * k, a.y + dy * k))];
+  function ripShape(map, latlngs) {
+    const curve=simplifyCurve(latlngs.map(ll=>{
+      const p=map.latLngToLayerPoint(ll); return [p.x,p.y];
+    }));
+    if(!curve)return {shaft:[],head:[]};
+    const {start:a,control:c,end:b}=curve;
+    const convert=p=>map.layerPointToLatLng(L.point(p[0],p[1]));
+    const shaft=[];
+    for(let i=0;i<=32;i++){
+      const t=i/32,v=1-t;
+      shaft.push(convert([v*v*a[0]+2*v*t*c[0]+t*t*b[0],v*v*a[1]+2*v*t*c[1]+t*t*b[1]]));
+    }
+    const dx=b[0]-c[0],dy=b[1]-c[1],length=Math.hypot(dx,dy);
+    const ux=dx/length,uy=dy/length;
+    // Same 7 x 6 px head as the proof marker: tip 1 px beyond the shaft cap.
+    const head=[[b[0]-6*ux-3*uy,b[1]-6*uy+3*ux],
+      [b[0]+ux,b[1]+uy],[b[0]-6*ux+3*uy,b[1]-6*uy-3*ux]].map(convert);
+    return {shaft,head};
   }
-
-  // A compact open chevron reads as direction without the visual mass of a
-  // filled triangle. The shaft ends at the chevron tip.
-  function headPoints(map, a, b, headLen) {
-    var p1 = map.latLngToLayerPoint(a), p2 = map.latLngToLayerPoint(b);
-    var ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-    var bx = p2.x - headLen * Math.cos(ang), by = p2.y - headLen * Math.sin(ang);
-    var half = headLen * 0.58;
-    return [map.layerPointToLatLng(L.point(bx + half * Math.sin(ang), by - half * Math.cos(ang))),
-      b,
-      map.layerPointToLatLng(L.point(bx - half * Math.sin(ang), by + half * Math.cos(ang)))];
-  }
-
-  // Fit a restrained cubic to quarter points of the PDF stroke. Its controls
-  // stay one-third and two-thirds along the chord, so noisy PDF samples cannot
-  // make loops or hooks. Only the lateral offsets shape the curve, and both
-  // source endpoints remain fixed to preserve the GPS shoreline registration.
-  function gentleShaft(map, pts, zoom) {
-    var raw = shaftPoints(map, pts, zoom);
-    if (raw.length < 3) return raw;
-    var px = raw.map(function (p) { return map.latLngToLayerPoint(p); });
-    var dist = [0], i;
-    for (i = 1; i < px.length; i++)
-      dist.push(dist[i - 1] + px[i].distanceTo(px[i - 1]));
-    var total = dist[dist.length - 1];
-    if (total < 1) return [raw[0], raw[raw.length - 1]];
-    var a = px[0], b = px[px.length - 1];
-    var dx = b.x - a.x, dy = b.y - a.y, chord = Math.hypot(dx, dy);
-    if (chord < 1) return [raw[0], raw[raw.length - 1]];
-    function along(fraction) {
-      var target = total * fraction;
-      for (var j = 1; j < dist.length; j++) if (dist[j] >= target) {
-        var t = (target - dist[j - 1]) / (dist[j] - dist[j - 1] || 1);
-        return L.point(px[j - 1].x + (px[j].x - px[j - 1].x) * t,
-                       px[j - 1].y + (px[j].y - px[j - 1].y) * t);
-      }
-      return b;
+  function curveArrow(map,latlngs,opts={}) {
+    if(!map.getPane('cgRipPane')){
+      map.createPane('cgRipPane').style.zIndex=410;
+      map.getPane('cgRipPane').style.pointerEvents='none';
     }
-    var nx = -dy / chord, ny = dx / chord;
-    var cap = Math.min(chord * .20, 24);
-    function control(fraction, baseFraction) {
-      var source = along(fraction);
-      var baseline = L.point(a.x + dx * fraction, a.y + dy * fraction);
-      var lateral = Math.max(-cap, Math.min(cap,
-        ((source.x - baseline.x) * nx + (source.y - baseline.y) * ny) * 1.35));
-      return L.point(a.x + dx * baseFraction + nx * lateral,
-                     a.y + dy * baseFraction + ny * lateral);
-    }
-    var c1 = control(.25, 1 / 3), c2 = control(.75, 2 / 3);
-    // Even a straight PDF segment needs a modest visual arc at beach zoom;
-    // limit it to a few screen pixels, well inside the source registration
-    // uncertainty. Curved source segments keep their authored bend instead.
-    var bend1 = (c1.x - a.x - dx / 3) * nx + (c1.y - a.y - dy / 3) * ny;
-    var bend2 = (c2.x - a.x - 2 * dx / 3) * nx +
-                (c2.y - a.y - 2 * dy / 3) * ny;
-    if (Math.max(Math.abs(bend1), Math.abs(bend2)) < 2) {
-      var side = Math.round((raw[0].lat + raw[0].lng) * 100000) % 2 ? 1 : -1;
-      var bow = side * Math.min(6, Math.max(2.5, chord * .055));
-      c1 = L.point(c1.x + nx * bow, c1.y + ny * bow);
-      c2 = L.point(c2.x + nx * bow, c2.y + ny * bow);
-    }
-    var steps = Math.max(10, Math.min(32, Math.ceil(total / 6)));
-    var out = [];
-    for (i = 0; i <= steps; i++) {
-      var u = i / steps, v = 1 - u;
-      out.push(map.layerPointToLatLng(L.point(
-        v*v*v*a.x + 3*v*v*u*c1.x + 3*v*u*u*c2.x + u*u*u*b.x,
-        v*v*v*a.y + 3*v*v*u*c1.y + 3*v*u*u*c2.y + u*u*u*b.y)));
-    }
-    return out;
-  }
-
-  /* opts: {color, weight, head, dashArray, outline, outlineWidth, outlineOpacity}
-     Anything omitted falls back to the rip defaults above.
-     Returns an L.LayerGroup with cgRedraw(map, latlngs, opts) -- heads and the
-     shaft minimum are sized in SCREEN space, so both are rebuilt on zoom. */
-  function outlinedArrow(map, latlngs, opts) {
-    opts = opts || {};
-    var g = L.layerGroup();
-    var ow = opts.outlineWidth == null ? ARROW_OUTLINE_W : opts.outlineWidth;
-    var colour = opts.color || "#e53935";
-    var dash = opts.dashArray === undefined ? null : opts.dashArray;
-
-    /* ITS OWN PANE, SO ITS MOTION REPAINTS ONLY ITSELF. Leaflet draws every
-       vector in a pane into one SVG, and an animated stroke repaints the SVG it
-       lives in. In the overlay pane that was every beach stroke too, on every
-       frame; in this pane it is the rips alone. */
-    if (!map.getPane("cgRipPane")) {
-      map.createPane("cgRipPane").style.zIndex = 410;
-      map.getPane("cgRipPane").style.pointerEvents = "none";
-    }
-    function poly(pts, c, w, op, d, klass, cap) {
-      return L.polyline(pts, {
-        pane: "cgRipPane",
-        color: c, weight: w, opacity: op, dashArray: d || null,
-        lineCap: cap || "round", lineJoin: "round", interactive: false,
-        className: klass || ''
-      }).addTo(g);
-    }
-
-    var zoom = map.getZoom();
-    var sc = arrowScale(zoom);
-    var w = opts.weight == null ? sc.weight : opts.weight;
-    var hl = opts.head == null ? sc.head : opts.head;
-    var drawn = gentleShaft(map, latlngs, zoom);
-    var head = headPoints(map, drawn[drawn.length - 2] || drawn[0],
-                          drawn[drawn.length - 1], hl);
-    var oc = opts.outline || ARROW_OUTLINE;
-    var oo = opts.outlineOpacity == null ? ARROW_OUTLINE_OPACITY : opts.outlineOpacity;
-
-    // One continuous shaft and chevron. Draw outlines before all color so the
-    // head cannot cut across its own shaft. No animated dashes or broad channels.
-    var shaftOut=poly(drawn,oc,w+2*ow,1,null,'cg-rip-shaft');
-    var headOut=poly(head,oc,w+2*ow,1,null,'cg-rip-head');
-    var shaft=poly(drawn,colour,w,1,null,'cg-rip-shaft');
-    var headLine=poly(head,colour,w,1,null,'cg-rip-head');
-
-    g.cgRedraw = function (m, lls, o) {
-      o = o || opts;
-      var z = m.getZoom(), s = arrowScale(z);
-      var ww = o.weight == null ? s.weight : o.weight;
-      var hh = o.head == null ? s.head : o.head;
-      var ow2 = o.outlineWidth == null ? ARROW_OUTLINE_W : o.outlineWidth;
-      var d2 = gentleShaft(m, lls, z);
-      var h2 = headPoints(m, d2[d2.length - 2] || d2[0], d2[d2.length - 1], hh);
-      shaftOut.setLatLngs(d2); shaftOut.setStyle({ weight: ww + 2 * ow2 });
-      shaft.setLatLngs(d2); shaft.setStyle({ weight: ww });
-      headOut.setLatLngs(h2); headOut.setStyle({ weight: ww + 2 * ow2 });
-      headLine.setLatLngs(h2); headLine.setStyle({ weight: ww });
+    const group=L.layerGroup(),color=opts.color||'#f04444';
+    const shape=ripShape(map,latlngs);
+    const shaft=L.polyline(shape.shaft,{pane:'cgRipPane',color,weight:2,opacity:1,
+      dashArray:'8 6',lineCap:'round',lineJoin:'round',smoothFactor:0,
+      interactive:false,className:'cg-rip-shaft cg-rip-dashes'}).addTo(group);
+    // Open V, following the source flow direction. No closing edge or fill.
+    const head=L.polyline(shape.head,{pane:'cgRipPane',color,weight:2,opacity:1,
+      fill:false,lineCap:'round',lineJoin:'round',smoothFactor:0,
+      interactive:false,className:'cg-rip-head'}).addTo(group);
+    group.cgRedraw=function(m,lls){
+      const next=ripShape(m,lls);shaft.setLatLngs(next.shaft);head.setLatLngs(next.head);
     };
-    return g;
+    return group;
+  }
+
+  // Group only symbols that collide with a real member's anchor, never a
+  // centroid. A chain of nearby stations must not swallow an entire coastline.
+  function groupMarkers(entries,gap=12){
+    const groups=[];
+    for(const entry of entries){
+      const group=groups.find(({anchor})=>{
+        const clearance=(entry.size+anchor.size)/2+gap;
+        return Math.abs(entry.x-anchor.x)<clearance&&Math.abs(entry.y-anchor.y)<clearance;
+      });
+      if(group)group.members.push(entry);
+      else groups.push({anchor:entry,members:[entry]});
+    }
+    return groups;
+  }
+
+  // Labels may move within a small local radius; geographic symbols never do.
+  // A crowded or off-screen beach yields instead of being pulled across the map.
+  function layoutBeachLabels(entries, obstacles, bounds, gap=6){
+    const placed=[], result=[];
+    const hits=(a,b)=>a.left<b.right+gap&&a.right>b.left-gap&&a.top<b.bottom+gap&&a.bottom>b.top-gap;
+    for(const entry of entries){
+      const w=entry.width,h=entry.height;
+      const candidates=[];
+      const add=(left,top)=>{
+        if(left<bounds.left||left+w>bounds.right||top<bounds.top||top+h>bounds.bottom)return;
+        candidates.push({left,top,right:left+w,bottom:top+h});
+      };
+      add(entry.left,entry.top);
+      for(let dy=-72;dy<=72;dy+=12)
+        for(let dx=-72;dx<=72;dx+=12)
+          if(Math.hypot(dx,dy)<=72)add(entry.left+dx,entry.top+dy);
+      candidates.sort((a,b)=>{
+        const cost=r=>2*Math.pow(r.left-entry.left,2)+Math.pow(r.top-entry.top,2);
+        return cost(a)-cost(b);
+      });
+      const box=candidates.find(r=>!obstacles.some(o=>hits(r,o))&&!placed.some(o=>hits(r,o)));
+      if(box){placed.push(box);result.push({...box,id:entry.id});}
+    }
+    return result;
+  }
+
+  // Screen-space selection only. Never offset, snap or alter source coordinates.
+  // Required rescue markers always survive; others return as soon as space exists.
+  function declutterMarkers(entries,gap=6){
+    const kept=[];
+    const ranked=entries.slice().sort((a,b)=>Number(!!b.required)-Number(!!a.required)||b.priority-a.priority);
+    for(const entry of ranked){
+      const clash=kept.some(other=>{
+        const clearance=(entry.size+other.size)/2+gap;
+        return Math.abs(entry.x-other.x)<clearance&&Math.abs(entry.y-other.y)<clearance;
+      });
+      if(entry.required||!clash)kept.push(entry);
+    }
+    return kept.map(entry=>entry.id);
   }
 
   /* ==========================================================================
@@ -315,9 +260,12 @@
     TAPER_M: TAPER_M,
     zoneStroke: zoneStroke,
     taperedPolyline: taperedPolyline,
-    arrowScale: arrowScale,
-    shaftPoints: shaftPoints,
-    outlinedArrow: outlinedArrow,
+    simplifyCurve: simplifyCurve,
+    ripShape: ripShape,
+    curveArrow: curveArrow,
+    declutterMarkers: declutterMarkers,
+    groupMarkers: groupMarkers,
+    layoutBeachLabels: layoutBeachLabels,
     placeLabels: placeLabels
   };
 })(typeof globalThis !== "undefined" ? globalThis : this);

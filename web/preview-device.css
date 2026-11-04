@@ -1,0 +1,5 @@
+/* Review frame only: illustrative system chrome, never mounted in the app. */
+.preview-status{display:none;position:absolute;left:0;top:0;z-index:6;width:390px;height:59px;color:#fff;pointer-events:none;transform:scale(var(--preview-scale));transform-origin:top left;font-family:Arial,Helvetica,sans-serif}
+.safe-areas .preview-status{display:block}
+.preview-status .preview-clock{position:absolute;left:34px;top:19px;font-size:16px;line-height:20px;font-weight:600;letter-spacing:-.4px}
+.preview-status svg{position:absolute;right:27px;top:21px;width:76px;height:17px}

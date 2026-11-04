@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const MODULE = fileURLToPath(new URL('../../web/lifeguard.js', import.meta.url));
@@ -96,8 +97,30 @@ test('the page renders through the Costa Rica clock and refreshes it', () => {
 test('the access point sheet shows the same clock-aware instruction as the beach', () => {
   assert.doesNotMatch(HTML, /T\[lang\]\[[\w?.]*character\??\.class\]/, 'no instruction keyed on class alone');
   const access = HTML.slice(HTML.indexOf('function openAccess('), HTML.indexOf('function updateAccessMarkers('));
-  assert.match(access, /T\[lang\]\[instructionKey\(beach\)\]/);
+  assert.match(access, /statusCardInner\(beach\)/);
+  assert.match(access, /data-zone="\$\{beach.id\}"/);
   const refresh = HTML.slice(HTML.indexOf('function refreshPostClock('), HTML.indexOf('/* ---------- map ---------- */'));
-  assert.match(refresh, /\.access-risk\[data-zone=/, 'an open access sheet is patched when the post flips');
+  assert.match(refresh, /\.statuscard\[data-zone=/, 'an open access sheet is patched when the post flips');
   assert.doesNotMatch(WORKER, /cg-map-v51-lifeguard-cr-time/, 'offline cache version bumped');
+});
+
+
+test('an open access safety card changes to off duty at closing without replacing its sheet', async () => {
+  await import('../../web/lifeguard.js');
+  const card = {innerHTML:''};
+  const zone = {id:'cocles',post:POST,character:{class:'high-risk'}};
+  const ctx = {ZONES:[zone],CGLifeguard:globalThis.CGLifeguard,postState:new Map(),lang:'en',
+    T:{en:{'high-risk':'ONLY WITH LIFEGUARDS',offDuty:"DON'T GO IN"}},
+    instructionKey:(z,t)=>globalThis.CGLifeguard.instructionKey(z.character.class,z.post,t),
+    dangerLabel:()=> 'High risk',hoursLine:()=>'',
+    document:{querySelector:selector=>selector.startsWith('.statuscard[')?card:null}};
+  for(const name of ['statusCardInner','refreshPostClock']){
+    const start=HTML.indexOf('function '+name+'(');
+    const rest=HTML.slice(start).replace(/\r\n/g,'\n');
+    runInNewContext(rest.slice(0,rest.indexOf('\n}\n')+3),ctx);
+  }
+  ctx.refreshPostClock(cr(16,59));
+  assert.match(card.innerHTML,/ONLY WITH LIFEGUARDS/);
+  ctx.refreshPostClock(cr(17,0));
+  assert.match(card.innerHTML,/DON'T GO IN/);
 });
