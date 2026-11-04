@@ -3472,6 +3472,7 @@ function openZone(z){
         <section class="beach-overview" aria-labelledby="beach-overview-title">
           <h3 id="beach-overview-title">${lang==='es'?'Sobre esta playa':'About this beach'}</h3>
           <p class="beach-context">${c.why[lang]}</p>
+          ${!c.reviewed?`<p class="beach-meta">${lang==='es'?'Sin revisión local. Sin condiciones en vivo.':'Not locally reviewed. No live conditions.'}</p>`:''}
         </section>
         <details class="beach-background"><summary>${lang==='es'?'Fuentes y revisión':'Sources and review'}</summary>
           ${rider}${trustLine(z)}${renderWeatherPanel()}

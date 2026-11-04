@@ -28,3 +28,27 @@ test('a clear label stays at its home position',()=>{
   const placed=layout([{id:1,left:80,top:130,width:120,height:44}],[],bounds);
   assert.equal(placed[0].left,80);assert.equal(placed[0].top,130);
 });
+
+test('the unreviewed beach notice is outside the collapsed sources section and absent for reviewed beaches',()=>{
+  const html=readFileSync(new URL('../../web/index.html',import.meta.url),'utf8');
+  const start=html.indexOf('function openZone(');
+  const source=html.slice(start,html.indexOf('\n}\n',start)+3);
+  for(const lang of ['en','es']) for(const reviewed of [null,{by:'Guard',on:'2026-11-04'}]){
+    let panel;
+    const z={id:'test',at:[0,0],line:[],name:{en:'Beach',es:'Playa'},character:{class:'conditional',why:{en:'Context',es:'Contexto'},reviewed}};
+    const noop=()=>{};
+    runInNewContext(source+';openZone(z);',{
+      z,lang,T:{[lang]:{}},clearAccessPath:noop,tierOf:()=>'',statusCardInner:()=>'',
+      renderSwimAdvisory:()=>'',renderForecastPanel:()=>'',trustLine:()=>'',renderWeatherPanel:()=>'',
+      reportHref:()=>'',sheetFoot:()=>'',openSheet:html=>{panel=html;},requestAnimationFrame:noop,
+      fitZoneDetail:noop,markCurrent:noop,flyClear:noop,showBand:noop,sheetAddress:noop,localId:id=>id,
+      L:{latLngBounds:()=>({})}
+    });
+    const text=lang==='en'?'Not locally reviewed. No live conditions.':'Sin revisión local. Sin condiciones en vivo.';
+    const details=panel.match(/<details\b[^>]*>[\s\S]*?<\/details>/g)||[];
+    assert.ok(details.length>0);
+    assert.ok(details.every(section=>!section.includes(text)));
+    assert.equal(panel.includes(text),!reviewed);
+    if(!reviewed) assert.ok(panel.includes(`<p class="beach-meta">${text}</p>`));
+  }
+});
